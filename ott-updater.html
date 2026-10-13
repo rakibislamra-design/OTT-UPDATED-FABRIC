@@ -204,11 +204,14 @@ td.fail.hov:hover{background:var(--red-soft)}
 #poTbl td.n{white-space:nowrap}
 .posearch{position:relative;max-width:420px}
 .posearch input{font-size:15px;padding:9px 12px}
-.posug{position:absolute;z-index:30;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(43,32,39,.18);max-height:320px;overflow:auto}
+.posug{max-height:380px!important;position:absolute;z-index:30;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(43,32,39,.18);max-height:320px;overflow:auto}
 .posug li{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:13.5px}
 .posug li b{font-family:var(--f-mono);font-weight:600}
 .posug li span{color:var(--muted);font-size:12.5px;text-align:right}
-.posug li.act,.posug li:hover{background:var(--q10)}
+.posug li[data-po]{padding-left:22px}
+.posug li.act,.posug li[data-po]:hover{background:var(--q10)}
+.posug li.grp{position:sticky;top:-4px;background:var(--surface);border-bottom:1px solid var(--line);border-radius:0;cursor:default;padding-top:9px;font-size:13px}
+.posug li.grp b{font-family:var(--f-display);font-weight:700;color:var(--accent)}
 .posug mark{background:var(--q20);color:inherit;border-radius:2px}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .chartbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px;overflow-x:auto}
@@ -307,6 +310,11 @@ td.fail.hov:hover{background:var(--red-soft)}
 
   <div class="viewbanner" id="viewBanner" hidden></div>
 
+  <section id="daySec" class="dem" hidden aria-label="Date-wise RFD and achieve %">
+        <div class="row2"><h2>Date-wise RFD · achieve % <span class="stamp" data-stamp></span></h2><span class="status" id="dayNote"></span></div>
+        <div class="chartbox"><div class="legend"><span><i style="background:var(--accent)"></i>RFD qty (+ recovered)</span><span>% above bar = achieve % vs plan</span></div><div id="dayChart"></div></div>
+  </section>
+
   <section id="summary" aria-label="Buyer-wise qty added since last update">
     <div class="row2"><h2>Buyer-wise summary · qty added since last update <span class="stamp" data-stamp></span></h2><span class="status" id="sumNote"></span></div>
     <div class="tbl"><table id="sumTbl"></table></div>
@@ -336,8 +344,6 @@ td.fail.hov:hover{background:var(--red-soft)}
           <span class="status">Dates = Agreed RFD Date-Hues (col S) · dots mark days with demand</span>
         </div>
         <div class="tbl"><table id="demTbl"></table></div>
-        <div class="row2" style="margin-top:6px"><h2>Date-wise RFD · achieve % <span class="stamp" data-stamp></span></h2><span class="status" id="dayNote"></span></div>
-        <div class="chartbox"><div class="legend"><span><i style="background:var(--accent)"></i>RFD qty (+ recovered)</span><span>% above bar = achieve % vs plan</span></div><div id="dayChart"></div></div>
         <div class="row2" style="margin-top:6px"><h2>Plan TBC · buyer-wise <span class="stamp" data-stamp></span></h2><span class="status" id="tbcNote">Rows where Agreed RFD Date-Hues is “Plan TBC” · not date-filtered</span></div>
         <div class="tbl"><table id="tbcTbl"></table></div>
         <div class="row2" style="margin-top:6px"><h2>PO details <span class="stamp" data-stamp></span></h2></div>
@@ -725,19 +731,29 @@ function buildPOIndex(){
   for(const x of DEM){ if(!x.po||!(x.L||x.M||x.O))continue; if(!m.has(x.po))m.set(x.po,{po:x.po,b:new Set(),req:0,del:0}); const o=m.get(x.po); o.b.add(x.b); o.req+=x.L; o.del+=x.M+x.O; }
   POIDX=[...m.values()].map(o=>({...o,b:[...o.b].join(", "),beh:Math.max(0,o.req-o.del)}));
 }
+let SUGALL=false;
 function drawSug(){
-  const q=($("q").value||"").trim().toLowerCase(), ul=$("poSug");
+  const cur=($("q").value||"").trim().toLowerCase(), q=SUGALL?"":cur, ul=$("poSug");
   if(!POIDX&&DEM) buildPOIndex();
   if(!POIDX){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
-  const hits=(q?POIDX.filter(o=>o.po.toLowerCase().includes(q)).sort((a,b)=>(a.po.toLowerCase().startsWith(q)?0:1)-(b.po.toLowerCase().startsWith(q)?0:1)||b.beh-a.beh):POIDX.slice().sort((a,b)=>b.beh-a.beh)).slice(0,q?15:60);
-  if(!hits.length||(hits.length===1&&hits[0].po.toLowerCase()===q)){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
-  sugAct=-1;
-  ul.innerHTML=hits.map((o,i)=>{const i0=o.po.toLowerCase().indexOf(q); const hl=esc(o.po.slice(0,i0))+"<mark>"+esc(o.po.slice(i0,i0+q.length))+"</mark>"+esc(o.po.slice(i0+q.length));
-    if(!q) return `<li role="option" data-po="${esc(o.po)}" id="sug${i}"><b>${esc(o.po)}</b><span>${esc(o.b)} · ${o.beh>0.5?`<span style="color:var(--red)">${fmt(o.beh)} behind</span>`:"complete"}</span></li>`;
-    return `<li role="option" data-po="${esc(o.po)}" id="sug${i}"><b>${hl}</b><span>${esc(o.b)} · ${o.beh>0.5?`<span style="color:var(--red)">${fmt(o.beh)} behind</span>`:"complete"}</span></li>`}).join("");
-  ul.hidden=false; $("q").setAttribute("aria-expanded","true");
+  let hits=q?POIDX.filter(o=>o.po.toLowerCase().includes(q)):POIDX.filter(o=>o.beh>0.5);
+  if(!hits.length||(q&&hits.length===1&&hits[0].po.toLowerCase()===q)){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
+  // group by buyer, buyers by total balance, POs by balance (highest first)
+  const grp=new Map(); for(const o of hits){ for(const b of o.b.split(", ")){ if(!grp.has(b))grp.set(b,{b,tot:0,list:[]}); const g=grp.get(b); g.list.push(o); g.tot+=o.beh/(o.b.split(", ").length); } }
+  const groups=[...grp.values()].sort((a,c)=>c.tot-a.tot);
+  sugAct=-1; let i=0, h="";
+  const tag=o=>o.beh>0.5?`<span style="color:var(--red)">${fmt(o.beh)}</span>`:"complete";
+  for(const g of groups){
+    g.list.sort((a,c)=>c.beh-a.beh);
+    h+=`<li class="grp" role="presentation"><b>${esc(g.b)}</b><span>${g.list.length} PO${g.list.length>1?"s":""} · ${fmt(g.tot)} m balance</span></li>`;
+    for(const o of g.list){ const sel=o.po.toLowerCase()===cur; let lab=esc(o.po);
+      if(q){const i0=o.po.toLowerCase().indexOf(q); lab=esc(o.po.slice(0,i0))+"<mark>"+esc(o.po.slice(i0,i0+q.length))+"</mark>"+esc(o.po.slice(i0+q.length));}
+      h+=`<li role="option" data-po="${esc(o.po)}" id="sug${i++}"${sel?' class="act" aria-selected="true"':""}><b>${lab}${sel?" ✓":""}</b><span>${tag(o)}</span></li>`; }
+  }
+  ul.innerHTML=h; ul.hidden=false; $("q").setAttribute("aria-expanded","true");
+  const a0=ul.querySelector("li.act"); if(a0) a0.scrollIntoView({block:"nearest"});
 }
-function pickSug(po){ $("q").value=po; $("poSug").hidden=true; $("q").setAttribute("aria-expanded","false"); drawPO(); }
+function pickSug(po){ SUGALL=false; $("q").value=po; $("poSug").hidden=true; $("q").setAttribute("aria-expanded","false"); drawPO(); }
 function drawPO(){
   const head=`<thead><tr><th>Buyer</th><th>Colour</th><th>Article</th><th class="n">Req qty</th><th class="n">Delivered qty</th><th class="n">Behind qty</th><th class="n">Done %</th></tr></thead>`;
   if(!DEM){$("poOut").hidden=true;return}
@@ -921,7 +937,7 @@ function drawDays(R){
     if(i===0||d.getUTCDate()===1) g+=`<text class="mut" x="${cx}" y="${top+ph+32}" text-anchor="middle">${MON[d.getUTCMonth()]}</text>`;});
   $("dayChart").innerHTML=g+"</svg>";
   const T=days.reduce((t,o)=>({d:t.d+o.d,a:t.a+o.a}),{d:0,a:0});
-  $("dayNote").textContent=`${R.label} · ${days.length} days · overall ${(T.d?T.a/T.d*100:0).toFixed(1)}% · hover a bar for buyer breakdown`;
+  $("dayNote").textContent=`${R.label} · ${days.length} days (calendar below sets the range) · overall ${(T.d?T.a/T.d*100:0).toFixed(1)}% · hover a bar for buyer breakdown`;
 }
 function drawTBC(){
   const head=`<thead><tr><th>Buyer</th><th class="n">Demand qty (TBC)</th><th class="n">RFD qty</th><th class="n">Balance qty</th></tr></thead>`;
@@ -936,7 +952,7 @@ function drawTBC(){
 }
 function stampText(iso){ if(!iso)return ""; const d=new Date(iso); return `Last updated ${String(d.getDate()).padStart(2,"0")}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
 function showDash(){
-  $("dash").hidden=false;
+  $("dash").hidden=false; $("daySec").hidden=false;
   document.querySelectorAll("[data-stamp]").forEach(el=>el.textContent=stampText(DASH.at));
   POIDX=null; drawDemand(); drawPO();
 }
@@ -1023,14 +1039,15 @@ bindDrop("dropDOC","fileDOC","nameDOC","DOC","okDOC","badDOC");
 (function(){const d=new Date();$("runDate").value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`})();
 $("runDate").addEventListener("change",refresh);
 $("runBtn").addEventListener("click",run);
-$("q").addEventListener("input",()=>{drawSug();drawPO()});
-$("q").addEventListener("focus",drawSug);
-$("q").addEventListener("click",drawSug);
-$("q").addEventListener("keydown",e=>{const ul=$("poSug"),li=[...ul.querySelectorAll("li")]; if(ul.hidden||!li.length)return;
+$("q").addEventListener("input",()=>{SUGALL=false;drawSug();drawPO()});
+const openAllSug=()=>{SUGALL=true;drawSug();try{$("q").select()}catch(e){}};
+$("q").addEventListener("focus",openAllSug);
+$("q").addEventListener("click",()=>{ if($("poSug").hidden) openAllSug(); });
+$("q").addEventListener("keydown",e=>{const ul=$("poSug"),li=[...ul.querySelectorAll("li[data-po]")]; if(ul.hidden||!li.length)return;
   if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault(); sugAct=(sugAct+(e.key==="ArrowDown"?1:-1)+li.length)%li.length; li.forEach((x,i)=>x.classList.toggle("act",i===sugAct)); $("q").setAttribute("aria-activedescendant","sug"+sugAct); li[sugAct].scrollIntoView({block:"nearest"});}
   else if(e.key==="Enter"){e.preventDefault(); pickSug((li[sugAct>=0?sugAct:0]).dataset.po);}
   else if(e.key==="Escape"){ul.hidden=true;}});
-$("poSug").addEventListener("mousedown",e=>{const li=e.target.closest("li");if(li){e.preventDefault();pickSug(li.dataset.po)}});
+$("poSug").addEventListener("mousedown",e=>{const li=e.target.closest("li[data-po]");if(!li&&e.target.closest("li.grp")){e.preventDefault();return}if(li){e.preventDefault();pickSug(li.dataset.po)}});
 $("q").addEventListener("blur",()=>setTimeout(()=>{$("poSug").hidden=true},120));
 async function save(blobP,name){
   const blob=await blobP; $("dlStatus").textContent="";
