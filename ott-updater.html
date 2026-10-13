@@ -189,6 +189,11 @@ td.fail.hov:hover{background:var(--red-soft)}
 .pubrow input[type=password]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
 .ck{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--fg);padding-bottom:8px}
 #dash{display:grid;gap:16px}
+.dlinline{display:inline-flex;gap:8px;flex-wrap:wrap}
+.dlb{display:inline-flex;align-items:center;gap:7px}
+.dlb svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#poTbl td{white-space:normal}
+#poTbl td.n{white-space:nowrap}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .chartbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px;overflow-x:auto}
 .chartbox svg{display:block;width:100%;min-width:560px;height:auto}
@@ -253,7 +258,12 @@ td.fail.hov:hover{background:var(--red-soft)}
 
   <div class="runbar">
     <button class="primary" id="runBtn" disabled>Run update</button>
+    <span class="dlinline" id="dlInline" hidden>
+      <button class="primary dlb" id="dlOTT" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Updated OTT</button>
+      <button class="ghost dlb" id="dlLog" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Update log</button>
+    </span>
     <span class="status" id="status">Add both files to start.</span>
+    <span class="status" id="dlStatus"></span>
   </div>
 
   <div class="prog" id="prog" hidden>
@@ -264,12 +274,6 @@ td.fail.hov:hover{background:var(--red-soft)}
   <section id="results" hidden>
     <div style="display:grid;gap:16px">
       <div id="flags" style="display:grid;gap:8px"></div>
-      <div class="row2"><h2>Download</h2></div>
-      <div class="dl">
-        <button class="primary" id="dlOTT">Download updated OTT</button>
-        <button class="ghost" id="dlLog">Download update log</button>
-        <span class="status" id="dlStatus"></span>
-      </div>
       <div class="pub" id="pubBox" hidden>
         <div class="row2"><h2>Publish dashboard to the site</h2><span class="status" id="pubStatus"></span></div>
         <p class="pubtxt">Saves only the dashboard figures (no Excel file) so everyone who opens the site sees this update. The figures, including buyer, PO and colour quantities, can be seen by anyone with the site link.</p>
@@ -320,20 +324,20 @@ td.fail.hov:hover{background:var(--red-soft)}
         <div class="chartbox"><div class="legend"><span><i style="background:var(--accent)"></i>RFD qty (+ recovered)</span><span>% above bar = achieve % vs plan</span></div><div id="dayChart"></div></div>
         <div class="row2" style="margin-top:6px"><h2>Plan TBC · buyer-wise <span class="stamp" data-stamp></span></h2><span class="status" id="tbcNote">Rows where Agreed RFD Date-Hues is “Plan TBC” · not date-filtered</span></div>
         <div class="tbl"><table id="tbcTbl"></table></div>
+        <div class="row2" style="margin-top:6px"><h2>PO details <span class="stamp" data-stamp></span></h2>
+          <label class="f" for="q" style="min-width:280px">Filter by PO, colour, article or buyer
+            <input type="search" id="q" placeholder="e.g. 459112 or Navy Blazer or LIDL">
+          </label>
+        </div>
+        <div class="filters" role="group" aria-label="Show">
+          <button type="button" class="chip pochip" data-po="behind" aria-pressed="true">Behind only</button>
+          <button type="button" class="chip pochip" data-po="all" aria-pressed="false">All POs</button>
+        </div>
+        <div class="tbl scroll" style="max-height:520px"><table id="poTbl"></table></div>
+        <div class="status" id="poNote"></div>
       </section>
   </section>
 
-  <section id="allocSec" hidden>
-    <div style="display:grid;gap:16px">
-      <div class="row2">
-        <h2>Allocation detail</h2>
-        <label class="f" for="q" style="min-width:240px">Filter by key, buyer or row
-          <input type="search" id="q" placeholder="e.g. LIDL or 446252">
-        </label>
-      </div>
-      <div class="tbl scroll"><table id="allocTbl"></table></div>
-    </div>
-  </section>
 
   <div id="errBox"></div>
   <div class="tip" id="tip" role="tooltip" hidden></div>
@@ -448,7 +452,7 @@ function cellInfo(c,sst){
 
 /* ---------- main run ---------- */
 async function run(){
-  $("errBox").innerHTML="";$("results").hidden=true;$("runBtn").disabled=true;$("prog").classList.remove("fail","done");
+  $("errBox").innerHTML="";$("results").hidden=true;$("dlInline").hidden=true;$("runBtn").disabled=true;$("prog").classList.remove("fail","done");
   prog(1,"Starting…");
   try{
     setStep("read","run");status("Reading DOC -280+217 (sheet 217)…");await tick();
@@ -686,7 +690,7 @@ function drawHistory(){
 }
 
 function render(R){
-  $("results").hidden=false; $("allocSec").hidden=false;
+  $("results").hidden=false; $("dlInline").hidden=false;
   DASH={at:new Date().toISOString(),report:$("runDate").value,fp:fpFile.name,doc:docFile.name,buyers:R.buyers.map(b=>({buyer:b.buyer,req:r3(b.req),before:r3(b.before),after:r3(b.after),step2:b.step2,filled:b.filled})),live:true};
   showDash();
   const flags=[];
@@ -699,19 +703,33 @@ function render(R){
   const k=(t,v,s)=>`<div class="kpi"><div class="k">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
   drawDemand();
   drawSummary(DASH.buyers);
-  allocRows=R.report; drawAlloc();
-}
-function drawAlloc(){
-  const q=($("q").value||"").toLowerCase().trim();
-  const rows=q?allocRows.filter(x=>(x.key+" "+x.buyer+" "+x.row).toLowerCase().includes(q)):allocRows;
-  let h=`<thead><tr><th>Key</th><th class="n">Row</th><th>Buyer</th><th class="n">Req Qty L</th><th class="n">M before</th><th class="n">Added</th><th class="n">M after</th><th class="n">Group AU</th></tr></thead><tbody>`;
-  for(const x of rows.slice(0,800)) h+=`<tr><td>${esc(x.key)}</td><td class="n">${x.row}</td><td>${esc(x.buyer)}</td><td class="n">${fmt(x.L,2)}</td><td class="n">${fmt(x.before,2)}</td><td class="n">${fmt(x.add,2)}</td><td class="n">${fmt(x.after,2)}</td><td class="n">${fmt(x.au,2)}</td></tr>`;
-  if(!rows.length) h+=`<tr><td colspan="8" style="color:var(--muted)">No allocation rows match.</td></tr>`;
-  if(rows.length>800) h+=`<tr><td colspan="8" style="color:var(--muted)">Showing 800 of ${rows.length.toLocaleString()} rows. The log file has all of them.</td></tr>`;
-  $("allocTbl").innerHTML=h+"</tbody>";
-}
 
-/* ---------- names, files, downloads ---------- */
+}
+let poMode="behind";
+function drawPO(){
+  const head=`<thead><tr><th>Buyer</th><th>PO</th><th>Colour</th><th>Article</th><th class="n">Req qty</th><th class="n">Delivered qty</th><th class="n">Behind qty</th><th class="n">Done %</th></tr></thead>`;
+  if(!DEM){$("poTbl").innerHTML=head;$("poNote").textContent="";return}
+  const g=new Map();
+  for(const x of DEM){ if(!(x.L||x.M||x.O))continue; const k=x.b+"\u0001"+x.po+"\u0001"+x.col+"\u0001"+(x.art||"");
+    if(!g.has(k))g.set(k,{b:x.b,po:x.po,col:x.col,art:x.art||"",req:0,del:0}); const o=g.get(k); o.req+=x.L; o.del+=x.M+x.O; }
+  const q=($("q").value||"").toLowerCase().trim().split(/\s+/).filter(Boolean);
+  let list=[...g.values()].map(o=>({...o,beh:Math.max(0,o.req-o.del)}));
+  if(q.length) list=list.filter(o=>{const t=(o.b+" "+o.po+" "+o.col+" "+o.art).toLowerCase();return q.every(w=>t.includes(w))});
+  if(poMode==="behind") list=list.filter(o=>o.beh>0.5);
+  list.sort((a,b)=>b.beh-a.beh||b.req-a.req);
+  const T=list.reduce((t,o)=>({r:t.r+o.req,d:t.d+o.del,b:t.b+o.beh}),{r:0,d:0,b:0});
+  const pc=o=>o.req>0?Math.min(100,o.del/o.req*100):0, cls=p=>p>=95?"good":p>=70?"mid":"bad";
+  let h=head+"<tbody>";
+  if(!list.length) h+=`<tr><td colspan="8" style="color:var(--muted)">No PO lines match.</td></tr>`;
+  else{
+    h+=`<tr class="tot"><td colspan="4">Total · ${list.length.toLocaleString()} lines${q.length?" (filtered)":""}</td><td class="n">${fmt(T.r)}</td><td class="n">${fmt(T.d)}</td><td class="n ${T.b>0.5?"fail":""}">${fmt(T.b)}</td><td class="n"><span class="hit ${cls(T.r?T.d/T.r*100:0)}">${(T.r?Math.min(100,T.d/T.r*100):0).toFixed(1)}%</span></td></tr>`;
+    for(const o of list.slice(0,600)){const p=pc(o);
+      h+=`<tr><td>${esc(o.b)}</td><td>${esc(o.po||"—")}</td><td>${esc(o.col||"—")}</td><td style="color:var(--muted);font-size:12.5px">${esc(o.art||"—")}</td><td class="n">${fmt(o.req)}</td><td class="n">${fmt(o.del)}</td><td class="n ${o.beh>0.5?"fail":""}">${fmt(o.beh)}</td><td class="n"><span class="hit ${cls(p)}">${p.toFixed(0)}%</span></td></tr>`}
+    if(list.length>600) h+=`<tr><td colspan="8" style="color:var(--muted)">Showing 600 of ${list.length.toLocaleString()} lines. Type in the filter to narrow down.</td></tr>`;
+  }
+  $("poTbl").innerHTML=h+"</tbody>";
+  $("poNote").textContent=`Whole file (all dates) · grouped by buyer, PO, colour and article · delivered = RFD + recovered · qty in m`;
+}
 function ord(n){const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
 function outNames(){
   const v=$("runDate").value; if(!v) return {ott:"—",log:"—"};
@@ -801,17 +819,18 @@ function stampText(iso){ if(!iso)return ""; const d=new Date(iso); return `Last 
 function showDash(){
   $("dash").hidden=false;
   document.querySelectorAll("[data-stamp]").forEach(el=>el.textContent=stampText(DASH.at));
-  drawDemand();
+  drawDemand(); drawPO();
 }
 /* ---- snapshot: only dashboard figures, no Excel file ---- */
 function buildSnapshot(){
   const bIdx=new Map(), B=[]; const bi=b=>{if(!bIdx.has(b)){bIdx.set(b,B.length);B.push(b)}return bIdx.get(b)};
-  const rows=DEM.filter(x=>x.L||x.M||x.O).map(x=>[bi(x.b),x.s,x.tbc?1:0,r3(x.L),r3(x.M),r3(x.O),x.po,x.col]);
-  return {v:1,tool:"ott-fabric-plan-updater",at:DASH.at,report:DASH.report,fp:DASH.fp,doc:DASH.doc,summary:DASH.buyers,buyers:B,rows};
+  const aIdx=new Map(), A=[]; const ai=a=>{a=a||"";if(!aIdx.has(a)){aIdx.set(a,A.length);A.push(a)}return aIdx.get(a)};
+  const rows=DEM.filter(x=>x.L||x.M||x.O).map(x=>[bi(x.b),x.s,x.tbc?1:0,r3(x.L),r3(x.M),r3(x.O),x.po,x.col,ai(x.art)]);
+  return {v:1,articles:A,tool:"ott-fabric-plan-updater",at:DASH.at,report:DASH.report,fp:DASH.fp,doc:DASH.doc,summary:DASH.buyers,buyers:B,rows};
 }
 function loadSnapshot(j){
   if(!j||j.v!==1||!Array.isArray(j.rows))return false;
-  DEM=j.rows.map(r=>({b:j.buyers[r[0]],s:r[1],tbc:!!r[2],L:r[3],M:r[4],O:r[5],po:r[6]||"",col:r[7]||""}));
+  DEM=j.rows.map(r=>({b:j.buyers[r[0]],s:r[1],tbc:!!r[2],L:r[3],M:r[4],O:r[5],po:r[6]||"",col:r[7]||"",art:(j.articles&&r[8]!=null)?j.articles[r[8]]:""}));
   DASH={at:j.at,report:j.report,fp:j.fp||"",doc:j.doc||"",buyers:j.summary||[],live:false};
   drawSummary(DASH.buyers); showDash();
   const vb=$("viewBanner"); vb.hidden=false;
@@ -885,7 +904,8 @@ bindDrop("dropDOC","fileDOC","nameDOC","DOC","okDOC","badDOC");
 (function(){const d=new Date();$("runDate").value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`})();
 $("runDate").addEventListener("change",refresh);
 $("runBtn").addEventListener("click",run);
-$("q").addEventListener("input",drawAlloc);
+$("q").addEventListener("input",drawPO);
+document.querySelectorAll(".pochip").forEach(b=>b.addEventListener("click",()=>{poMode=b.dataset.po;document.querySelectorAll(".pochip").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));drawPO()}));
 async function save(blobP,name){
   const blob=await blobP; $("dlStatus").textContent="";
   if(dlNS){ try{ await dlNS.save({filename:name,data:blob}); $("dlStatus").textContent=`Saved ${name}`; }catch(e){ $("dlStatus").textContent=e&&e.code==="declined"?"Download cancelled.":`Download failed (${e&&e.code||"error"}).`; } return; }
