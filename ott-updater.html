@@ -198,6 +198,8 @@ td.fail.hov:hover{background:var(--red-soft)}
 .setdlg input{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
 .setrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
 .savechip{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--f-body);border-radius:999px;padding:5px 11px;background:var(--ok-soft);color:var(--ok)}
+.savechip.wait{background:var(--q10);color:var(--accent)}
+.savechip.live{background:var(--ok);color:#fff}
 .savechip.bad{background:var(--red-soft);color:var(--red)}
 .viewbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
 .viewbar .viewbanner{flex:1;min-width:280px}
@@ -1010,6 +1012,18 @@ async function ghPut(path,b64,msg,key){
   const r=await fetch(api,{method:"PUT",headers:{...hdr,"Content-Type":"application/json"},body:JSON.stringify(body)});
   if(!r.ok){ const t=await r.json().catch(()=>({})); throw new Error(r.status===404?"repository not found for this key":(t.message||"GitHub error "+r.status)); }
 }
+let liveTimer=null;
+function watchLive(at){
+  const chip=$("saveChip"), t0=Date.now(); clearInterval(liveTimer);
+  const tick=async()=>{
+    const sec=Math.round((Date.now()-t0)/1000);
+    try{ const r=await fetch("dashboard.json?ts="+Date.now(),{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(j.at===at){ clearInterval(liveTimer); chip.className="savechip"; chip.innerHTML="● Live on site now"; chip.classList.add("live"); return; } } }catch(e){}
+    if(sec>420){ clearInterval(liveTimer); chip.className="savechip"; chip.textContent="✓ Saved · site is taking longer than usual, it will go live shortly"; return; }
+    chip.className="savechip wait"; chip.textContent=`✓ Saved · going live… ${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`;
+  };
+  tick(); liveTimer=setInterval(tick,8000);
+  const clock=setInterval(()=>{ if(!chip.classList.contains("wait")){clearInterval(clock);return} const sec=Math.round((Date.now()-t0)/1000); chip.textContent=`✓ Saved · going live… ${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`; },1000);
+}
 async function autoSave(){
   const key=getKey(), chip=$("saveChip"); if(!SITE||!key){ chip.hidden=true; return; }
   chip.hidden=false; chip.className="savechip"; chip.textContent="Saving to site…";
@@ -1018,7 +1032,7 @@ async function autoSave(){
     const xbytes=new Uint8Array(await (await outputs.ott).arrayBuffer());
     await ghPut(OTT_PATH,b64bytes(xbytes),msg+" · Fabric Plan file",key);
     await ghPut("dashboard.json",b64bytes(new TextEncoder().encode(JSON.stringify(buildSnapshot()))),msg+" · dashboard",key);
-    chip.textContent="✓ Saved to site · live in about 1 minute";
+    watchLive(DASH.at);
   }catch(e){ chip.className="savechip bad"; chip.textContent="✕ Not saved to site: "+e.message; }
 }
 async function fetchSnapshot(){ try{ const r=await fetch("dashboard.json?ts="+Date.now(),{cache:"no-store"}); if(!r.ok)return; const j=await r.json(); if(!DASH.live) loadSnapshot(j); }catch(e){} }
