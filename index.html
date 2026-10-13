@@ -1,550 +1,147 @@
-<title>OTT Fabric Plan Updater</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SQ Hues Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one working column — inputs strip, run bar, then summary-before-detail results */
+/* Layout: purple masthead band, then a grid of tool cards grouped by status (Live first) */
 :root{
   --q:#664356; --q80:#7C5D6D; --q60:#957B87; --q20:#D2C7CB; --q10:#E6DFE1; --q5:#EFECED;
   --bg:#FBFAFA; --surface:#FFFFFF; --fg:#2B2027; --muted:#6E6369; --line:#DED5D8;
-  --accent:var(--q); --accent-soft:var(--q10); --accent-ink:#FFFFFF;
-  --tan:#B7A19B; --blue:#366083; --red:#AF4F5A; --red-soft:#F3E3E1; --ok:#366083; --ok-soft:#E3E8EF;
+  --accent:var(--q); --accent-ink:#FFFFFF; --band:#664356; --band-ink:#FFFFFF; --band-sub:#E6DFE1;
+  --live:#366083; --live-soft:#E3E8EF; --plan:#7C5D6D; --plan-soft:#EFECED; --tan:#B7A19B;
   --f-display:"Archivo","Segoe UI",Arial,sans-serif;
   --f-body:"Source Sans 3","Segoe UI",Calibri,Arial,sans-serif;
-  --f-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --f-mono:"JetBrains Mono",Consolas,monospace;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#1C1619; --surface:#251D21; --fg:#EFE8EB; --muted:#B5A9AF; --line:#3D3138;
-  --accent:#B29EA6; --accent-soft:#3A2C33; --accent-ink:#1C1619;
-  --red:#D7ADAA; --red-soft:#3B2427; --ok:#A3ABBF; --ok-soft:#262C36; --q5:#2A2126; --q10:#33282E; --q20:#4A3B43; color-scheme:dark}}
+  --bg:#1C1619; --surface:#251D21; --fg:#EFE8EB; --muted:#B5A9AF; --line:#3D3138; --q10:#33282E; --q5:#2A2126;
+  --accent:#B29EA6; --accent-ink:#1C1619; --band:#3A2932; --band-sub:#D2C7CB;
+  --live:#A3ABBF; --live-soft:#262C36; --plan:#B29EA6; --plan-soft:#2E242A; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#1C1619; --surface:#251D21; --fg:#EFE8EB; --muted:#B5A9AF; --line:#3D3138;
-  --accent:#B29EA6; --accent-soft:#3A2C33; --accent-ink:#1C1619;
-  --red:#D7ADAA; --red-soft:#3B2427; --ok:#A3ABBF; --ok-soft:#262C36; --q5:#2A2126; --q10:#33282E; --q20:#4A3B43; color-scheme:dark}
+  --bg:#1C1619; --surface:#251D21; --fg:#EFE8EB; --muted:#B5A9AF; --line:#3D3138; --q10:#33282E; --q5:#2A2126;
+  --accent:#B29EA6; --accent-ink:#1C1619; --band:#3A2932; --band-sub:#D2C7CB;
+  --live:#A3ABBF; --live-soft:#262C36; --plan:#B29EA6; --plan-soft:#2E242A; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
-.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:grid;gap:22px}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:3px solid var(--q);padding-bottom:14px}
-.brand{display:flex;gap:14px;align-items:center}
-.mark{width:44px;height:44px;border-radius:10px;background:var(--q);color:#fff;display:grid;place-items:center;font:800 24px/1 var(--f-display)}
-h1{font:800 clamp(22px,3.2vw,30px)/1.1 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
-.sub{color:var(--muted);font-size:13.5px;margin:2px 0 0}
-.tag{font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.inputs{display:grid;grid-template-columns:1fr 1fr 260px;gap:14px}
-@media (max-width:860px){.inputs{grid-template-columns:1fr}}
-.drop{position:relative;border:1.5px dashed var(--q60);border-radius:12px;background:var(--surface);padding:16px;display:grid;gap:6px;min-width:0;cursor:pointer;transition:border-color .15s,background .15s}
-.drop:hover,.drop.over{border-color:var(--accent);background:var(--q5)}
-.drop.has{border-style:solid;border-width:2px;border-color:var(--ok);background:var(--ok-soft)}
-.drop .ok{display:none;align-items:center;gap:6px;font:600 12.5px var(--f-body);color:var(--ok)}
-.drop.has .ok{display:inline-flex}
-.drop.has .hint{display:none}
-.drop .tickmark{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:var(--ok);display:none;place-items:center;animation:pop .25s ease-out}
-.drop.has .tickmark{display:grid}
-.tickmark svg{width:18px;height:18px;fill:none;stroke:var(--bg);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-.drop.has .name{padding-right:34px}
-@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
-@media (prefers-reduced-motion:reduce){.drop .tickmark{animation:none}}
-.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.drop .lbl{font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.drop .name{font-weight:600;overflow-wrap:anywhere}
-.drop .hint{color:var(--muted);font-size:13px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;min-width:0}
-label.f{display:grid;gap:4px;font-size:13px;color:var(--muted)}
-input[type=date],input[type=search]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
-.outname{font:500 12px/1.4 var(--f-mono);overflow-wrap:anywhere;color:var(--fg)}
-.runbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-button{font:600 15px var(--f-body);border-radius:9px;border:1px solid transparent;padding:10px 18px;cursor:pointer}
-button:focus-visible,input:focus-visible{outline:3px solid var(--q60);outline-offset:2px}
-.primary{background:var(--accent);color:var(--accent-ink)}
-.primary:disabled{opacity:.45;cursor:not-allowed}
-.ghost{background:transparent;color:var(--accent);border-color:var(--accent)}
-.status{font:500 13px var(--f-mono);color:var(--muted)}
-.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-.steps li{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--muted);padding:10px 12px;border-radius:9px;background:var(--surface);border:1px solid var(--line)}
-.steps li b{color:var(--fg);font-weight:600}
-.dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--q60);display:grid;place-items:center;font:700 10px var(--f-mono);color:var(--q60);margin-top:1px}
-.steps li.run .dot{border-color:var(--accent);color:var(--accent);animation:pulse 1s infinite}
-.steps li.done .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-@keyframes pulse{50%{opacity:.35}}
-@media (prefers-reduced-motion:reduce){.steps li.run .dot{animation:none}}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-@media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--q);border-radius:10px;padding:12px 14px;min-width:0}
-.kpi .k{font:600 11px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.kpi .v{font:800 26px/1.15 var(--f-display);font-variant-numeric:tabular-nums;margin-top:6px}
-.kpi .s{font-size:12.5px;color:var(--muted)}
-.flag{border-radius:10px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
-.flag.warn{background:var(--red-soft);color:var(--fg);border-left:4px solid var(--red)}
-.flag.good{background:var(--ok-soft);border-left:4px solid var(--ok)}
-.flag.err{background:var(--red-soft);border-left:4px solid var(--red);white-space:pre-wrap;font-family:var(--f-mono);font-size:12.5px}
-h2{font:700 17px/1.2 var(--f-display);margin:6px 0 0}
-.dl{display:flex;flex-wrap:wrap;gap:10px}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
-th{background:var(--q);color:#fff;text-align:left;font-weight:600;padding:8px 10px;white-space:nowrap;position:sticky;top:0}
-td{padding:6px 10px;border-top:1px solid var(--line);white-space:nowrap}
-td.n,th.n{text-align:right}
-tr.tot td{background:var(--q10);font-weight:700}
-.bar{height:8px;border-radius:4px;background:var(--q20);position:relative;min-width:90px}
-.bar i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--accent)}
-.scroll{max-height:420px;overflow:auto}
-.row2{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px}
-.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
-.how div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:14px}
-.how b{display:block;font:700 14px var(--f-display);margin-bottom:4px;color:var(--accent)}
+.band{background:var(--band);color:var(--band-ink);padding-inline:20px;padding-block:calc(26px + env(safe-area-inset-top,0px)) 30px}
+.band .in,.main{max-width:1100px;margin:0 auto}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:42px;height:42px;border-radius:10px;background:var(--band-ink);color:#664356;display:grid;place-items:center;font:800 24px/1 var(--f-display)}
+.tag{font:500 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--band-sub)}
+h1{font:800 clamp(28px,4.4vw,44px)/1.05 var(--f-display);margin:22px 0 8px;letter-spacing:-.015em;text-wrap:balance}
+.lead{max-width:62ch;color:var(--band-sub);margin:0;font-size:16px}
+.date{font:500 13px var(--f-mono);color:var(--band-sub)}
+.main{padding-inline:20px;padding-block:26px 56px;display:grid;gap:18px}
+.bar{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+input[type=search]{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 12px;width:min(280px,100%)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--q60);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-rows:auto auto 1fr auto;gap:10px;min-width:0}
+.card.live{border-color:var(--live)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ico{width:40px;height:40px;border-radius:10px;background:var(--q10);display:grid;place-items:center;flex:none}
+.ico svg{width:22px;height:22px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.status{font:600 11px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:6px 10px;white-space:nowrap}
+.status.live{background:var(--live-soft);color:var(--live)}
+.status.planned{background:var(--plan-soft);color:var(--plan)}
+.status.link{background:var(--q10);color:var(--accent)}
+h2{font:700 18px/1.25 var(--f-display);margin:0}
+.desc{color:var(--muted);font-size:14px;margin:0}
+.io{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.io span{font:500 11.5px var(--f-mono);background:var(--q5);border:1px solid var(--line);border-radius:6px;padding:3px 7px;color:var(--fg)}
+.go{display:inline-flex;justify-content:center;align-items:center;gap:6px;font:600 14px var(--f-body);text-decoration:none;border-radius:9px;padding:9px 14px;background:var(--accent);color:var(--accent-ink)}
+.go.off{background:transparent;color:var(--muted);border:1px dashed var(--line);cursor:default}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
 code{font-family:var(--f-mono);font-size:12.5px;background:var(--q5);padding:1px 5px;border-radius:4px}
-footer{color:var(--muted);font-size:12.5px}
+.empty{color:var(--muted)}
 </style>
-
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="mark" aria-hidden="true">Q</div>
-      <div>
-        <div class="tag">SQ Biricina · Fabric Planning</div>
-        <h1>OTT Fabric Plan Updater</h1>
-        <p class="sub">Updates Fab Plan-Final from DOC-280+217. The files are processed in your browser and aren't uploaded anywhere.</p>
-      </div>
+</head>
+<body>
+<header class="band">
+  <div class="in">
+    <div class="top">
+      <div class="brand"><div class="mark" aria-hidden="true">Q</div><div><div class="tag">SQ Biricina · Q Collection</div><div class="tag" style="margin-top:6px">Hues Excel Digitalisation</div></div></div>
+      <div class="date" id="today"></div>
     </div>
-    <div class="tag">Quality Seeks Quality</div>
-  </header>
-
-  <section class="inputs" aria-label="Input files">
-    <div class="drop" id="dropFP">
-      <span class="lbl">1 · Fabric Plan / Hues Feedback</span>
-      <span class="name" id="nameFP">Drop the OTT workbook here</span>
-      <span class="hint">e.g. Fabric_Plan_Oct26-Hues_Feedback-…_SQ.xlsx</span>
-      <span class="ok" id="okFP">Uploaded</span>
-      <span class="tickmark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-      <input type="file" id="fileFP" accept=".xlsx" aria-label="Fabric Plan workbook">
-    </div>
-    <div class="drop" id="dropDOC">
-      <span class="lbl">2 · DOC -280+217</span>
-      <span class="name" id="nameDOC">Drop the DOC master here</span>
-      <span class="hint">Reads sheet 217 (AP key · AQ Rfd · AR Bal · AF %)</span>
-      <span class="ok" id="okDOC">Uploaded</span>
-      <span class="tickmark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-      <input type="file" id="fileDOC" accept=".xlsx" aria-label="DOC 280+217 workbook">
-    </div>
-    <div class="panel">
-      <label class="f" for="runDate">Report date (used in file name)
-        <input type="date" id="runDate">
-      </label>
-      <div><div class="tag">Output</div><div class="outname" id="outName">—</div></div>
-    </div>
-  </section>
-
-  <div class="runbar">
-    <button class="primary" id="runBtn" disabled>Run update</button>
-    <span class="status" id="status">Add both files to start.</span>
+    <h1>SQ Hues Tools</h1>
+    <p class="lead">Browser tools for daily fabric planning work. Drop in your Excel files, run, and download the result. Files stay on your computer and are never uploaded.</p>
   </div>
+</header>
 
-  <ol class="steps" id="steps">
-    <li data-k="read"><span class="dot">1</span><span><b>Read files</b><br>Sheet 217 keys and Fab Plan rows</span></li>
-    <li data-k="ax"><span class="dot">2</span><span><b>Activate AM:AX</b><br>Formulas live, Taps values pasted</span></li>
-    <li data-k="taps"><span class="dot">3</span><span><b>Taps done</b><br>Taps Balance ≤ 20 → M = L</span></li>
-    <li data-k="alloc"><span class="dot">4</span><span><b>Allocate Psbl to RFD</b><br>P &lt; 0 and AU &gt; 0, filled top-down</span></li>
-    <li data-k="write"><span class="dot">5</span><span><b>Build files</b><br>Updated OTT and the log</span></li>
-  </ol>
-
-  <section id="intro" class="how" aria-label="What the update does">
-    <div><b>Same SQ format</b>The workbook XML is edited in place. Styles, hidden and grouped columns, the freeze at C3, the pivot and the Buyer Wise sheet stay exactly as they are.</div>
-    <div><b>Your manual steps, automated</b>Activates the <code>qq</code> templates, sets <code>M=L</code> where Taps is done, then fills each group's Psbl to RFD qty into M up to L, row by row.</div>
-    <div><b>Checked before download</b>Shows rows set, qty allocated, RFD total before and after by buyer, and warns you if the DOC file looks like the same old copy.</div>
-  </section>
-
-  <section id="results" hidden>
-    <div style="display:grid;gap:16px">
-      <div id="flags" style="display:grid;gap:8px"></div>
-      <div class="kpis" id="kpis"></div>
-      <div class="row2">
-        <h2>Download</h2>
-      </div>
-      <div class="dl">
-        <button class="primary" id="dlOTT">Download updated OTT</button>
-        <button class="ghost" id="dlLog">Download update log</button>
-        <span class="status" id="dlStatus"></span>
-      </div>
-      <h2>RFD Qty (M) by buyer</h2>
-      <div class="tbl"><table id="buyerTbl"></table></div>
-      <div class="row2">
-        <h2>Allocation detail</h2>
-        <label class="f" for="q" style="min-width:240px">Filter by key, buyer or row
-          <input type="search" id="q" placeholder="e.g. LIDL or 446252">
-        </label>
-      </div>
-      <div class="tbl scroll"><table id="allocTbl"></table></div>
+<main class="main">
+  <div class="bar">
+    <div class="filters" role="group" aria-label="Filter tools">
+      <button class="chip" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" data-f="live" aria-pressed="false">Live</button>
+      <button class="chip" data-f="planned" aria-pressed="false">Coming next</button>
     </div>
-  </section>
+    <input type="search" id="q" placeholder="Search tools" aria-label="Search tools">
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="none" hidden>No tools match.</p>
+  <p class="note">To add a tool: upload its page to this repository, then edit the <code>TOOLS</code> list at the bottom of <code>index.html</code> (set <code>status: "live"</code> and its <code>link</code>). Quality Seeks Quality · #SustainabilityAtQ</p>
+</main>
 
-  <div id="errBox"></div>
-  <footer>Excel recalculates every formula when you open the updated file. Check the Buyer Wise OTT Hit Rate MTD figures after opening it.</footer>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-"use strict";
-const $=id=>document.getElementById(id);
-const EPS=0.0005;
-const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-let fpFile=null, docFile=null, outputs=null, dlNS=null;
-try{ window.claude?.use?.("downloads")?.then(x=>{dlNS=x}).catch(()=>{}); }catch(e){}
+/* ===== Edit this list to add or update tools ===== */
+const TOOLS = [
+  { name:"OTT Fabric Plan Updater", status:"live", link:"ott-updater.html", icon:"table",
+    desc:"Updates Fab Plan-Final from DOC-280+217: activates AM:AX, sets M = L where Taps is done, allocates Psbl to RFD. Gives the dated SQ file, a log, a buyer chart and run history.",
+    io:["Fabric Plan .xlsx","DOC -280+217 .xlsx","→ OTT + log"] },
+  { name:"280+217 DOC master update", status:"link", link:"", icon:"merge",
+    desc:"Builds the DOC -280+217 master workbook. Your existing tool. Add its link here so it opens from the hub.",
+    io:["280","217","→ DOC master"] },
+  { name:"Taps PO match", status:"planned", link:"", icon:"link",
+    desc:"Adds Taps PO and Taps Color columns to the Hues line-plan Split file from sheet 217 of DOC-217+280, in SQ lite format.",
+    io:["Line-plan Split","DOC sheet 217","→ Split + Taps cols"] },
+  { name:"RFD comment split", status:"planned", link:"", icon:"split",
+    desc:"Splits 'Agreed RFD Plan' comments date-wise by PO, Article and Color using Required Qty, and adds a GSM column.",
+    io:["Hues feedback file","→ date-wise RFD"] },
+  { name:"Lab dip New / Repeat", status:"planned", link:"", icon:"flask",
+    desc:"Marks lab dips New or Repeat in the DOC master (280 / Dye Q / DQ P) and adds the field to the DQ P pivot as values.",
+    io:["DOC master","→ New / Repeat"] }
+];
+/* ================================================= */
 
-/* ---------- helpers ---------- */
-const colNum=s=>{let n=0;for(const ch of s)n=n*26+ch.charCodeAt(0)-64;return n};
-const colStr=n=>{let s="";while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
-const splitRef=r=>{const m=/^([A-Z]+)(\d+)$/.exec(r);return [m[1],+m[2]]};
-const isNum=v=>typeof v==="number"&&isFinite(v);
-const r3=x=>Math.round(x*1000)/1000;
-const r6=x=>Math.round(x*1e6)/1e6;
-const fmt=(x,d=0)=>isNum(x)?x.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d}):"—";
-const decode=s=>s.replace(/&(lt|gt|amp|quot|apos|#\d+|#x[0-9a-fA-F]+);/g,(m,e)=>e==="lt"?"<":e==="gt"?">":e==="amp"?"&":e==="quot"?'"':e==="apos"?"'":e[1]==="x"?String.fromCodePoint(parseInt(e.slice(2),16)):String.fromCodePoint(+e.slice(1)));
+const ICONS={
+  table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/>',
+  merge:'<path d="M6 4v5a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4v3M18 4v5a4 4 0 0 1-4 4"/><path d="M15 17l3 3 3-3"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  split:'<path d="M4 6h16M4 12h10M4 18h6M17 14l3 3-3 3M14 17h6"/>',
+  flask:'<path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3"/><path d="M7.5 15h9"/>'
+};
+const LABEL={live:"Live",planned:"Coming next",link:"Add link"};
+let filter="all";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function xtrim(v){ if(v===null||v===undefined) return ""; return String(v).replace(/^ +| +$/g,"").replace(/ {2,}/g," "); }
-const norm=k=>k.toLowerCase();
-const tick=()=>new Promise(r=>setTimeout(r,0));
-function setStep(k,state){const li=document.querySelector(`#steps li[data-k="${k}"]`);if(li){li.classList.remove("run","done");if(state)li.classList.add(state)}}
-function status(t){$("status").textContent=t}
-
-function parseSST(xml){
-  const out=[];const re=/<si>([\s\S]*?)<\/si>/g;let m;
-  while((m=re.exec(xml))){let inner=m[1].replace(/<rPh[\s\S]*?<\/rPh>/g,"");let t="";const tr=/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g;let n;while((n=tr.exec(inner)))t+=n[1];out.push(decode(t))}
-  return out;
+function draw(){
+  const q=document.getElementById("q").value.toLowerCase().trim();
+  const order={live:0,link:1,planned:2};
+  const list=TOOLS.filter(t=>(filter==="all"||(filter==="live"?t.status==="live":t.status!=="live"))&&(!q||(t.name+" "+t.desc).toLowerCase().includes(q))).sort((a,b)=>order[a.status]-order[b.status]);
+  document.getElementById("none").hidden=list.length>0;
+  document.getElementById("grid").innerHTML=list.map(t=>{
+    const live=t.status==="live"&&t.link;
+    return `<article class="card ${live?"live":""}">
+      <div class="head"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[t.icon]||ICONS.table}</svg></div><span class="status ${t.status}">${LABEL[t.status]||t.status}</span></div>
+      <h2>${esc(t.name)}</h2>
+      <div style="display:grid;gap:10px;align-content:start"><p class="desc">${esc(t.desc)}</p><div class="io">${(t.io||[]).map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>
+      ${live?`<a class="go" href="${esc(t.link)}">Open tool →</a>`:t.link?`<a class="go" href="${esc(t.link)}" target="_blank" rel="noopener">Open →</a>`:`<span class="go off">${t.status==="link"?"Link not added yet":"Not built yet"}</span>`}
+    </article>`}).join("");
 }
-async function sheetPath(zip,name){
-  const wb=await zip.file("xl/workbook.xml").async("string");
-  const rels=await zip.file("xl/_rels/workbook.xml.rels").async("string");
-  const sm=new RegExp(`<sheet [^>]*name="${name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/&/g,"&amp;")}"[^>]*>`).exec(wb);
-  if(!sm) throw new Error(`Sheet "${name}" not found in the workbook.`);
-  const rid=/r:id="([^"]+)"/.exec(sm[0])[1];
-  const rm=new RegExp(`<Relationship [^>]*Id="${rid}"[^>]*>`).exec(rels);
-  let t=/Target="([^"]+)"/.exec(rm[0])[1];
-  return t.startsWith("/")?t.slice(1):"xl/"+t;
-}
-/* raw cell value from xml pieces */
-function rawVal(t,inner,sst){
-  if(inner==null) return null;
-  if(t==="inlineStr"){const m=/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/.exec(inner);return m?decode(m[1]):""}
-  const vm=/<v>([\s\S]*?)<\/v>/.exec(inner); if(!vm) return null;
-  const v=vm[1];
-  if(t==="s") return sst[+v];
-  if(t==="str") return decode(v);
-  if(t==="e") return decode(v);
-  if(t==="b") return v==="1";
-  return Number(v);
-}
-
-/* ---------- 1. DOC sheet 217 ---------- */
-async function readDOC(file){
-  const zip=await JSZip.loadAsync(await file.arrayBuffer());
-  const path=await sheetPath(zip,"217");
-  const ssf=zip.file("xl/sharedStrings.xml");
-  const sst=ssf?parseSST(await ssf.async("string")):[];
-  const xml=await zip.file(path).async("string");
-  const sumAQ=new Map(),sumAR=new Map(),first=new Map();
-  const rowRe=/<row [^>]*?r="(\d+)"[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g;
-  const cRe=/<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
-  const want={AF:1,AP:1,AQ:1,AR:1};
-  let m,rows=0;
-  while((m=rowRe.exec(xml))){
-    if(+m[1]<3||!m[2]) continue;
-    const cells={};let c;cRe.lastIndex=0;
-    while((c=cRe.exec(m[2]))){ if(want[c[1]]){const tm=/\bt="(\w+)"/.exec(c[2]);cells[c[1]]=rawVal(tm?tm[1]:null,c[3],sst);} }
-    let key=cells.AP; if(key===null||key===undefined||key==="") continue;
-    const k=typeof key==="string"?norm(key):norm(xtrim(key));
-    const aq=cells.AQ??null, ar=cells.AR??null, af=cells.AF??null;
-    if(isNum(aq)) sumAQ.set(k,(sumAQ.get(k)||0)+aq);
-    if(isNum(ar)) sumAR.set(k,(sumAR.get(k)||0)+ar);
-    if(!first.has(k)) first.set(k,[aq,af]);
-    rows++;
-  }
-  return {sumAQ,sumAR,first,rows};
-}
-
-/* ---------- 2. Fabric plan ---------- */
-async function readFP(file){
-  const buf=await file.arrayBuffer();
-  const zip=await JSZip.loadAsync(buf);
-  const path=await sheetPath(zip,"Fab Plan-Final");
-  const ssf=zip.file("xl/sharedStrings.xml");
-  const sst=ssf?parseSST(await ssf.async("string")):[];
-  const xml=await zip.file(path).async("string");
-  const doc=new DOMParser().parseFromString(xml,"application/xml");
-  if(doc.getElementsByTagName("parsererror").length) throw new Error("Could not read the Fab Plan-Final sheet XML.");
-  return {zip,path,sst,doc};
-}
-function cellInfo(c,sst){
-  if(!c) return {v:null,f:null};
-  const t=c.getAttribute("t");
-  const fEl=c.getElementsByTagName("f")[0];
-  const vEl=c.getElementsByTagName("v")[0];
-  const isEl=c.getElementsByTagName("is")[0];
-  let v=null;
-  if(t==="inlineStr"&&isEl){v=Array.from(isEl.getElementsByTagName("t")).map(x=>x.textContent).join("")}
-  else if(vEl){const s=vEl.textContent; v=t==="s"?sst[+s]:(t==="str"||t==="e")?s:t==="b"?s==="1":Number(s)}
-  return {v,f:fEl?fEl.textContent:null,fShared:fEl&&fEl.getAttribute("t")==="shared",fRef:fEl?fEl.getAttribute("ref"):null};
-}
-
-/* ---------- main run ---------- */
-async function run(){
-  $("errBox").innerHTML="";$("results").hidden=true;$("runBtn").disabled=true;
-  ["read","ax","taps","alloc","write"].forEach(k=>setStep(k,null));
-  try{
-    setStep("read","run");status("Reading DOC -280+217 (sheet 217)…");await tick();
-    const D=await readDOC(docFile);
-    status(`Sheet 217: ${D.rows.toLocaleString()} rows. Reading Fabric Plan…`);await tick();
-    const F=await readFP(fpFile);
-    const doc=F.doc, NS=doc.documentElement.namespaceURI;
-    const sheetData=doc.getElementsByTagName("sheetData")[0];
-    const rowEls=new Map(); for(const r of Array.from(sheetData.children)) rowEls.set(+r.getAttribute("r"),r);
-    const cellsOf=new Map();
-    const getCells=r=>{ if(!cellsOf.has(r)){const mp=new Map();const re=rowEls.get(r);if(re)for(const c of Array.from(re.children)){if(c.localName==="c")mp.set(splitRef(c.getAttribute("r"))[0],c)}cellsOf.set(r,mp)} return cellsOf.get(r) };
-    const val=(r,col)=>cellInfo(getCells(r).get(col),F.sst);
-    let last=0; for(const r of rowEls.keys()){ if(r>=3){const v=val(r,"A").v; if(v!==null&&v!=="") last=Math.max(last,r)} }
-    if(!last) throw new Error("No data rows found in Fab Plan-Final (column A is empty from row 3).");
-    const rows=[];for(let r=3;r<=last;r++)rows.push(r);
-    setStep("read","done");
-
-    /* state */
-    const L=new Map(),O=new Map(),Mv=new Map(),Mf=new Map(),buyer=new Map(),key=new Map(),prevAN=new Map();
-    const num=v=>isNum(v)?v:0;
-    for(const r of rows){
-      L.set(r,num(val(r,"L").v)); O.set(r,num(val(r,"O").v)); buyer.set(r,String(val(r,"A").v??""));
-      const mi=val(r,"M"); prevAN.set(r,val(r,"AN").v);
-      key.set(r, xtrim(val(r,"AJ").v)+xtrim(val(r,"AL").v)+xtrim(val(r,"AK").v));
-      Mf.set(r, mi.f && /^\$?L\$?\d+$/.test(mi.f.trim()) ? "L"+mi.f.replace(/\$/g,"").slice(1) : null);
-      Mv.set(r, mi.v);
-    }
-    const mval=r=>{const f=Mf.get(r); if(f){return L.get(+f.slice(1))??num(val(+f.slice(1),"L").v)} return num(Mv.get(r))};
-    const P=r=>(mval(r)-L.get(r))+O.get(r);
-    const Mbefore=new Map(rows.map(r=>[r,mval(r)]));
-
-    setStep("ax","run");status("Looking up Taps values…");await tick();
-    const AN=new Map(),AO=new Map(),AV=new Map(),AW=new Map();
-    for(const r of rows){
-      const nk=norm(key.get(r)); const an=D.sumAQ.get(nk)||0; AN.set(r,an);
-      AO.set(r, an===0?"#NA":(D.sumAR.get(nk)||0));
-      if(D.first.has(nk)){const [aq,af]=D.first.get(nk);AV.set(r,aq??0);AW.set(r,af??0)} else {AV.set(r,"#N/A");AW.set(r,"#N/A")}
-    }
-    setStep("ax","done");
-
-    /* step 2 */
-    setStep("taps","run");await tick();
-    const mWrite=new Map(); // r -> {f} or {v}
-    let step2=0; const step2Rows=new Set();
-    for(const r of rows){ const ao=AO.get(r); if(isNum(ao)&&ao<=20){ if(Mf.get(r)!=="L"+r) step2++; Mf.set(r,"L"+r); mWrite.set(r,{f:"L"+r}); step2Rows.add(r);} }
-    setStep("taps","done");
-
-    /* step 3 */
-    setStep("alloc","run");status("Allocating Psbl to RFD…");await tick();
-    const groups=new Map(); for(const r of rows){const g=norm(key.get(r)); if(!groups.has(g))groups.set(g,[]); groups.get(g).push(r)}
-    const AU=g=>{const rs=groups.get(g);let s=0;for(const r of rs)s+=-P(r);const ao=AO.get(rs[0]);if(!isNum(ao))return false;return s>ao+EPS?s-ao:false};
-    const report=[];
-    for(let it=0;it<10;it++){
-      let moved=0;
-      for(const [g,rs] of groups){
-        const au=AU(g); if(au===false||au<=EPS||!rs.some(r=>P(r)< -EPS)) continue;
-        let rem=au;
-        for(const r of rs){
-          if(rem<=EPS)break; const p=P(r); if(p>=-EPS)continue;
-          const before=mval(r), add=Math.min(rem,-p); let nv;
-          if(add>=-p-EPS){nv=r6(L.get(r)-O.get(r))} else {nv=r3(before+add)}
-          Mf.set(r,null); Mv.set(r,nv); mWrite.set(r,{v:nv}); rem-=add;
-          report.push({key:key.get(r),row:r,buyer:buyer.get(r),L:L.get(r),before:r3(before),add:r3(add),after:nv,au:r3(au)});
-          moved++;
-        }
-      }
-      if(!moved)break;
-    }
-    const open=[...groups.keys()].filter(g=>{const a=AU(g);return a!==false&&a>EPS&&groups.get(g).some(r=>P(r)< -EPS)}).length;
-    setStep("alloc","done");
-
-    /* write */
-    setStep("write","run");status("Writing workbook…");await tick();
-    const writeCols=["M","AM","AN","AO","AP","AQ","AR","AS","AT","AU","AV","AW","AX"];
-    const W=new Set(writeCols);
-    // shared-formula safety: any master inside the written area must have all its children inside it too
-    for(const r of rows){ for(const col of writeCols){ const c=getCells(r).get(col); if(!c)continue; const ci=cellInfo(c,F.sst);
-      if(ci.fShared&&ci.fRef){ const [a,b]=ci.fRef.split(":"); const [ca,ra]=splitRef(a); const [cb,rb]=splitRef(b||a);
-        for(let k=colNum(ca);k<=colNum(cb);k++){ if(!W.has(colStr(k))||ra<3||rb>last) throw new Error(`Shared formula at ${col}${r} (${ci.fRef}) reaches outside the update area. Open the file in Excel, re-save, and try again.`) } } } }
-    const tplStyle={}; for(const col of writeCols){ for(const r of rows){const c=getCells(r).get(col); if(c&&c.getAttribute("s")){tplStyle[col]=c.getAttribute("s");break}} }
-    function setCell(r,col,spec){
-      let c=getCells(r).get(col);
-      if(!c){
-        let rowEl=rowEls.get(r);
-        if(!rowEl){rowEl=doc.createElementNS(NS,"row");rowEl.setAttribute("r",r);
-          let nxt=null;for(const ch of Array.from(sheetData.children)){if(+ch.getAttribute("r")>r){nxt=ch;break}} sheetData.insertBefore(rowEl,nxt); rowEls.set(r,rowEl)}
-        c=doc.createElementNS(NS,"c"); c.setAttribute("r",col+r); if(tplStyle[col])c.setAttribute("s",tplStyle[col]);
-        const ci=colNum(col); let nxt=null; for(const ch of Array.from(rowEl.children)){ if(ch.localName==="c"&&colNum(splitRef(ch.getAttribute("r"))[0])>ci){nxt=ch;break} }
-        rowEl.insertBefore(c,nxt); getCells(r).set(col,c);
-      }
-      while(c.firstChild)c.removeChild(c.firstChild); c.removeAttribute("t");
-      if(spec.f!==undefined){const f=doc.createElementNS(NS,"f");f.textContent=spec.f;c.appendChild(f);if(spec.str)c.setAttribute("t","str")}
-      else if(isNum(spec.v)){const v=doc.createElementNS(NS,"v");v.textContent=String(spec.v);c.appendChild(v)}
-      else if(typeof spec.v==="string"&&/^#(N\/A|REF!|VALUE!|DIV\/0!|NAME\?|NUM!|NULL!)$/.test(spec.v)){c.setAttribute("t","e");const v=doc.createElementNS(NS,"v");v.textContent=spec.v;c.appendChild(v)}
-      else if(typeof spec.v==="string"){c.setAttribute("t","inlineStr");const is=doc.createElementNS(NS,"is"),t=doc.createElementNS(NS,"t");t.textContent=spec.v;is.appendChild(t);c.appendChild(is)}
-      else if(typeof spec.v==="boolean"){c.setAttribute("t","b");const v=doc.createElementNS(NS,"v");v.textContent=spec.v?"1":"0";c.appendChild(v)}
-    }
-    const nv=x=>isNum(x)?r3(x):x;
-    for(const r of rows){
-      if(mWrite.has(r)) setCell(r,"M",mWrite.get(r));
-      setCell(r,"AM",{f:`TRIM(AJ${r})&TRIM(AL${r})&TRIM(AK${r})`,str:true});
-      setCell(r,"AN",{v:r3(AN.get(r))});
-      setCell(r,"AO",{v:nv(AO.get(r))});
-      setCell(r,"AP",{f:`SUMIFS(M:M,AM:AM,AM${r})+SUMIFS(O:O,AM:AM,AM${r})`});
-      setCell(r,"AQ",{f:`SUMIFS(L:L,AM:AM,AM${r})`});
-      setCell(r,"AR",{f:`AQ${r}-AP${r}`});
-      setCell(r,"AS",{f:`IF(AN${r}>=AQ${r},"ok","ck")`,str:true});
-      setCell(r,"AT",{f:`-P${r}`});
-      setCell(r,"AU",{f:`IF(SUMIFS(AT:AT,AM:AM,AM${r})>AO${r},(SUMIFS(AT:AT,AM:AM,AM${r})-AO${r}))`});
-      setCell(r,"AV",{v:nv(AV.get(r))});
-      setCell(r,"AW",{v:nv(AW.get(r))});
-      setCell(r,"AX",{f:`AN${r}-AP${r}`});
-    }
-    // drop cached values of every formula in this sheet that depends on M/AM:AX — simplest: clear all <v> under formulas so Excel recalcs
-    for(const f of Array.from(doc.getElementsByTagName("f"))){const c=f.parentNode;const v=c.getElementsByTagName("v")[0];if(v)c.removeChild(v);if(c.getAttribute("t")==="b"||c.getAttribute("t")==="e")c.removeAttribute("t")}
-    let out=new XMLSerializer().serializeToString(doc);
-    if(!out.startsWith("<?xml")) out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+out;
-    const z=F.zip; z.file(F.path,out);
-    // workbook: full recalc on load, remove calc chain, external links and broken names
-    let wb=await z.file("xl/workbook.xml").async("string");
-    let rels=await z.file("xl/_rels/workbook.xml.rels").async("string");
-    let ct=await z.file("[Content_Types].xml").async("string");
-    wb=/<calcPr\b/.test(wb)? wb.replace(/<calcPr\b([^>]*?)(\/?)>/,(m,a,s)=>`<calcPr${a.replace(/\s*fullCalcOnLoad="[^"]*"/,"")} fullCalcOnLoad="1"${s}>`) : wb.replace("</workbook>",'<calcPr fullCalcOnLoad="1"/></workbook>');
-    wb=wb.replace(/<definedName\b[^>]*>([^<]*)<\/definedName>/g,(m,v)=>(v.includes("#REF!")||v.startsWith("["))?"":m).replace(/<definedNames><\/definedNames>/,"");
-    wb=wb.replace(/<externalReferences>[\s\S]*?<\/externalReferences>/,"");
-    rels=rels.replace(/<Relationship [^>]*Type="[^"]*\/(calcChain|externalLink)"[^>]*\/>/g,"");
-    ct=ct.replace(/<Override [^>]*PartName="\/xl\/(calcChain\.xml|externalLinks\/[^"]+)"[^>]*\/>/g,"");
-    z.remove("xl/calcChain.xml"); z.forEach(p=>{if(p.startsWith("xl/externalLinks/"))z.remove(p)});
-    z.file("xl/workbook.xml",wb); z.file("xl/_rels/workbook.xml.rels",rels); z.file("[Content_Types].xml",ct);
-    const ottBlob=await z.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6}});
-
-    /* summaries */
-    const byB=new Map();
-    for(const r of rows){const b=buyer.get(r);if(!byB.has(b))byB.set(b,{buyer:b,before:0,after:0,added:0,step2:0,filled:0,groups:new Set()});const o=byB.get(b);o.before+=Mbefore.get(r);o.after+=mval(r);if(step2Rows.has(r)&&Mbefore.get(r)!==mval(r))o.step2++}
-    for(const x of report){const o=byB.get(x.buyer);o.added+=x.add;o.filled++;o.groups.add(norm(x.key))}
-    const buyers=[...byB.values()].sort((a,b)=>b.after-a.after);
-    const totBefore=rows.reduce((s,r)=>s+Mbefore.get(r),0), totAfter=rows.reduce((s,r)=>s+mval(r),0);
-    const added=report.reduce((s,x)=>s+x.add,0), nGroups=new Set(report.map(x=>norm(x.key))).size;
-    let anChanged=0,anComparable=0; for(const r of rows){const p=prevAN.get(r);if(isNum(p)){anComparable++;if(Math.abs(p-AN.get(r))>0.01)anChanged++}}
-    const d=new Date($("runDate").value+"T00:00:00");
-    const logBlob=buildLog(report,buyers,{fp:fpFile.name,doc:docFile.name,date:d});
-    setStep("write","done");
-    outputs={ott:ottBlob,log:logBlob,ottName:outNames().ott,logName:outNames().log};
-    render({rows:rows.length,step2,report,nGroups,added,totBefore,totAfter,buyers,anChanged,anComparable,open,docRows:D.rows});
-    status(`Done · ${rows.length.toLocaleString()} plan rows processed.`);
-  }catch(e){
-    console.error(e); status("Update stopped.");
-    $("errBox").innerHTML=`<div class="flag err">${esc(e.message||String(e))}</div>`;
-    document.querySelectorAll("#steps li.run").forEach(li=>li.classList.remove("run"));
-  }finally{$("runBtn").disabled=!(fpFile&&docFile)}
-}
-
-/* ---------- log workbook (hand-built xlsx, Q brand) ---------- */
-function buildLog(report,buyers,meta){
-  const z=new JSZip();
-  const cs=(ref,s,v)=>{ if(v===null||v===undefined||v==="") return `<c r="${ref}" s="${s}"/>`;
-    if(typeof v==="number") return `<c r="${ref}" s="${s}"><v>${v}</v></c>`;
-    if(typeof v==="object"&&v.f) return `<c r="${ref}" s="${s}"><f>${esc(v.f)}</f></c>`;
-    return `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;};
-  const sheet=(title,subtitle,head,widths,data,numCols,totalCols)=>{
-    let x=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr><tabColor rgb="FF664356"/></sheetPr><sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A4" sqref="A4"/></sheetView></sheetViews><cols>`;
-    widths.forEach((w,i)=>x+=`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`);
-    x+=`</cols><sheetData><row r="1" ht="22" customHeight="1">${cs("A1",1,title)}</row><row r="2">${cs("A2",2,subtitle)}</row><row r="3" ht="30" customHeight="1">`;
-    head.forEach((h,i)=>x+=cs(colStr(i+1)+"3",3,h)); x+=`</row>`;
-    let r=4; for(const row of data){x+=`<row r="${r}">`;row.forEach((v,i)=>x+=cs(colStr(i+1)+r,numCols.has(i)?(typeof v==="number"&&Number.isInteger(v)&&i===1?8:5):4,v));x+=`</row>`;r++}
-    const lastData=r-1;
-    x+=`<row r="${r}">`; head.forEach((h,i)=>{const L=colStr(i+1);x+= i===0?cs(L+r,6,"Total"): totalCols.has(i)?cs(L+r,7,{f:`SUBTOTAL(9,${L}4:${L}${lastData})`}):cs(L+r,6,null)}); x+=`</row>`;
-    x+=`</sheetData><autoFilter ref="A3:${colStr(head.length)}${lastData}"/><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/></worksheet>`;
-    return x;
-  };
-  const dstr=`${meta.date.getDate()} ${MON[meta.date.getMonth()]} ${meta.date.getFullYear()}`;
-  const sub=`Source: ${meta.fp} + ${meta.doc} (sheet 217) | Report date ${dstr}`;
-  const s1=sheet("OTT Update Log – Psbl to RFD allocation into M (Fab Plan-Final)",sub,
-    ["Key","Row","Buyer","Req Qty L","M before","Added","M after","Group AU"],[42,8,20,13,13,13,13,13],
-    report.map(x=>[x.key,x.row,x.buyer,x.L,x.before,x.add,x.after,x.au]),new Set([1,3,4,5,6,7]),new Set([5]));
-  const s2=sheet("OTT Update – Buyer summary",sub,
-    ["Buyer","Rows set =L","Rows filled","Groups filled","Added qty","RFD Qty before","RFD Qty after"],[22,12,12,13,14,15,15],
-    buyers.map(b=>[b.buyer,b.step2,b.filled,b.groups.size,r3(b.added),r3(b.before),r3(b.after)]),new Set([1,2,3,4,5,6]),new Set([1,2,3,4,5,6]));
-  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00"/></numFmts><fonts count="5"><font><sz val="10"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="13"/><color rgb="FF664356"/><name val="Calibri"/><family val="2"/></font><font><i/><sz val="9"/><color rgb="FF929597"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="10"/><color rgb="FF664356"/><name val="Calibri"/><family val="2"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF664356"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE6DFE1"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/><xf numFmtId="0" fontId="4" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="164" fontId="4" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-  z.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`);
-  z.file("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
-  z.file("xl/workbook.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="Allocation Log" sheetId="1" r:id="rId1"/><sheet name="Buyer Summary" sheetId="2" r:id="rId2"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'Allocation Log'!$A$3:$H$${Math.max(4,report.length+3)}</definedName><definedName name="_xlnm._FilterDatabase" localSheetId="1" hidden="1">'Buyer Summary'!$A$3:$G$${Math.max(4,buyers.length+3)}</definedName></definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`);
-  z.file("xl/_rels/workbook.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
-  z.file("xl/styles.xml",styles); z.file("xl/worksheets/sheet1.xml",s1); z.file("xl/worksheets/sheet2.xml",s2);
-  return z.generateAsync({type:"blob",compression:"DEFLATE"});
-}
-
-/* ---------- render ---------- */
-let allocRows=[];
-function render(R){
-  $("intro").hidden=true; $("results").hidden=false;
-  const flags=[];
-  if(R.anComparable&&R.anChanged===0) flags.push(`<div class="flag warn"><b>DOC file may be the old copy.</b>&nbsp;Tps Rfd Qty (AN) matches the previous values on every row. Check that you picked today's DOC -280+217.</div>`);
-  else if(R.anComparable) flags.push(`<div class="flag good">DOC is a newer copy. Tps Rfd Qty changed on ${R.anChanged.toLocaleString()} of ${R.rows.toLocaleString()} rows.</div>`);
-  if(R.open) flags.push(`<div class="flag warn">${R.open} group(s) still have Psbl to RFD left after 10 passes. Check them in the log.</div>`);
-  const top=R.buyers.slice().sort((a,b)=>b.added-a.added)[0];
-  if(top&&R.added>0&&top.added/R.added>0.6) flags.push(`<div class="flag warn">${esc(top.buyer)} takes ${Math.round(top.added/R.added*100)}% of the allocated qty (${fmt(top.added)} m). Check its groups in the log before sharing.</div>`);
-  $("flags").innerHTML=flags.join("");
-  const k=(t,v,s)=>`<div class="kpi"><div class="k">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
-  $("kpis").innerHTML=
-    k("Taps done · M = L",R.step2.toLocaleString(),"rows set (Taps Balance ≤ 20)")+
-    k("Psbl to RFD allocated",fmt(R.added),`m · ${R.report.length.toLocaleString()} rows · ${R.nGroups} groups`)+
-    k("RFD Qty before",fmt(R.totBefore),"m in column M")+
-    k("RFD Qty after",fmt(R.totAfter),`m · +${fmt(R.totAfter-R.totBefore)}`);
-  const max=Math.max(1,...R.buyers.map(b=>b.after));
-  let h=`<thead><tr><th>Buyer</th><th class="n">Rows =L</th><th class="n">Rows filled</th><th class="n">Added</th><th class="n">M before</th><th class="n">M after</th><th style="min-width:140px">M after</th></tr></thead><tbody>`;
-  let t={s:0,f:0,a:0,b:0,af:0};
-  for(const b of R.buyers){t.s+=b.step2;t.f+=b.filled;t.a+=b.added;t.b+=b.before;t.af+=b.after;
-    h+=`<tr><td>${esc(b.buyer)}</td><td class="n">${b.step2}</td><td class="n">${b.filled}</td><td class="n">${fmt(b.added)}</td><td class="n">${fmt(b.before)}</td><td class="n">${fmt(b.after)}</td><td><div class="bar"><i style="width:${(b.after/max*100).toFixed(1)}%"></i></div></td></tr>`}
-  h+=`<tr class="tot"><td>Total</td><td class="n">${t.s}</td><td class="n">${t.f}</td><td class="n">${fmt(t.a)}</td><td class="n">${fmt(t.b)}</td><td class="n">${fmt(t.af)}</td><td></td></tr></tbody>`;
-  $("buyerTbl").innerHTML=h;
-  allocRows=R.report; drawAlloc();
-}
-function drawAlloc(){
-  const q=($("q").value||"").toLowerCase().trim();
-  const rows=q?allocRows.filter(x=>(x.key+" "+x.buyer+" "+x.row).toLowerCase().includes(q)):allocRows;
-  let h=`<thead><tr><th>Key</th><th class="n">Row</th><th>Buyer</th><th class="n">Req Qty L</th><th class="n">M before</th><th class="n">Added</th><th class="n">M after</th><th class="n">Group AU</th></tr></thead><tbody>`;
-  for(const x of rows.slice(0,800)) h+=`<tr><td>${esc(x.key)}</td><td class="n">${x.row}</td><td>${esc(x.buyer)}</td><td class="n">${fmt(x.L,2)}</td><td class="n">${fmt(x.before,2)}</td><td class="n">${fmt(x.add,2)}</td><td class="n">${fmt(x.after,2)}</td><td class="n">${fmt(x.au,2)}</td></tr>`;
-  if(!rows.length) h+=`<tr><td colspan="8" style="color:var(--muted)">No allocation rows match.</td></tr>`;
-  if(rows.length>800) h+=`<tr><td colspan="8" style="color:var(--muted)">Showing 800 of ${rows.length.toLocaleString()} rows. The log file has all of them.</td></tr>`;
-  $("allocTbl").innerHTML=h+"</tbody>";
-}
-
-/* ---------- names, files, downloads ---------- */
-function ord(n){const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
-function outNames(){
-  const v=$("runDate").value; if(!v) return {ott:"—",log:"—"};
-  const d=new Date(v+"T00:00:00"); const mon=MON[d.getMonth()], yy=String(d.getFullYear()).slice(2);
-  const m=fpFile&&/Fabric_Plan_([A-Za-z]{3}\d{2})/i.exec(fpFile.name); const plan=m?m[1]:mon+yy;
-  return {ott:`Fabric_Plan_${plan}-Hues_Feedback-${ord(d.getDate())}_${mon}_${yy}_SQ.xlsx`, log:`OTT_Update_Log-${ord(d.getDate())}_${mon}_${yy}.xlsx`};
-}
-function refresh(){ $("outName").textContent=outNames().ott; $("runBtn").disabled=!(fpFile&&docFile);
-  if(fpFile&&docFile) status("✓ Both files uploaded. Ready to run."); else if(fpFile||docFile) status(`✓ 1 of 2 uploaded. Add the ${fpFile?"DOC -280+217":"Fabric Plan"} file.`); else status("Add both files to start.");
-  if(outputs){outputs.ottName=outNames().ott;outputs.logName=outNames().log} }
-function bindDrop(dropId,inputId,nameId,set,okId){
-  const drop=$(dropId),inp=$(inputId);
-  const take=f=>{ if(!f) return; if(!/\.xlsx$/i.test(f.name)){status("Use an .xlsx file.");return} set(f); $(nameId).textContent=f.name;
-    const mb=f.size/1048576; $(okId).textContent=`✓ Uploaded · ${mb>=1?mb.toFixed(1)+" MB":Math.max(1,Math.round(f.size/1024))+" KB"}`;
-    drop.classList.remove("has"); void drop.offsetWidth; drop.classList.add("has"); refresh(); };
-  inp.addEventListener("change",()=>take(inp.files[0]));
-  drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("over")});
-  drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
-  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");take(e.dataTransfer.files[0])});
-}
-bindDrop("dropFP","fileFP","nameFP",f=>{fpFile=f},"okFP");
-bindDrop("dropDOC","fileDOC","nameDOC",f=>{docFile=f},"okDOC");
-(function(){const d=new Date();$("runDate").value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`})();
-$("runDate").addEventListener("change",refresh);
-$("runBtn").addEventListener("click",run);
-$("q").addEventListener("input",drawAlloc);
-async function save(blobP,name){
-  const blob=await blobP; $("dlStatus").textContent="";
-  if(dlNS){ try{ await dlNS.save({filename:name,data:blob}); $("dlStatus").textContent=`Saved ${name}`; }catch(e){ $("dlStatus").textContent=e&&e.code==="declined"?"Download cancelled.":`Download failed (${e&&e.code||"error"}).`; } return; }
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
-  $("dlStatus").textContent=`Saved ${name}`;
-}
-$("dlOTT").addEventListener("click",()=>outputs&&save(outputs.ott,outputs.ottName));
-$("dlLog").addEventListener("click",()=>outputs&&save(outputs.log,outputs.logName));
-refresh();
+document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.f;document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));draw()}));
+document.getElementById("q").addEventListener("input",draw);
+document.getElementById("today").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"});
+draw();
 </script>
+</body>
+</html>
