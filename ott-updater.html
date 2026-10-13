@@ -50,6 +50,23 @@ h1{font:800 clamp(22px,3.2vw,30px)/1.1 var(--f-display);margin:0;letter-spacing:
 .drop.has .tickmark{display:grid}
 .tickmark svg{width:18px;height:18px;fill:none;stroke:var(--bg);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .drop.has .name{padding-right:34px}
+.drop .badmsg{display:none;font:600 13px var(--f-body);color:var(--red)}
+.drop.bad{border-style:solid;border-width:2px;border-color:var(--red);background:var(--red-soft)}
+.drop.bad .badmsg{display:block}
+.drop.bad .hint{display:none}
+.drop.checking{border-style:solid;border-color:var(--q60)}
+.drop.checking .hint::before{content:"Checking file… ";font-weight:600;color:var(--accent)}
+.prog{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.ptrack{height:14px;border-radius:999px;background:var(--q10);overflow:hidden;position:relative}
+.ptrack i{position:absolute;inset:0 auto 0 0;width:0;border-radius:999px;background:linear-gradient(90deg,var(--q80),var(--accent));transition:width .35s ease}
+.ptrack i::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 10px,transparent 10px 20px);animation:stripe 1s linear infinite}
+.prog.done .ptrack i{background:var(--ok)}
+.prog.done .ptrack i::after,.prog.fail .ptrack i::after{display:none}
+.prog.fail .ptrack i{background:var(--red)}
+.plabel{display:flex;justify-content:space-between;gap:10px;font:500 13px var(--f-mono);color:var(--muted)}
+.prog.done .plabel{color:var(--ok);font-weight:600}
+@keyframes stripe{to{background-position:28px 0}}
+@media (prefers-reduced-motion:reduce){.ptrack i{transition:none}.ptrack i::after{animation:none}}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce){.drop .tickmark{animation:none}}
 .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -105,6 +122,17 @@ footer{color:var(--muted);font-size:12.5px}
 .back{display:none;align-items:center;gap:6px;font:600 13px var(--f-body);color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--surface)}
 .back.on{display:inline-flex}
 .back:hover{border-color:var(--accent)}
+.topnav{display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--q);color:#fff;border-radius:12px;padding:8px 10px 8px 8px}
+.topnav.on{display:flex}
+.crumbs{display:flex;align-items:center;gap:8px;font:600 14px var(--f-body);min-width:0;flex-wrap:wrap}
+.crumbs .sep{opacity:.6}
+.crumbs .here{opacity:.85;font-weight:500}
+.homebtn{display:inline-flex;align-items:center;gap:8px;color:#664356;background:#fff;text-decoration:none;font:700 14px var(--f-body);border-radius:9px;padding:7px 14px}
+.homebtn:hover{background:#E6DFE1}
+.homebtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.navlink{color:#fff;text-decoration:none;font:600 13px var(--f-body);border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:5px 12px}
+.navlink:hover{background:rgba(255,255,255,.12)}
+@media (max-width:640px){.navlink,.crumbs .sep,.crumbs .here{display:none}}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .chartbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px;overflow-x:auto}
 .chartbox svg{display:block;width:100%;min-width:560px;height:auto}
@@ -120,6 +148,13 @@ footer{color:var(--muted);font-size:12.5px}
 </style>
 
 <div class="wrap">
+  <nav class="topnav" id="topNav" aria-label="Site">
+    <div class="crumbs">
+      <a class="homebtn" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>
+      <span>SQ Hues Tools</span><span class="sep">›</span><span class="here">OTT Fabric Plan Updater</span>
+    </div>
+    <a class="navlink" href="./">All tools →</a>
+  </nav>
   <header>
     <div class="brand">
       <div class="mark" aria-hidden="true">Q</div>
@@ -138,6 +173,7 @@ footer{color:var(--muted);font-size:12.5px}
       <span class="name" id="nameFP">Drop the OTT workbook here</span>
       <span class="hint">e.g. Fabric_Plan_Oct26-Hues_Feedback-…_SQ.xlsx</span>
       <span class="ok" id="okFP">Uploaded</span>
+      <span class="badmsg" id="badFP"></span>
       <span class="tickmark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <input type="file" id="fileFP" accept=".xlsx" aria-label="Fabric Plan workbook">
     </div>
@@ -146,6 +182,7 @@ footer{color:var(--muted);font-size:12.5px}
       <span class="name" id="nameDOC">Drop the DOC master here</span>
       <span class="hint">Reads sheet 217 (AP key · AQ Rfd · AR Bal · AF %)</span>
       <span class="ok" id="okDOC">Uploaded</span>
+      <span class="badmsg" id="badDOC"></span>
       <span class="tickmark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <input type="file" id="fileDOC" accept=".xlsx" aria-label="DOC 280+217 workbook">
     </div>
@@ -162,18 +199,14 @@ footer{color:var(--muted);font-size:12.5px}
     <span class="status" id="status">Add both files to start.</span>
   </div>
 
-  <ol class="steps" id="steps">
-    <li data-k="read"><span class="dot">1</span><span><b>Read files</b><br>Sheet 217 keys and Fab Plan rows</span></li>
-    <li data-k="ax"><span class="dot">2</span><span><b>Activate AM:AX</b><br>Formulas live, Taps values pasted</span></li>
-    <li data-k="taps"><span class="dot">3</span><span><b>Taps done</b><br>Taps Balance ≤ 20 → M = L</span></li>
-    <li data-k="alloc"><span class="dot">4</span><span><b>Allocate Psbl to RFD</b><br>P &lt; 0 and AU &gt; 0, filled top-down</span></li>
-    <li data-k="write"><span class="dot">5</span><span><b>Build files</b><br>Updated OTT and the log</span></li>
-  </ol>
+  <div class="prog" id="prog" hidden>
+    <div class="ptrack" role="progressbar" aria-label="Update progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progTrack"><i id="progBar"></i></div>
+    <div class="plabel"><span id="progText">Starting…</span><span id="progPct">0%</span></div>
+  </div>
 
-  <section id="intro" class="how" aria-label="What the update does">
-    <div><b>Same SQ format</b>The workbook XML is edited in place. Styles, hidden and grouped columns, the freeze at C3, the pivot and the Buyer Wise sheet stay exactly as they are.</div>
-    <div><b>Your manual steps, automated</b>Activates the <code>qq</code> templates, sets <code>M=L</code> where Taps is done, then fills each group's Psbl to RFD qty into M up to L, row by row.</div>
-    <div><b>Checked before download</b>Shows rows set, qty allocated, RFD total before and after by buyer, and warns you if the DOC file looks like the same old copy.</div>
+  <section id="summary" aria-label="Buyer-wise qty added since last update">
+    <div class="row2"><h2>Buyer-wise summary · qty added since last update</h2><span class="status" id="sumNote"></span></div>
+    <div class="tbl"><table id="sumTbl"></table></div>
   </section>
 
   <section id="results" hidden>
@@ -188,10 +221,8 @@ footer{color:var(--muted);font-size:12.5px}
         <button class="ghost" id="dlLog">Download update log</button>
         <span class="status" id="dlStatus"></span>
       </div>
-      <h2>RFD Qty by buyer · before vs after</h2>
-      <div class="chartbox"><div class="legend"><span><i style="background:var(--q20)"></i>Before update</span><span><i style="background:var(--accent)"></i>After update</span></div><div id="chart"></div></div>
-      <h2>RFD Qty (M) by buyer</h2>
-      <div class="tbl"><table id="buyerTbl"></table></div>
+      <h2>RFD Qty by buyer · last update vs this update</h2>
+      <div class="chartbox"><div class="legend"><span><i style="background:var(--q20)"></i>Last update</span><span><i style="background:var(--accent)"></i>This update</span></div><div id="chart"></div></div>
       <div class="row2">
         <h2>Allocation detail</h2>
         <label class="f" for="q" style="min-width:240px">Filter by key, buyer or row
@@ -203,12 +234,6 @@ footer{color:var(--muted);font-size:12.5px}
   </section>
 
   <div id="errBox"></div>
-
-  <section class="hist" aria-label="Run history">
-    <div class="row2"><h2>Run history</h2><button class="linkbtn" id="clearHist" type="button">Clear history</button></div>
-    <div class="spark" id="sparkBox" hidden><div class="tag">RFD Qty after each run (m)</div><div id="spark"></div></div>
-    <div id="histBody"></div>
-  </section>
   <footer>Excel recalculates every formula when you open the updated file. Check the Buyer Wise OTT Hit Rate MTD figures after opening it.</footer>
 </div>
 
@@ -218,7 +243,7 @@ footer{color:var(--muted);font-size:12.5px}
 const $=id=>document.getElementById(id);
 const EPS=0.0005;
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-let fpFile=null, docFile=null, outputs=null, dlNS=null;
+let fpFile=null, docFile=null, docZip=null, outputs=null, dlNS=null;
 try{ window.claude?.use?.("downloads")?.then(x=>{dlNS=x}).catch(()=>{}); }catch(e){}
 
 /* ---------- helpers ---------- */
@@ -234,7 +259,9 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 function xtrim(v){ if(v===null||v===undefined) return ""; return String(v).replace(/^ +| +$/g,"").replace(/ {2,}/g," "); }
 const norm=k=>k.toLowerCase();
 const tick=()=>new Promise(r=>setTimeout(r,0));
-function setStep(k,state){const li=document.querySelector(`#steps li[data-k="${k}"]`);if(li){li.classList.remove("run","done");if(state)li.classList.add(state)}}
+const STAGE={read:[4,"Reading DOC -280+217 · sheet 217"],ax:[48,"Looking up Taps values (AN · AO · AV · AW)"],taps:[56,"Taps done · setting M = L"],alloc:[62,"Allocating Psbl to RFD into M"],write:[78,"Writing the updated workbook"]};
+function prog(pct,text){ $("prog").hidden=false; pct=Math.max(0,Math.min(100,pct)); $("progBar").style.width=pct+"%"; $("progTrack").setAttribute("aria-valuenow",Math.round(pct)); $("progPct").textContent=Math.round(pct)+"%"; if(text)$("progText").textContent=text; $("prog").classList.toggle("done",pct>=100); }
+function setStep(k,state){ if(state==="run"&&STAGE[k]) prog(STAGE[k][0],STAGE[k][1]+"…"); }
 function status(t){$("status").textContent=t}
 
 function parseSST(xml){
@@ -266,8 +293,7 @@ function rawVal(t,inner,sst){
 }
 
 /* ---------- 1. DOC sheet 217 ---------- */
-async function readDOC(file){
-  const zip=await JSZip.loadAsync(await file.arrayBuffer());
+async function readDOC(zip){
   const path=await sheetPath(zip,"217");
   const ssf=zip.file("xl/sharedStrings.xml");
   const sst=ssf?parseSST(await ssf.async("string")):[];
@@ -318,12 +344,12 @@ function cellInfo(c,sst){
 
 /* ---------- main run ---------- */
 async function run(){
-  $("errBox").innerHTML="";$("results").hidden=true;$("runBtn").disabled=true;
-  ["read","ax","taps","alloc","write"].forEach(k=>setStep(k,null));
+  $("errBox").innerHTML="";$("results").hidden=true;$("runBtn").disabled=true;$("prog").classList.remove("fail","done");
+  prog(1,"Starting…");
   try{
     setStep("read","run");status("Reading DOC -280+217 (sheet 217)…");await tick();
-    const D=await readDOC(docFile);
-    status(`Sheet 217: ${D.rows.toLocaleString()} rows. Reading Fabric Plan…`);await tick();
+    const D=await readDOC(docZip);
+    status(`Sheet 217: ${D.rows.toLocaleString()} rows. Reading Fabric Plan…`);prog(36,"Reading Fabric Plan · Fab Plan-Final");await tick();
     const F=await readFP(fpFile);
     const doc=F.doc, NS=doc.documentElement.namespaceURI;
     const sheetData=doc.getElementsByTagName("sheetData")[0];
@@ -334,7 +360,7 @@ async function run(){
     let last=0; for(const r of rowEls.keys()){ if(r>=3){const v=val(r,"A").v; if(v!==null&&v!=="") last=Math.max(last,r)} }
     if(!last) throw new Error("No data rows found in Fab Plan-Final (column A is empty from row 3).");
     const rows=[];for(let r=3;r<=last;r++)rows.push(r);
-    setStep("read","done");
+    prog(46,"Files read");
 
     /* state */
     const L=new Map(),O=new Map(),Mv=new Map(),Mf=new Map(),buyer=new Map(),key=new Map(),prevAN=new Map();
@@ -362,8 +388,8 @@ async function run(){
     /* step 2 */
     setStep("taps","run");await tick();
     const mWrite=new Map(); // r -> {f} or {v}
-    let step2=0; const step2Rows=new Set();
-    for(const r of rows){ const ao=AO.get(r); if(isNum(ao)&&ao<=20){ if(Mf.get(r)!=="L"+r) step2++; Mf.set(r,"L"+r); mWrite.set(r,{f:"L"+r}); step2Rows.add(r);} }
+    let step2=0; const step2Rows=new Set(), step2New=new Set();
+    for(const r of rows){ const ao=AO.get(r); if(isNum(ao)&&ao<=20){ if(Mf.get(r)!=="L"+r){ step2++; step2New.add(r); } Mf.set(r,"L"+r); mWrite.set(r,{f:"L"+r}); step2Rows.add(r);} }
     setStep("taps","done");
 
     /* step 3 */
@@ -448,11 +474,11 @@ async function run(){
     ct=ct.replace(/<Override [^>]*PartName="\/xl\/(calcChain\.xml|externalLinks\/[^"]+)"[^>]*\/>/g,"");
     z.remove("xl/calcChain.xml"); z.forEach(p=>{if(p.startsWith("xl/externalLinks/"))z.remove(p)});
     z.file("xl/workbook.xml",wb); z.file("xl/_rels/workbook.xml.rels",rels); z.file("[Content_Types].xml",ct);
-    const ottBlob=await z.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6}});
+    let lastP=0;const ottBlob=await z.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6}},m=>{const v=80+m.percent*0.16;if(v-lastP>=1){lastP=v;prog(v,"Compressing the updated workbook…")}});
 
     /* summaries */
     const byB=new Map();
-    for(const r of rows){const b=buyer.get(r);if(!byB.has(b))byB.set(b,{buyer:b,before:0,after:0,added:0,step2:0,filled:0,groups:new Set()});const o=byB.get(b);o.before+=Mbefore.get(r);o.after+=mval(r);if(step2Rows.has(r)&&Mbefore.get(r)!==mval(r))o.step2++}
+    for(const r of rows){const b=buyer.get(r);if(!byB.has(b))byB.set(b,{buyer:b,before:0,after:0,added:0,step2:0,filled:0,groups:new Set()});const o=byB.get(b);o.before+=Mbefore.get(r);o.after+=mval(r);if(step2New.has(r))o.step2++}
     for(const x of report){const o=byB.get(x.buyer);o.added+=x.add;o.filled++;o.groups.add(norm(x.key))}
     const buyers=[...byB.values()].sort((a,b)=>b.after-a.after);
     const totBefore=rows.reduce((s,r)=>s+Mbefore.get(r),0), totAfter=rows.reduce((s,r)=>s+mval(r),0);
@@ -460,13 +486,13 @@ async function run(){
     let anChanged=0,anComparable=0; for(const r of rows){const p=prevAN.get(r);if(isNum(p)){anComparable++;if(Math.abs(p-AN.get(r))>0.01)anChanged++}}
     const d=new Date($("runDate").value+"T00:00:00");
     const logBlob=buildLog(report,buyers,{fp:fpFile.name,doc:docFile.name,date:d});
-    setStep("write","done");
+    prog(98,"Building the update log…");
     outputs={ott:ottBlob,log:logBlob,ottName:outNames().ott,logName:outNames().log};
     render({rows:rows.length,step2,report,nGroups,added,totBefore,totAfter,buyers,anChanged,anComparable,open,docRows:D.rows});
     status(`Done · ${rows.length.toLocaleString()} plan rows processed.`);
-    saveHistory({at:new Date().toISOString(),report:$("runDate").value,fp:fpFile.name,doc:docFile.name,rows:rows.length,step2,alloc:r3(added),allocRows:report.length,groups:nGroups,before:r3(totBefore),after:r3(totAfter),anChanged});
+    prog(100,"Done · ready to download");
   }catch(e){
-    console.error(e); status("Update stopped.");
+    console.error(e); status("Update stopped."); $("prog").classList.add("fail"); $("progText").textContent="Stopped";
     $("errBox").innerHTML=`<div class="flag err">${esc(e.message||String(e))}</div>`;
     document.querySelectorAll("#steps li.run").forEach(li=>li.classList.remove("run"));
   }finally{$("runBtn").disabled=!(fpFile&&docFile)}
@@ -554,7 +580,7 @@ function drawHistory(){
 
 function render(R){
   drawChart(R.buyers);
-  $("intro").hidden=true; $("results").hidden=false;
+  $("results").hidden=false;
   const flags=[];
   if(R.anComparable&&R.anChanged===0) flags.push(`<div class="flag warn"><b>DOC file may be the old copy.</b>&nbsp;Tps Rfd Qty (AN) matches the previous values on every row. Check that you picked today's DOC -280+217.</div>`);
   else if(R.anComparable) flags.push(`<div class="flag good">DOC is a newer copy. Tps Rfd Qty changed on ${R.anChanged.toLocaleString()} of ${R.rows.toLocaleString()} rows.</div>`);
@@ -568,13 +594,7 @@ function render(R){
     k("Psbl to RFD allocated",fmt(R.added),`m · ${R.report.length.toLocaleString()} rows · ${R.nGroups} groups`)+
     k("RFD Qty before",fmt(R.totBefore),"m in column M")+
     k("RFD Qty after",fmt(R.totAfter),`m · +${fmt(R.totAfter-R.totBefore)}`);
-  const max=Math.max(1,...R.buyers.map(b=>b.after));
-  let h=`<thead><tr><th>Buyer</th><th class="n">Rows =L</th><th class="n">Rows filled</th><th class="n">Added</th><th class="n">M before</th><th class="n">M after</th><th style="min-width:140px">M after</th></tr></thead><tbody>`;
-  let t={s:0,f:0,a:0,b:0,af:0};
-  for(const b of R.buyers){t.s+=b.step2;t.f+=b.filled;t.a+=b.added;t.b+=b.before;t.af+=b.after;
-    h+=`<tr><td>${esc(b.buyer)}</td><td class="n">${b.step2}</td><td class="n">${b.filled}</td><td class="n">${fmt(b.added)}</td><td class="n">${fmt(b.before)}</td><td class="n">${fmt(b.after)}</td><td><div class="bar"><i style="width:${(b.after/max*100).toFixed(1)}%"></i></div></td></tr>`}
-  h+=`<tr class="tot"><td>Total</td><td class="n">${t.s}</td><td class="n">${t.f}</td><td class="n">${fmt(t.a)}</td><td class="n">${fmt(t.b)}</td><td class="n">${fmt(t.af)}</td><td></td></tr></tbody>`;
-  $("buyerTbl").innerHTML=h;
+  drawSummary(R.buyers);
   allocRows=R.report; drawAlloc();
 }
 function drawAlloc(){
@@ -598,18 +618,47 @@ function outNames(){
 function refresh(){ $("outName").textContent=outNames().ott; $("runBtn").disabled=!(fpFile&&docFile);
   if(fpFile&&docFile) status("✓ Both files uploaded. Ready to run."); else if(fpFile||docFile) status(`✓ 1 of 2 uploaded. Add the ${fpFile?"DOC -280+217":"Fabric Plan"} file.`); else status("Add both files to start.");
   if(outputs){outputs.ottName=outNames().ott;outputs.logName=outNames().log} }
-function bindDrop(dropId,inputId,nameId,set,okId){
-  const drop=$(dropId),inp=$(inputId);
-  const take=f=>{ if(!f) return; if(!/\.xlsx$/i.test(f.name)){status("Use an .xlsx file.");return} set(f); $(nameId).textContent=f.name;
-    const mb=f.size/1048576; $(okId).textContent=`✓ Uploaded · ${mb>=1?mb.toFixed(1)+" MB":Math.max(1,Math.round(f.size/1024))+" KB"}`;
-    drop.classList.remove("has"); void drop.offsetWidth; drop.classList.add("has"); refresh(); };
+function drawSummary(buyers){
+  if(!buyers){
+    $("sumNote").textContent="";
+    $("sumTbl").innerHTML=`<thead><tr><th>Buyer</th><th class="n">Last update</th><th class="n">This update</th><th class="n">Added</th><th class="n">Share of added</th></tr></thead><tbody><tr><td colspan="5" style="color:var(--muted);white-space:normal">Run the update to see how much RFD qty each buyer gained since the last file. “Last update” is the RFD Qty (col M) already in the Fabric Plan you upload.</td></tr></tbody>`;
+    return;
+  }
+  const list=buyers.filter(b=>b.before||b.after).map(b=>({...b,gain:r3(b.after-b.before)})).sort((a,b)=>b.gain-a.gain||b.after-a.after);
+  const tot=list.reduce((t,b)=>({b:t.b+b.before,a:t.a+b.after,g:t.g+b.gain,s:t.s+b.step2,f:t.f+b.filled}),{b:0,a:0,g:0,s:0,f:0});
+  const mx=Math.max(1,...list.map(b=>b.gain));
+  let h=`<thead><tr><th>Buyer</th><th class="n">Last update</th><th class="n">This update</th><th class="n">Added</th><th class="n">Rows =L</th><th class="n">Rows filled</th><th style="min-width:160px">Share of added</th></tr></thead><tbody>`;
+  for(const b of list){const pc=tot.g>0?b.gain/tot.g*100:0;
+    h+=`<tr><td>${esc(b.buyer)}</td><td class="n">${fmt(b.before)}</td><td class="n">${fmt(b.after)}</td><td class="n" style="font-weight:700;color:${b.gain>0?"var(--accent)":"var(--muted)"}">${b.gain>0?"+":""}${fmt(b.gain)}</td><td class="n">${b.step2}</td><td class="n">${b.filled}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i style="width:${(Math.max(0,b.gain)/mx*100).toFixed(1)}%"></i></div><span style="font-size:12px;color:var(--muted);width:38px;text-align:right">${pc.toFixed(0)}%</span></div></td></tr>`}
+  h+=`<tr class="tot"><td>Total</td><td class="n">${fmt(tot.b)}</td><td class="n">${fmt(tot.a)}</td><td class="n">+${fmt(tot.g)}</td><td class="n">${tot.s}</td><td class="n">${tot.f}</td><td></td></tr></tbody>`;
+  $("sumTbl").innerHTML=h;
+  $("sumNote").textContent=`Last update = RFD Qty in ${fpFile?fpFile.name:"the uploaded file"} · m`;
+}
+async function sheetNames(zip){const f=zip.file("xl/workbook.xml");if(!f)throw new Error("not a workbook");const x=await f.async("string");return [...x.matchAll(/<sheet\b[^>]*\bname="([^"]*)"/g)].map(m=>decode(m[1]))}
+const RULE={
+  FP:{need:"Fab Plan-Final",label:"Fabric Plan / Hues Feedback workbook",other:"217",otherMsg:"This is the DOC -280+217 file. Drop it in box 2."},
+  DOC:{need:"217",label:"DOC -280+217 master",other:"Fab Plan-Final",otherMsg:"This is the Fabric Plan file. Drop it in box 1."}
+};
+function bindDrop(dropId,inputId,nameId,kind,okId,badId){
+  const drop=$(dropId),inp=$(inputId),R=RULE[kind];
+  const setFile=(f,zip)=>{ if(kind==="FP"){fpFile=f}else{docFile=f;docZip=zip} };
+  const reject=(f,msg)=>{ setFile(null,null); drop.classList.remove("has","checking"); drop.classList.add("bad"); $(nameId).textContent=f?f.name:"Wrong file"; $(badId).textContent="✕ "+msg; inp.value=""; refresh(); };
+  const take=async f=>{ if(!f) return;
+    drop.classList.remove("has","bad"); drop.classList.add("checking"); $(nameId).textContent=f.name; $(badId).textContent=""; setFile(null,null); refresh(); status(`Checking ${f.name}…`);
+    if(!/\.xlsx$/i.test(f.name)) return reject(f,"Not an .xlsx file. Upload the "+R.label+".");
+    let zip,names;
+    try{ zip=await JSZip.loadAsync(f); names=await sheetNames(zip); }catch(e){ return reject(f,"Can't open this file as an Excel workbook. Save it as .xlsx and try again."); }
+    if(!names.includes(R.need)) return reject(f, names.includes(R.other)?R.otherMsg:`Wrong file: sheet “${R.need}” not found. Upload the ${R.label}.`);
+    setFile(f,kind==="DOC"?zip:null);
+    const mb=f.size/1048576; $(okId).textContent=`✓ Uploaded · ${mb>=1?mb.toFixed(1)+" MB":Math.max(1,Math.round(f.size/1024))+" KB"} · sheet ${R.need} found`;
+    drop.classList.remove("checking","bad"); void drop.offsetWidth; drop.classList.add("has"); refresh(); };
   inp.addEventListener("change",()=>take(inp.files[0]));
   drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("over")});
   drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
-  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");take(e.dataTransfer.files[0])});
+  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files.length>1){status("Drop one file per box.");}take(e.dataTransfer.files[0])});
 }
-bindDrop("dropFP","fileFP","nameFP",f=>{fpFile=f},"okFP");
-bindDrop("dropDOC","fileDOC","nameDOC",f=>{docFile=f},"okDOC");
+bindDrop("dropFP","fileFP","nameFP","FP","okFP","badFP");
+bindDrop("dropDOC","fileDOC","nameDOC","DOC","okDOC","badDOC");
 (function(){const d=new Date();$("runDate").value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`})();
 $("runDate").addEventListener("change",refresh);
 $("runBtn").addEventListener("click",run);
@@ -622,9 +671,8 @@ async function save(blobP,name){
 }
 $("dlOTT").addEventListener("click",()=>outputs&&save(outputs.ott,outputs.ottName));
 $("dlLog").addEventListener("click",()=>outputs&&save(outputs.log,outputs.logName));
-$("clearHist").addEventListener("click",()=>{const b=$("clearHist");if(b.dataset.arm!=="1"){b.dataset.arm="1";b.textContent="Click again to clear";setTimeout(()=>{b.dataset.arm="";b.textContent="Clear history"},3000);return}try{localStorage.removeItem(HKEY)}catch(e){}b.dataset.arm="";b.textContent="Clear history";drawHistory()});
-if(/github\.io$/.test(location.hostname)||location.protocol==="file:"||location.hostname==="localhost") $("backLink").classList.add("on");
-drawHistory();
+if(/github\.io$/.test(location.hostname)||location.protocol==="file:"||location.hostname==="localhost"){ $("topNav").classList.add("on"); }
+drawSummary(null);
 refresh();
 </script>
 
