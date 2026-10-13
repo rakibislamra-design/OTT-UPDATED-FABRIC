@@ -43,14 +43,10 @@ h1{font:800 clamp(22px,3.2vw,30px)/1.1 var(--f-display);margin:0;letter-spacing:
 .drop{position:relative;border:1.5px dashed var(--q60);border-radius:12px;background:var(--surface);padding:16px;display:grid;gap:6px;min-width:0;cursor:pointer;transition:border-color .15s,background .15s}
 .drop{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .15s,background .15s}
 .drop:hover{border-color:var(--accent);background:var(--q5);transform:translateY(-2px);box-shadow:0 6px 18px rgba(102,67,86,.12)}
-.drop.over{transform:scale(1.045);border-style:solid;border-width:2px;border-color:var(--accent);background:var(--q10);box-shadow:0 14px 34px rgba(102,67,86,.28);z-index:2}
-.drop::after{content:"⬇  Drop here to upload";position:absolute;inset:0;display:grid;place-items:center;border-radius:inherit;background:color-mix(in srgb,var(--q) 95%,transparent);color:#fff;font:700 17px var(--f-display);letter-spacing:.01em;opacity:0;transform:scale(.96);transition:opacity .18s,transform .18s;pointer-events:none}
-.drop.over::after{opacity:1;transform:scale(1)}
-body.dragging .drop:not(.has):not(.over){animation:invite 1.1s ease-in-out infinite;border-color:var(--accent)}
-@keyframes invite{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(102,67,86,0)}50%{transform:scale(1.02);box-shadow:0 0 0 6px rgba(102,67,86,.14)}}
+.drop.over{transform:scale(1.03);border-style:solid;border-color:var(--accent);background:var(--q5);box-shadow:0 8px 22px rgba(102,67,86,.18);z-index:2}
 .drop.has{animation:landed .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes landed{0%{transform:scale(1.05)}60%{transform:scale(.985)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){.drop,.drop::after{transition:none}.drop.over,.drop:hover{transform:none}body.dragging .drop:not(.has):not(.over),.drop.has{animation:none}}
+@media (prefers-reduced-motion:reduce){.drop{transition:none}.drop.over,.drop:hover{transform:none}.drop.has{animation:none}}
 .drop.has{border-style:solid;border-width:2px;border-color:var(--ok);background:var(--ok-soft)}
 .drop .ok{display:none;align-items:center;gap:6px;font:600 12.5px var(--f-body);color:var(--ok)}
 .drop.has .ok{display:inline-flex}
