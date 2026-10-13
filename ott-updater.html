@@ -179,6 +179,7 @@ td.fail.hov:hover{background:var(--red-soft)}
 .tip tr.pick:hover td,.tip tr.pick.on td{background:var(--q10)}
 .tip tr.pick td:last-child::after{content:" ›";color:var(--muted)}
 .tip2{border-top-color:var(--q);max-width:min(560px,calc(100vw - 24px))}
+.barhov{cursor:pointer}.barhov:hover{fill:var(--q80)}
 .tip .meta{color:var(--muted);margin:-2px 0 8px;font-size:12px;line-height:1.4}
 .tip td.fail{color:var(--red);font-weight:600}
 .tip h4{margin:0 0 6px;font:700 13px var(--f-display)}
@@ -342,7 +343,7 @@ td.fail.hov:hover{background:var(--red-soft)}
         <div class="row2" style="margin-top:6px"><h2>PO details <span class="stamp" data-stamp></span></h2></div>
         <div class="posearch">
           <label class="f" for="q">Search a PO
-            <input type="search" id="q" placeholder="Type a PO number, e.g. 4512…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="poSug">
+            <input type="search" id="q" placeholder="Click to pick a PO, or type to narrow…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="poSug">
           </label>
           <ul class="posug" id="poSug" role="listbox" hidden></ul>
         </div>
@@ -726,11 +727,13 @@ function buildPOIndex(){
 }
 function drawSug(){
   const q=($("q").value||"").trim().toLowerCase(), ul=$("poSug");
-  if(!POIDX||!q){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
-  const hits=POIDX.filter(o=>o.po.toLowerCase().includes(q)).sort((a,b)=>(a.po.toLowerCase().startsWith(q)?0:1)-(b.po.toLowerCase().startsWith(q)?0:1)||b.beh-a.beh).slice(0,10);
+  if(!POIDX&&DEM) buildPOIndex();
+  if(!POIDX){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
+  const hits=(q?POIDX.filter(o=>o.po.toLowerCase().includes(q)).sort((a,b)=>(a.po.toLowerCase().startsWith(q)?0:1)-(b.po.toLowerCase().startsWith(q)?0:1)||b.beh-a.beh):POIDX.slice().sort((a,b)=>b.beh-a.beh)).slice(0,q?15:60);
   if(!hits.length||(hits.length===1&&hits[0].po.toLowerCase()===q)){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
   sugAct=-1;
   ul.innerHTML=hits.map((o,i)=>{const i0=o.po.toLowerCase().indexOf(q); const hl=esc(o.po.slice(0,i0))+"<mark>"+esc(o.po.slice(i0,i0+q.length))+"</mark>"+esc(o.po.slice(i0+q.length));
+    if(!q) return `<li role="option" data-po="${esc(o.po)}" id="sug${i}"><b>${esc(o.po)}</b><span>${esc(o.b)} · ${o.beh>0.5?`<span style="color:var(--red)">${fmt(o.beh)} behind</span>`:"complete"}</span></li>`;
     return `<li role="option" data-po="${esc(o.po)}" id="sug${i}"><b>${hl}</b><span>${esc(o.b)} · ${o.beh>0.5?`<span style="color:var(--red)">${fmt(o.beh)} behind</span>`:"complete"}</span></li>`}).join("");
   ul.hidden=false; $("q").setAttribute("aria-expanded","true");
 }
@@ -792,7 +795,7 @@ function drawDemand(){
   const list=[...by.values()].filter(o=>o.d||o.m).sort((a,b)=>b.d-a.d);
   const t=list.reduce((t,o)=>({d:t.d+o.d,m:t.m+o.m,o:t.o+o.o}),{d:0,m:0,o:0});
   const line=(name,o,cls,key)=>{const fail=Math.max(0,o.d-o.m-o.o),hit=o.d>0?(o.m+o.o)/o.d*100:0,k=hit>=95?"good":hit>=70?"mid":"bad";
-    const hov=FAILMAP.has(key)?` hov" data-fk="${esc(key)}" tabindex="0`:"";
+    const hov=FAILMAP.has(key)?` hov" data-pop="dem|${esc(key)}" tabindex="0`:"";
     return `<tr${cls}><td>${esc(name)}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n">${o.o?fmt(o.o):"–"}</td><td class="n ${fail>0.5?"fail":""}${fail>0.5?hov:""}">${fail>0.5?fmt(fail):"0"}</td><td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="flex:1;min-width:90px"><i style="width:${Math.min(100,hit).toFixed(1)}%"></i></div><span class="hit ${k}" style="min-width:58px;text-align:right">${hit.toFixed(1)}%</span></div></td></tr>`};
   let h=head+"<tbody>"+(list.length?list.map(o=>line(o.b,o,"",o.b)).join(""):`<tr><td colspan="6" style="color:var(--muted)">No demand in this period.</td></tr>`);
   if(list.length) h+=line("Total",t,' class="tot"',"__ALL__");
@@ -800,39 +803,100 @@ function drawDemand(){
   $("demNote").textContent=`${R.label} · qty in m · hover a failed qty to see PO & colour`; $("dpLabel").textContent=demSel.mode==="ytd"?`Up to yesterday · ${R.label.replace("Up to ","")}`:R.label;
   drawDays(R); drawTBC();
 }
-let TIP={items:[],key:null,t1:null,t2:null};
-function placeBeside(el,anchor,prefer){ // put el beside anchor rect, inside viewport
-  el.hidden=false; el.style.left="0px"; el.style.top="0px";
-  const r=el.getBoundingClientRect(), a=anchor; let L=prefer==="below"?a.left:a.right+8, T=prefer==="below"?a.bottom+6:a.top-8;
-  if(prefer!=="below"&&L+r.width>innerWidth-8) L=a.left-r.width-8;
-  if(L<8) L=Math.max(8,Math.min(innerWidth-r.width-8,a.left));
-  if(L+r.width>innerWidth-8) L=Math.max(8,innerWidth-r.width-8);
-  if(T+r.height>innerHeight-8) T=Math.max(8,innerHeight-r.height-8);
-  el.style.left=L+"px"; el.style.top=Math.max(8,T)+"px";
+let TIP={spec:null,key:null,t1:null,sw:null};
+function placeBeside(el,a){
+  el.hidden=false; el.style.left="0px"; el.style.top="0px"; el.style.maxWidth="";
+  let r=el.getBoundingClientRect();
+  const roomR=innerWidth-a.right-16, roomL=a.left-16;
+  let L;
+  if(r.width<=roomR) L=a.right+8;
+  else if(r.width<=roomL) L=a.left-r.width-8;
+  else { // squeeze into the larger side so boxes never cover each other
+    const right=roomR>=roomL, room=Math.max(roomR,roomL);
+    if(room>=260){ el.style.maxWidth=room+"px"; r=el.getBoundingClientRect(); L=right?a.right+8:a.left-r.width-8; }
+    else L=Math.max(8,Math.min(innerWidth-r.width-8,a.left));
+  }
+  let T=a.top-8; if(T+r.height>innerHeight-8) T=Math.max(8,innerHeight-r.height-8);
+  el.style.left=Math.max(8,L)+"px"; el.style.top=Math.max(8,T)+"px";
 }
-function showTip(td){
-  const key=td.dataset.fk, g=FAILMAP.get(key); if(!g)return;
-  if(TIP.key===key&&!$("tip").hidden)return;
-  hideTip2(); TIP.key=key;
-  const all=key==="__ALL__", items=[...g.values()].sort((a,b)=>b.q-a.q), tot=items.reduce((s,e)=>s+e.q,0); TIP.items=items;
-  let h=`<h4>${all?"All buyers":esc(key)} · short by PO & colour</h4><div class="meta">Point at a line to see article and date-wise breakdown</div><div class="tscroll"><table><thead><tr><th>PO</th><th>Colour</th>${all?"<th>Buyer</th>":""}<th class="n">Short qty</th></tr></thead><tbody>`;
-  items.forEach((e,i)=>{ h+=`<tr class="pick" data-i="${i}" tabindex="0"><td>${esc(e.po||"—")}</td><td>${esc(e.col||"—")}</td>${all?`<td>${esc(e.b)}</td>`:""}<td class="n">${fmt(e.q)}</td></tr>`; });
-  h+=`</tbody></table></div><div class="more">${items.length} lines · ${fmt(tot)} m short (row level, before over-delivery offsets)</div>`;
-  const tip=$("tip"); tip.innerHTML=h; placeBeside(tip,td.getBoundingClientRect(),"side");
+function renderSpec(sp,pickable){
+  let h=`<h4>${sp.title}</h4>${sp.meta?`<div class="meta">${sp.meta}</div>`:""}<div class="tscroll"><table><thead><tr>${sp.cols.map(c=>`<th${c.n?' class="n"':""}>${c.t}</th>`).join("")}</tr></thead><tbody>`;
+  if(!sp.rows.length) h+=`<tr><td colspan="${sp.cols.length}" style="color:var(--muted)">Nothing to show.</td></tr>`;
+  sp.rows.forEach((r,i)=>{ const pk=pickable&&r.sub; h+=`<tr${pk?` class="pick" data-i="${i}" tabindex="0"`:""}>${r.c.map((v,j)=>`<td${sp.cols[j].n?` class="n${r.f===j?" fail":""}"`:""}>${v}</td>`).join("")}</tr>`; });
+  if(sp.total) h+=`<tr class="tot">${sp.total.map((v,j)=>`<td${sp.cols[j]&&sp.cols[j].n?' class="n"':""}>${v}</td>`).join("")}</tr>`;
+  return h+`</tbody></table></div>${sp.foot?`<div class="more">${sp.foot}</div>`:""}`;
+}
+/* level-1 specs */
+function specFor(kind,key){
+  const R=demRange(); if(!DEM||!R) return null;
+  if(kind==="dem"){
+    const g=FAILMAP.get(key); if(!g) return null; const all=key==="__ALL__";
+    const items=[...g.values()].sort((a,b)=>b.q-a.q), tot=items.reduce((s,e)=>s+e.q,0);
+    return {title:`${all?"All buyers":esc(key)} · failed by PO & colour`, meta:"Point at a line for article and date-wise failed qty",
+      cols:[{t:"PO"},{t:"Colour"},...(all?[{t:"Buyer"}]:[]),{t:"Failed qty",n:1}],
+      rows:items.map(e=>({c:[esc(e.po||"—"),esc(e.col||"—"),...(all?[esc(e.b)]:[]),fmt(e.q)],f:all?3:2,sub:()=>subFailDates(e.b,e.po,e.col,R)})),
+      foot:`${items.length} lines · ${fmt(tot)} m failed (row level)`};
+  }
+  if(kind==="tbc"){
+    const all=key==="__ALL__", g=new Map();
+    for(const x of DEM){ if(!x.tbc||(!all&&x.b!==key))continue; const k=x.b+"\u0001"+x.po+"\u0001"+x.col; if(!g.has(k))g.set(k,{b:x.b,po:x.po,col:x.col,q:0}); g.get(k).q+=Math.max(0,x.L-x.M-x.O); }
+    const items=[...g.values()].filter(e=>e.q>0.5).sort((a,b)=>b.q-a.q), tot=items.reduce((s,e)=>s+e.q,0);
+    return {title:`${all?"All buyers":esc(key)} · Plan TBC balance by PO & colour`, meta:"Point at a line for article breakdown",
+      cols:[{t:"PO"},{t:"Colour"},...(all?[{t:"Buyer"}]:[]),{t:"Balance qty",n:1}],
+      rows:items.map(e=>({c:[esc(e.po||"—"),esc(e.col||"—"),...(all?[esc(e.b)]:[]),fmt(e.q)],f:all?3:2,sub:()=>subTbcArticles(e.b,e.po,e.col)})),
+      foot:`${items.length} lines · ${fmt(tot)} m with no agreed date`};
+  }
+  if(kind==="day"){
+    const s0=+key, g=new Map();
+    for(const x of DEM){ if(x.s!==s0)continue; if(!g.has(x.b))g.set(x.b,{b:x.b,d:0,a:0,f:0}); const o=g.get(x.b); o.d+=x.L; o.a+=x.M+x.O; o.f+=Math.max(0,x.L-x.M-x.O); }
+    const items=[...g.values()].filter(o=>o.d>0).sort((a,b)=>b.f-a.f||b.d-a.d), T=items.reduce((t,o)=>({d:t.d+o.d,a:t.a+o.a,f:t.f+o.f}),{d:0,a:0,f:0});
+    const pc=o=>o.d>0?o.a/o.d*100:0, cl=p=>p>=95?"good":p>=70?"mid":"bad";
+    return {title:`${fromSerial(s0)} · buyer-wise`, meta:"Point at a buyer for failed qty by PO & colour",
+      cols:[{t:"Buyer"},{t:"Plan",n:1},{t:"RFD",n:1},{t:"Failed",n:1},{t:"Achieve",n:1}],
+      rows:items.map(o=>({c:[esc(o.b),fmt(o.d),fmt(o.a),fmt(o.f),`<span class="hit ${cl(pc(o))}">${pc(o).toFixed(0)}%</span>`],f:3,sub:o.f>0.5?()=>subDayBuyer(s0,o.b):null})),
+      total:["Total",fmt(T.d),fmt(T.a),fmt(T.f),`<span class="hit ${cl(T.d?T.a/T.d*100:0)}">${(T.d?T.a/T.d*100:0).toFixed(1)}%</span>`]};
+  }
+  return null;
+}
+/* level-2 specs (failed only) */
+function subFailDates(b,po,col,R){
+  const g=new Map(); let arts=new Set();
+  for(const x of DEM){ if(x.b!==b||x.po!==po||x.col!==col||!inRange(x,R))continue; const f=Math.max(0,x.L-x.M-x.O); if(f<=0.5)continue; const k=x.s+"\u0001"+(x.art||""); arts.add(x.art||""); if(!g.has(k))g.set(k,{s:x.s,art:x.art||"",f:0}); g.get(k).f+=f; }
+  const list=[...g.values()].sort((a,c)=>a.s-c.s), multi=arts.size>1, T=list.reduce((t,o)=>t+o.f,0);
+  return {title:`PO ${esc(po||"—")} · ${esc(col||"—")}`, meta:`${esc(b)}${!multi&&[...arts][0]?` · ${esc([...arts][0])}`:""}`,
+    cols:[{t:"Date"},...(multi?[{t:"Article"}]:[]),{t:"Failed qty",n:1}],
+    rows:list.map(o=>({c:[fromSerial(o.s),...(multi?[`<span style="font-size:11.5px;color:var(--muted)">${esc(o.art)}</span>`]:[]),fmt(o.f)],f:multi?2:1})),
+    total:["Total",...(multi?[""]:[]),fmt(T)]};
+}
+function subTbcArticles(b,po,col){
+  const g=new Map();
+  for(const x of DEM){ if(!x.tbc||x.b!==b||x.po!==po||x.col!==col)continue; const k=x.art||"—"; if(!g.has(k))g.set(k,{art:k,d:0,q:0}); const o=g.get(k); o.d+=x.L; o.q+=Math.max(0,x.L-x.M-x.O); }
+  const list=[...g.values()].filter(o=>o.q>0.5).sort((a,c)=>c.q-a.q), T=list.reduce((t,o)=>t+o.q,0);
+  return {title:`PO ${esc(po||"—")} · ${esc(col||"—")}`, meta:`${esc(b)} · Plan TBC (no agreed date)`,
+    cols:[{t:"Article"},{t:"Balance qty",n:1}], rows:list.map(o=>({c:[`<span style="font-size:12px">${esc(o.art)}</span>`,fmt(o.q)],f:1})), total:["Total",fmt(T)]};
+}
+function subDayBuyer(s0,b){
+  const g=new Map();
+  for(const x of DEM){ if(x.s!==s0||x.b!==b)continue; const f=Math.max(0,x.L-x.M-x.O); if(f<=0.5)continue; const k=x.po+"\u0001"+x.col+"\u0001"+(x.art||""); if(!g.has(k))g.set(k,{po:x.po,col:x.col,art:x.art||"",f:0}); g.get(k).f+=f; }
+  const list=[...g.values()].sort((a,c)=>c.f-a.f), T=list.reduce((t,o)=>t+o.f,0);
+  return {title:`${esc(b)} · ${fromSerial(s0)} · failed`, meta:"By PO, colour and article",
+    cols:[{t:"PO"},{t:"Colour"},{t:"Article"},{t:"Failed qty",n:1}],
+    rows:list.map(o=>({c:[esc(o.po||"—"),esc(o.col||"—"),`<span style="font-size:11.5px;color:var(--muted)">${esc(o.art)}</span>`,fmt(o.f)],f:3})), total:["Total","","",fmt(T)]};
+}
+function showPop(el){
+  const [kind,key]=el.dataset.pop.split(/\|(.*)/s); const id=kind+"|"+key;
+  if(TIP.key===id&&!$("tip").hidden) return;
+  const sp=specFor(kind,key); if(!sp) return;
+  hideTip2(); TIP.key=id; TIP.spec=sp;
+  const tip=$("tip"); tip.style.borderTopColor=kind==="day"?"var(--q)":""; tip.innerHTML=renderSpec(sp,true);
+  placeBeside(tip,el.getBoundingClientRect());
 }
 function showTip2(tr){
-  const e=TIP.items[+tr.dataset.i]; if(!e)return;
+  const r=TIP.spec&&TIP.spec.rows[+tr.dataset.i]; if(!r||!r.sub) return;
   $("tip").querySelectorAll("tr.pick.on").forEach(x=>x.classList.remove("on")); tr.classList.add("on");
-  const R=demRange(); const rows=DEM.filter(x=>R&&inRange(x,R)&&x.b===e.b&&x.po===e.po&&x.col===e.col);
-  const g=new Map(); for(const x of rows){ const k=x.s+"\u0001"+(x.art||""); if(!g.has(k))g.set(k,{s:x.s,art:x.art||"",d:0,a:0}); const o=g.get(k); o.d+=x.L; o.a+=x.M+x.O; }
-  const list=[...g.values()].sort((a,b)=>a.s-b.s||a.art.localeCompare(b.art)); const arts=[...new Set(list.map(o=>o.art))];
-  const T=list.reduce((t,o)=>({d:t.d+o.d,a:t.a+o.a}),{d:0,a:0});
-  let h=`<h4>PO ${esc(e.po||"—")} · ${esc(e.col||"—")}</h4><div class="meta">${esc(e.b)}${arts.length===1&&arts[0]?` · ${esc(arts[0])}`:""}</div><div class="tscroll"><table><thead><tr><th>Date</th>${arts.length>1?"<th>Article</th>":""}<th class="n">Plan</th><th class="n">Delivered</th><th class="n">Failed</th></tr></thead><tbody>`;
-  for(const o of list){ const f=Math.max(0,o.d-o.a); h+=`<tr><td>${fromSerial(o.s)}</td>${arts.length>1?`<td style="font-size:11.5px;color:var(--muted)">${esc(o.art)}</td>`:""}<td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.a)}</td><td class="n ${f>0.5?"fail":""}">${fmt(f)}</td></tr>`; }
-  h+=`<tr class="tot"><td${arts.length>1?' colspan="2"':""}>Total</td><td class="n">${fmt(T.d)}</td><td class="n">${fmt(T.a)}</td><td class="n fail">${fmt(Math.max(0,T.d-T.a))}</td></tr></tbody></table></div>`;
-  const t2=$("tip2"); t2.innerHTML=h;
-  const tr1=tr.getBoundingClientRect(), t1=$("tip").getBoundingClientRect();
-  placeBeside(t2,{left:t1.left,right:t1.right,top:tr1.top,bottom:tr1.bottom},"side");
+  const t2=$("tip2"); t2.innerHTML=renderSpec(r.sub(),false);
+  const a=tr.getBoundingClientRect(), t1=$("tip").getBoundingClientRect();
+  placeBeside(t2,{left:t1.left,right:t1.right,top:a.top,bottom:a.bottom});
 }
 function hideTip2(){ $("tip2").hidden=true; $("tip").querySelectorAll("tr.pick.on").forEach(x=>x.classList.remove("on")); }
 function hideTip(){ $("tip").hidden=true; hideTip2(); TIP.key=null; }
@@ -851,13 +915,13 @@ function drawDays(R){
   let g=`<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;min-width:${Math.min(W,520)}px" role="img" aria-label="RFD qty and achieve % by date">`;
   for(let v=0;v<=yMax+1e-9;v+=step) g+=`<line x1="${left}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="mut" x="${left-6}" y="${y(v)+4}" text-anchor="end">${fmtK(v)}</text>`;
   days.forEach((o,i)=>{const x0=left+i*colW, bw=Math.max(14,colW*0.62), p=pc(o), d=sDate(o.s), cx=x0+colW/2;
-    g+=`<rect x="${cx-bw/2}" y="${y(o.a)}" width="${bw}" height="${Math.max(0,top+ph-y(o.a))}" rx="3" fill="var(--accent)"><title>${fromSerial(o.s)} · RFD ${fmt(o.a)} m of plan ${fmt(o.d)} m · ${p.toFixed(1)}%</title></rect>`;
+    g+=`<rect class="barhov" data-pop="day|${o.s}" x="${cx-bw/2}" y="${Math.min(y(o.a),top+ph-4)}" width="${bw}" height="${Math.max(4,top+ph-y(o.a))}" rx="3" fill="var(--accent)"></rect>`;
     g+=`<text x="${cx}" y="${y(o.a)-7}" text-anchor="middle" class="pct ${cls(p)}">${Math.round(p)}%</text>`;
     g+=`<text class="mut" x="${cx}" y="${top+ph+16}" text-anchor="middle">${d.getUTCDate()}</text>`;
     if(i===0||d.getUTCDate()===1) g+=`<text class="mut" x="${cx}" y="${top+ph+32}" text-anchor="middle">${MON[d.getUTCMonth()]}</text>`;});
   $("dayChart").innerHTML=g+"</svg>";
   const T=days.reduce((t,o)=>({d:t.d+o.d,a:t.a+o.a}),{d:0,a:0});
-  $("dayNote").textContent=`${R.label} · ${days.length} days · overall ${(T.d?T.a/T.d*100:0).toFixed(1)}% · hover a bar for plan qty`;
+  $("dayNote").textContent=`${R.label} · ${days.length} days · overall ${(T.d?T.a/T.d*100:0).toFixed(1)}% · hover a bar for buyer breakdown`;
 }
 function drawTBC(){
   const head=`<thead><tr><th>Buyer</th><th class="n">Demand qty (TBC)</th><th class="n">RFD qty</th><th class="n">Balance qty</th></tr></thead>`;
@@ -867,7 +931,7 @@ function drawTBC(){
   const list=[...by.values()].sort((a,b)=>b.d-a.d);
   if(!list.length){$("tbcTbl").innerHTML=head+`<tbody><tr><td colspan="4" style="color:var(--muted)">No Plan TBC rows in this file.</td></tr></tbody>`;return}
   const t=list.reduce((t,o)=>({n:t.n+o.n,d:t.d+o.d,m:t.m+o.m,o:t.o+o.o}),{n:0,d:0,m:0,o:0});
-  const line=(name,o,cls)=>{const bal=Math.max(0,o.d-o.m-o.o);return `<tr${cls}><td>${esc(name)}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n ${bal>0.5?"fail":""}">${fmt(bal)}</td></tr>`};
+  const line=(name,o,cls)=>{const bal=Math.max(0,o.d-o.m-o.o);return `<tr${cls}><td>${esc(name)}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n ${bal>0.5?"fail hov":""}"${bal>0.5?` data-pop="tbc|${esc(cls?"__ALL__":name)}" tabindex="0"`:""}>${fmt(bal)}</td></tr>`};
   $("tbcTbl").innerHTML=head+"<tbody>"+list.map(o=>line(o.b,o,"")).join("")+line("Total",t,' class="tot"')+"</tbody>";
 }
 function stampText(iso){ if(!iso)return ""; const d=new Date(iso); return `Last updated ${String(d.getDate()).padStart(2,"0")}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
@@ -961,6 +1025,7 @@ $("runDate").addEventListener("change",refresh);
 $("runBtn").addEventListener("click",run);
 $("q").addEventListener("input",()=>{drawSug();drawPO()});
 $("q").addEventListener("focus",drawSug);
+$("q").addEventListener("click",drawSug);
 $("q").addEventListener("keydown",e=>{const ul=$("poSug"),li=[...ul.querySelectorAll("li")]; if(ul.hidden||!li.length)return;
   if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault(); sugAct=(sugAct+(e.key==="ArrowDown"?1:-1)+li.length)%li.length; li.forEach((x,i)=>x.classList.toggle("act",i===sugAct)); $("q").setAttribute("aria-activedescendant","sug"+sugAct); li[sugAct].scrollIntoView({block:"nearest"});}
   else if(e.key==="Enter"){e.preventDefault(); pickSug((li[sugAct>=0?sugAct:0]).dataset.po);}
@@ -1025,17 +1090,17 @@ document.addEventListener("click",e=>{if(!$("dpPop").hidden&&!$("dp").contains(e
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("dpPop").hidden)dpClose()});
 $("runDate").addEventListener("change",()=>{if(DEM)drawDemand()});
 drawTBC();
-$("demTbl").addEventListener("mouseover",e=>{const td=e.target.closest("td.hov"); if(!td)return; holdTips(); clearTimeout(TIP.sw);
-  if($("tip").hidden||TIP.key===td.dataset.fk) showTip(td); else TIP.sw=setTimeout(()=>showTip(td),350); });
-$("demTbl").addEventListener("mouseout",e=>{const td=e.target.closest("td.hov"); if(td&&!td.contains(e.relatedTarget)){ clearTimeout(TIP.sw); releaseTips(); } });
-$("demTbl").addEventListener("click",e=>{const td=e.target.closest("td.hov"); if(td){holdTips();TIP.key=null;showTip(td);} });
-$("demTbl").addEventListener("keydown",e=>{const td=e.target.closest("td.hov"); if(td&&(e.key==="Enter"||e.key===" ")){e.preventDefault();TIP.key=null;showTip(td);} });
+const popOf=t=>t&&t.closest?t.closest("[data-pop]"):null;
+document.addEventListener("mouseover",e=>{const el=popOf(e.target); if(!el||$("tip").contains(el))return; holdTips(); clearTimeout(TIP.sw);
+  const id=el.dataset.pop; if($("tip").hidden||TIP.key===id) showPop(el); else TIP.sw=setTimeout(()=>showPop(el),350); });
+document.addEventListener("mouseout",e=>{const el=popOf(e.target); if(el&&!$("tip").contains(el)&&!el.contains(e.relatedTarget)){ clearTimeout(TIP.sw); releaseTips(); } });
+document.addEventListener("click",e=>{const el=popOf(e.target); if(el&&!$("tip").contains(el)){ holdAll(); TIP.key=null; showPop(el); return; }
+  if(!$("tip").hidden&&!$("tip").contains(e.target)&&!$("tip2").contains(e.target)) hideTip(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){hideTip();return} const el=popOf(e.target); if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();TIP.key=null;showPop(el);} });
 for(const id of ["tip","tip2"]){ $(id).addEventListener("mouseenter",holdAll); $(id).addEventListener("mouseleave",e=>{ if(!$("tip").contains(e.relatedTarget)&&!$("tip2").contains(e.relatedTarget)) releaseTips(); }); }
 $("tip").addEventListener("mouseover",e=>{const tr=e.target.closest("tr.pick"); if(tr&&!tr.classList.contains("on")) showTip2(tr); });
 $("tip").addEventListener("click",e=>{const tr=e.target.closest("tr.pick"); if(tr) showTip2(tr); });
 $("tip").addEventListener("keydown",e=>{const tr=e.target.closest("tr.pick"); if(tr&&(e.key==="Enter"||e.key===" ")){e.preventDefault();showTip2(tr);} });
-document.addEventListener("click",e=>{ if(!$("tip").hidden&&!$("tip").contains(e.target)&&!$("tip2").contains(e.target)&&!e.target.closest("td.hov")) hideTip(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") hideTip(); });
 window.addEventListener("scroll",hideTip,{passive:true});
 try{ const t=localStorage.getItem("sqhues.gh.token"); if(t){$("ghToken").value=t;$("ghRemember").checked=true} $("ghAuto").checked=localStorage.getItem("sqhues.gh.auto")==="1"; }catch(e){}
 $("ghAuto").addEventListener("change",()=>{try{localStorage.setItem("sqhues.gh.auto",$("ghAuto").checked?"1":"0")}catch(e){}});
