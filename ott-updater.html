@@ -747,7 +747,7 @@ function render(R){
   drawSummary(DASH.buyers);
 
 }
-let POIDX=null, sugAct=-1;
+let POIDX=null, sugAct=-1, POLINES=[];
 function buildPOIndex(){
   const m=new Map();
   for(const x of DEM){ if(!x.po||!(x.L||x.M||x.O))continue; if(!m.has(x.po))m.set(x.po,{po:x.po,b:new Set(),req:0,del:0}); const o=m.get(x.po); o.b.add(x.b); o.req+=x.L; o.del+=x.M+x.O; }
@@ -788,13 +788,13 @@ function drawPO(){
   for(const x of DEM){ if(!want.has(x.po)||!(x.L||x.M||x.O))continue; const k=x.po+"\u0001"+x.b+"\u0001"+x.col+"\u0001"+(x.art||"");
     if(!g.has(k))g.set(k,{po:x.po,b:x.b,col:x.col,art:x.art||"",req:0,del:0}); const o=g.get(k); o.req+=x.L; o.del+=x.M+x.O; }
   const pc=(d,r)=>r>0?Math.min(100,d/r*100):0, cls=p=>p>=95?"good":p>=70?"mid":"bad";
-  let h="";
+  let h=""; POLINES=[];
   for(const po of want){
     const list=[...g.values()].filter(o=>o.po===po).map(o=>({...o,beh:Math.max(0,o.req-o.del)})).sort((a,b)=>b.beh-a.beh||b.req-a.req);
     const T=list.reduce((t,o)=>({r:t.r+o.req,d:t.d+o.del,b:t.b+o.beh}),{r:0,d:0,b:0});
-    h+=`<tbody><tr class="tot"><td colspan="3">PO ${esc(po)} · ${list.length} colour/article line${list.length>1?"s":""}</td><td class="n">${fmt(T.r)}</td><td class="n">${fmt(T.d)}</td><td class="n ${T.b>0.5?"fail":""}">${fmt(T.b)}</td><td class="n"><span class="hit ${cls(pc(T.d,T.r))}">${pc(T.d,T.r).toFixed(1)}%</span></td></tr>`;
+    h+=`<tbody><tr class="tot"><td colspan="3">PO ${esc(po)} · ${list.length} colour/article line${list.length>1?"s":""}</td><td class="n">${fmt(T.r)}</td><td class="n">${fmt(T.d)}</td><td class="n ${T.b>0.5?"fail hov":""}"${T.b>0.5?` data-pop="po|${POLINES.push({po,all:true})-1}" tabindex="0"`:""}>${fmt(T.b)}</td><td class="n"><span class="hit ${cls(pc(T.d,T.r))}">${pc(T.d,T.r).toFixed(1)}%</span></td></tr>`;
     for(const o of list){const p=pc(o.del,o.req);
-      h+=`<tr><td>${esc(o.b)}</td><td>${esc(o.col||"—")}</td><td style="color:var(--muted);font-size:12.5px">${esc(o.art||"—")}</td><td class="n">${fmt(o.req)}</td><td class="n">${fmt(o.del)}</td><td class="n ${o.beh>0.5?"fail":""}">${fmt(o.beh)}</td><td class="n"><span class="hit ${cls(p)}">${p.toFixed(0)}%</span></td></tr>`}
+      h+=`<tr><td>${esc(o.b)}</td><td>${esc(o.col||"—")}</td><td style="color:var(--muted);font-size:12.5px">${esc(o.art||"—")}</td><td class="n">${fmt(o.req)}</td><td class="n">${fmt(o.del)}</td><td class="n ${o.beh>0.5?"fail hov":""}"${o.beh>0.5?` data-pop="po|${POLINES.push(o)-1}" tabindex="0"`:""}>${fmt(o.beh)}</td><td class="n"><span class="hit ${cls(p)}">${p.toFixed(0)}%</span></td></tr>`}
     h+="</tbody>";
   }
   $("poTbl").innerHTML=head+h; $("poOut").hidden=false;
@@ -883,6 +883,19 @@ function specFor(kind,key){
       cols:[{t:"PO"},{t:"Colour"},...(all?[{t:"Buyer"}]:[]),{t:"Balance qty",n:1}],
       rows:items.map(e=>({c:[esc(e.po||"—"),esc(e.col||"—"),...(all?[esc(e.b)]:[]),fmt(e.q)],f:all?3:2,sub:()=>subTbcArticles(e.b,e.po,e.col)})),
       foot:`${items.length} lines · ${fmt(tot)} m with no agreed date`};
+  }
+  if(kind==="po"){
+    const L0=POLINES[+key]; if(!L0) return null; const rep=toSerial(DASH.report||$("runDate").value)||serialToday();
+    const g=new Map(), arts=new Set(), cols=new Set();
+    for(const x of DEM){ if(x.po!==L0.po) continue; if(!L0.all&&(x.b!==L0.b||x.col!==L0.col||(x.art||"")!==L0.art)) continue;
+      const f=Math.max(0,x.L-x.M-x.O); if(f<=0.5) continue; const k=x.s===null?(x.tbc?"TBC":"NA"):x.s; if(!g.has(k)) g.set(k,{k,s:x.s,tbc:x.tbc,f:0,cols:new Set()}); const o=g.get(k); o.f+=f; o.cols.add(x.col); arts.add(x.art||""); cols.add(x.col); }
+    const list=[...g.values()].sort((a,b)=>(a.s===null)-(b.s===null)||a.s-b.s), T=list.reduce((t,o)=>t+o.f,0);
+    const st=o=>o.s===null?`<span style="color:var(--muted)">${o.tbc?"Plan TBC":"No date"}</span>`:o.s<rep?`<span style="color:var(--red);font-weight:600">Overdue</span>`:o.s===rep?`<span style="font-weight:600">Due today</span>`:`<span style="color:var(--ok)">Upcoming</span>`;
+    const over=list.filter(o=>o.s!==null&&o.s<rep).reduce((t,o)=>t+o.f,0);
+    return {title:L0.all?`PO ${esc(L0.po)} · behind by date`:`PO ${esc(L0.po)} · ${esc(L0.col||"—")}`, meta:L0.all?`All colours (${cols.size}) · ${fmt(over)} m overdue`:`${esc(L0.b)} · ${esc(L0.art||"")}`,
+      cols:[{t:"Agreed RFD date"},...(L0.all?[{t:"Colours"}]:[]),{t:"Status"},{t:"Behind qty",n:1}],
+      rows:list.map(o=>({c:[o.s===null?"—":fromSerial(o.s),...(L0.all?[`<span style="font-size:12px">${esc([...o.cols].join(", "))}</span>`]:[]),st(o),fmt(o.f)],f:L0.all?3:2})),
+      total:["Total",...(L0.all?[""]:[]),"",fmt(T)], foot:"Overdue = agreed date before the report date"};
   }
   if(kind==="day"){
     const s0=+key, g=new Map();
