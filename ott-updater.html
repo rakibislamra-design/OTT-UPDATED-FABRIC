@@ -394,7 +394,7 @@ async function run(){
     setStep("taps","run");await tick();
     const mWrite=new Map(); // r -> {f} or {v}
     let step2=0; const step2Rows=new Set(), step2New=new Set();
-    for(const r of rows){ const ao=AO.get(r); if(isNum(ao)&&ao<=20){ if(Mf.get(r)!=="L"+r){ step2++; step2New.add(r); } Mf.set(r,"L"+r); mWrite.set(r,{f:"L"+r}); step2Rows.add(r);} }
+    for(const r of rows){ const ao=AO.get(r); if(isNum(ao)&&ao<=20){ if(Math.abs(mval(r)-L.get(r))>EPS){ step2++; step2New.add(r); } Mf.set(r,"L"+r); mWrite.set(r,{f:"L"+r}); step2Rows.add(r);} }
     setStep("taps","done");
 
     /* step 3 */
@@ -483,7 +483,7 @@ async function run(){
 
     /* summaries */
     const byB=new Map();
-    for(const r of rows){const b=buyer.get(r);if(!byB.has(b))byB.set(b,{buyer:b,before:0,after:0,added:0,step2:0,filled:0,groups:new Set()});const o=byB.get(b);o.before+=Mbefore.get(r);o.after+=mval(r);if(step2New.has(r))o.step2++}
+    for(const r of rows){const b=buyer.get(r);if(!byB.has(b))byB.set(b,{buyer:b,req:0,before:0,after:0,added:0,step2:0,filled:0,groups:new Set()});const o=byB.get(b);o.req+=L.get(r);o.before+=Mbefore.get(r);o.after+=mval(r);if(step2New.has(r))o.step2++}
     for(const x of report){const o=byB.get(x.buyer);o.added+=x.add;o.filled++;o.groups.add(norm(x.key))}
     const buyers=[...byB.values()].sort((a,b)=>b.after-a.after);
     const totBefore=rows.reduce((s,r)=>s+Mbefore.get(r),0), totAfter=rows.reduce((s,r)=>s+mval(r),0);
@@ -624,20 +624,23 @@ function refresh(){ $("outName").textContent=outNames().ott; $("runBtn").disable
   if(fpFile&&docFile) status("✓ Both files uploaded. Ready to run."); else if(fpFile||docFile) status(`✓ 1 of 2 uploaded. Add the ${fpFile?"DOC -280+217":"Fabric Plan"} file.`); else status("Add both files to start.");
   if(outputs){outputs.ottName=outNames().ott;outputs.logName=outNames().log} }
 function drawSummary(buyers){
+  const head=`<thead><tr><th>Buyer</th><th class="n">Total Req Qty</th><th class="n">RFD Qty · last update</th><th class="n">RFD Qty · now</th><th class="n">Added qty</th><th style="min-width:200px">Completion % (RFD ÷ Req)</th></tr></thead>`;
   if(!buyers){
     $("sumNote").textContent="";
-    $("sumTbl").innerHTML=`<thead><tr><th>Buyer</th><th class="n">Last update</th><th class="n">This update</th><th class="n">Added</th><th class="n">Share of added</th></tr></thead><tbody><tr><td colspan="5" style="color:var(--muted);white-space:normal">Run the update to see how much RFD qty each buyer gained since the last file. “Last update” is the RFD Qty (col M) already in the Fabric Plan you upload.</td></tr></tbody>`;
+    $("sumTbl").innerHTML=head+`<tbody><tr><td colspan="6" style="color:var(--muted);white-space:normal">Run the update to see each buyer's Req Qty, RFD Qty before and after, the qty added, and completion %. “Last update” is the RFD Qty (col M) already in the Fabric Plan you upload.</td></tr></tbody>`;
     return;
   }
-  const list=buyers.filter(b=>b.before||b.after).map(b=>({...b,gain:r3(b.after-b.before)})).sort((a,b)=>b.gain-a.gain||b.after-a.after);
-  const tot=list.reduce((t,b)=>({b:t.b+b.before,a:t.a+b.after,g:t.g+b.gain,s:t.s+b.step2,f:t.f+b.filled}),{b:0,a:0,g:0,s:0,f:0});
-  const mx=Math.max(1,...list.map(b=>b.gain));
-  let h=`<thead><tr><th>Buyer</th><th class="n">Last update</th><th class="n">This update</th><th class="n">Added</th><th class="n">Rows =L</th><th class="n">Rows filled</th><th style="min-width:160px">Share of added</th></tr></thead><tbody>`;
-  for(const b of list){const pc=tot.g>0?b.gain/tot.g*100:0;
-    h+=`<tr><td>${esc(b.buyer)}</td><td class="n">${fmt(b.before)}</td><td class="n">${fmt(b.after)}</td><td class="n" style="font-weight:700;color:${b.gain>0?"var(--accent)":"var(--muted)"}">${b.gain>0?"+":""}${fmt(b.gain)}</td><td class="n">${b.step2}</td><td class="n">${b.filled}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i style="width:${(Math.max(0,b.gain)/mx*100).toFixed(1)}%"></i></div><span style="font-size:12px;color:var(--muted);width:38px;text-align:right">${pc.toFixed(0)}%</span></div></td></tr>`}
-  h+=`<tr class="tot"><td>Total</td><td class="n">${fmt(tot.b)}</td><td class="n">${fmt(tot.a)}</td><td class="n">+${fmt(tot.g)}</td><td class="n">${tot.s}</td><td class="n">${tot.f}</td><td></td></tr></tbody>`;
+  const list=buyers.filter(b=>b.req||b.before||b.after).map(b=>({...b,gain:r3(b.after-b.before)})).sort((a,b)=>b.gain-a.gain||b.req-a.req);
+  const t=list.reduce((t,b)=>({req:t.req+b.req,b:t.b+b.before,a:t.a+b.after,g:t.g+b.gain}),{req:0,b:0,a:0,g:0});
+  const pct=(x,y)=>y>0?x/y*100:0;
+  const cell=(after,before,req,bold)=>{const p=pct(after,req),p0=pct(before,req),d=p-p0;
+    return `<td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="flex:1;min-width:90px"><i style="width:${Math.min(100,p0).toFixed(1)}%;background:var(--q60)"></i><i style="left:${Math.min(100,p0).toFixed(1)}%;width:${Math.max(0,Math.min(100,p)-Math.min(100,p0)).toFixed(1)}%;border-radius:0 4px 4px 0"></i></div><span style="min-width:96px;text-align:right;${bold?"font-weight:700":""}">${p.toFixed(1)}%${d>0.05?` <span style="color:var(--accent);font-size:12px;font-weight:600">+${d.toFixed(1)}</span>`:""}</span></div></td>`};
+  let h=head+"<tbody>";
+  for(const b of list){
+    h+=`<tr><td>${esc(b.buyer)}</td><td class="n">${fmt(b.req)}</td><td class="n">${fmt(b.before)}</td><td class="n">${fmt(b.after)}</td><td class="n" style="font-weight:700;color:${b.gain>0?"var(--accent)":"var(--muted)"}">${b.gain>0?"+":""}${fmt(b.gain)}</td>${cell(b.after,b.before,b.req,false)}</tr>`}
+  h+=`<tr class="tot"><td>Total</td><td class="n">${fmt(t.req)}</td><td class="n">${fmt(t.b)}</td><td class="n">${fmt(t.a)}</td><td class="n">${t.g>0?"+":""}${fmt(t.g)}</td>${cell(t.a,t.b,t.req,true)}</tr></tbody>`;
   $("sumTbl").innerHTML=h;
-  $("sumNote").textContent=`Last update = RFD Qty in ${fpFile?fpFile.name:"the uploaded file"} · m`;
+  $("sumNote").textContent=`Last update = RFD Qty in ${fpFile?fpFile.name:"the uploaded file"} · qty in m · bar: light = before, dark purple = added this update`;
 }
 async function sheetNames(zip){const f=zip.file("xl/workbook.xml");if(!f)throw new Error("not a workbook");const x=await f.async("string");return [...x.matchAll(/<sheet\b[^>]*\bname="([^"]*)"/g)].map(m=>decode(m[1]))}
 const RULE={
