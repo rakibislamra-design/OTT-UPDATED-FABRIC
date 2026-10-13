@@ -984,7 +984,7 @@ function buildSnapshot(){
   return {v:1,articles:A,ott:outputs?outputs.ottName:"",ottPath:OTT_PATH,tool:"ott-fabric-plan-updater",at:DASH.at,report:DASH.report,fp:DASH.fp,doc:DASH.doc,summary:DASH.buyers,buyers:B,rows};
 }
 function setViewer(on){
-  $("viewBar").hidden=!on;
+  $("viewBar").hidden=!on; $("newUpdBtn").hidden=!getKey();
   document.querySelector("section.inputs").hidden=on; document.querySelector(".runbar").hidden=on;
   if(on){ $("prog").hidden=true; $("results").hidden=true; }
 }
@@ -1151,8 +1151,8 @@ $("tip").addEventListener("keydown",e=>{const tr=e.target.closest("tr.pick"); if
 window.addEventListener("scroll",hideTip,{passive:true});
 $("gearBtn").addEventListener("click",()=>{ const d=$("setDlg"); d.hidden=!d.hidden; if(!d.hidden){ $("siteKey").value=getKey(); $("setStatus").textContent=!SITE?"Auto-save works on the GitHub site only.":getKey()?`Auto-save is ON for ${SITE.owner}/${SITE.repo}`:"Auto-save is off"; $("siteKey").focus(); } });
 $("setClose").addEventListener("click",()=>{$("setDlg").hidden=true});
-$("keySave").addEventListener("click",()=>{ const v=$("siteKey").value.trim(); if(!v){$("setStatus").textContent="Paste the key first.";return} try{localStorage.setItem("sqhues.sitekey",v)}catch(e){} $("setStatus").textContent=SITE?`✓ Saved · auto-save is ON for ${SITE.owner}/${SITE.repo}`:"✓ Saved (auto-save runs on the GitHub site)"; });
-$("keyRemove").addEventListener("click",()=>{ try{localStorage.removeItem("sqhues.sitekey")}catch(e){} $("siteKey").value=""; $("setStatus").textContent="Key removed · auto-save is off"; });
+$("keySave").addEventListener("click",()=>{ const v=$("siteKey").value.trim(); if(!v){$("setStatus").textContent="Paste the key first.";return} try{localStorage.setItem("sqhues.sitekey",v)}catch(e){} $("setStatus").textContent=SITE?`✓ Saved · auto-save is ON for ${SITE.owner}/${SITE.repo}`:"✓ Saved (auto-save runs on the GitHub site)"; $("newUpdBtn").hidden=false; });
+$("keyRemove").addEventListener("click",()=>{ try{localStorage.removeItem("sqhues.sitekey")}catch(e){} $("siteKey").value=""; $("setStatus").textContent="Key removed · auto-save is off"; $("newUpdBtn").hidden=true; });
 $("newUpdBtn").addEventListener("click",()=>{ setViewer(false); $("fileFP").focus(); });
 drawSummary(null);
 fetchSnapshot();
