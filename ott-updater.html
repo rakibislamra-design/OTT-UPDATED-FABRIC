@@ -171,10 +171,19 @@ td.fail{color:var(--red);font-weight:600}
 .dpgrid button.today{box-shadow:inset 0 0 0 1.5px var(--q60)}
 .dpfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
 button.sm{font-size:13px;padding:6px 12px}
+td.fail.hov{cursor:help;text-decoration:underline dotted;text-underline-offset:3px}
+td.fail.hov:hover{background:var(--red-soft)}
+.tip{position:fixed;z-index:50;max-width:min(460px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--red);border-radius:10px;box-shadow:0 14px 40px rgba(43,32,39,.25);padding:10px 12px;font-size:12.5px;pointer-events:none}
+.tip h4{margin:0 0 6px;font:700 13px var(--f-display)}
+.tip table{font-size:12px}
+.tip th{position:static;background:var(--q10);color:var(--fg);padding:4px 8px}
+.tip td{padding:3px 8px;white-space:normal}
+.tip .more{color:var(--muted);margin-top:6px}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .chartbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px;overflow-x:auto}
 .chartbox svg{display:block;width:100%;min-width:560px;height:auto}
 .chartbox text{fill:var(--fg);font-family:var(--f-body);font-size:12px;font-variant-numeric:tabular-nums}
+.chartbox text.pct{font:700 11px var(--f-body)}.chartbox text.pct.good{fill:var(--ok)}.chartbox text.pct.mid{fill:var(--fg)}.chartbox text.pct.bad{fill:var(--red)}
 .chartbox text.mut{fill:var(--muted);font-size:11px}
 .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin:2px 0 8px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
@@ -273,6 +282,9 @@ button.sm{font-size:13px;padding:6px 12px}
           <span class="status">Dates = Agreed RFD Date-Hues (col S) · dots mark days with demand</span>
         </div>
         <div class="tbl"><table id="demTbl"></table></div>
+        <div class="row2" style="margin-top:6px"><h2>Date-wise plan vs performance</h2><span class="status" id="dayNote"></span></div>
+        <div class="chartbox"><div class="legend"><span><i style="background:var(--q20)"></i>Plan (demand)</span><span><i style="background:var(--accent)"></i>RFD + recovered</span><span>% = performance</span></div><div id="dayChart"></div></div>
+        <div class="tbl scroll" style="max-height:340px"><table id="dayTbl"></table></div>
         <div class="row2" style="margin-top:6px"><h2>Plan TBC · buyer-wise</h2><span class="status" id="tbcNote">Rows where Agreed RFD Date-Hues is “Plan TBC” · not date-filtered</span></div>
         <div class="tbl"><table id="tbcTbl"></table></div>
       </section>
@@ -295,6 +307,7 @@ button.sm{font-size:13px;padding:6px 12px}
   </section>
 
   <div id="errBox"></div>
+  <div class="tip" id="tip" role="tooltip" hidden></div>
   <footer>Excel recalculates every formula when you open the updated file. Check the Buyer Wise OTT Hit Rate MTD figures after opening it.</footer>
 </div>
 
@@ -479,7 +492,7 @@ async function run(){
     setStep("alloc","done");
 
     /* write */
-    DEM=rows.map(r=>{const sv=val(r,"S").v;return {b:buyer.get(r),s:isNum(sv)?Math.floor(sv):null,tbc:typeof sv==="string"&&/tbc/i.test(sv),L:L.get(r),M:mval(r),O:O.get(r)}});
+    DEM=rows.map(r=>{const sv=val(r,"S").v;return {b:buyer.get(r),s:isNum(sv)?Math.floor(sv):null,tbc:typeof sv==="string"&&/tbc/i.test(sv),L:L.get(r),M:mval(r),O:O.get(r),po:String(val(r,"Q").v??"").trim(),col:String(val(r,"J").v??"").trim(),art:String(val(r,"I").v??"").trim()}});
     setStep("write","run");status("Writing workbook…");await tick();
     const writeCols=["M","AM","AN","AO","AP","AQ","AR","AS","AT","AU","AV","AW","AX"];
     const W=new Set(writeCols);
@@ -683,33 +696,81 @@ function demRange(){
   if(demSel.mode==="ytd") return rep?{lo:null,hi:rep-1,label:`Up to ${fromSerial(rep-1)}`}:null;
   const {lo,hi}=demSel; return {lo,hi,label:lo===hi?fromSerial(lo):`${fromSerial(lo)} to ${fromSerial(hi)}`};
 }
+let FAILMAP=new Map();
+function inRange(x,R){return x.s!==null&&!((R.lo!==null&&R.lo&&x.s<R.lo)||(R.hi!==null&&R.hi&&x.s>R.hi))}
 function drawDemand(){
   const head=`<thead><tr><th>Buyer</th><th class="n">Demand qty</th><th class="n">RFD qty</th><th class="n">Recovered</th><th class="n">Failed qty</th><th style="min-width:190px">Hit % (RFD + Recovered ÷ Demand)</th></tr></thead>`;
-  if(!DEM){$("demTbl").innerHTML=head+`<tbody><tr><td colspan="6" style="color:var(--muted)">Run the update to see demand vs RFD.</td></tr></tbody>`;return}
+  if(!DEM){$("demTbl").innerHTML=head+`<tbody><tr><td colspan="6" style="color:var(--muted)">Run the update to see demand vs RFD.</td></tr></tbody>`;drawDays(null);return}
   const R=demRange();
-  if(!R){$("demNote").textContent="";$("demTbl").innerHTML=head+`<tbody><tr><td colspan="6" style="color:var(--muted)">Pick dates above.</td></tr></tbody>`;return}
-  const by=new Map(); let noDate=0;
-  for(const x of DEM){ if(x.s===null){noDate++;continue} if((R.lo!==null&&R.lo&&x.s<R.lo)||(R.hi!==null&&R.hi&&x.s>R.hi))continue;
-    if(!by.has(x.b))by.set(x.b,{b:x.b,d:0,m:0,o:0}); const o=by.get(x.b); o.d+=x.L; o.m+=x.M; o.o+=x.O; }
+  if(!R){$("demNote").textContent="";$("demTbl").innerHTML=head+`<tbody><tr><td colspan="6" style="color:var(--muted)">Pick dates above.</td></tr></tbody>`;drawDays(null);return}
+  const by=new Map(); FAILMAP=new Map(); const allShort=new Map();
+  for(const x of DEM){ if(!inRange(x,R))continue;
+    if(!by.has(x.b))by.set(x.b,{b:x.b,d:0,m:0,o:0}); const o=by.get(x.b); o.d+=x.L; o.m+=x.M; o.o+=x.O;
+    const short=x.L-x.M-x.O;
+    if(short>0.5){ for(const [k,mp] of [[x.b,null],["__ALL__",null]]){ if(!FAILMAP.has(k))FAILMAP.set(k,new Map()); const g=FAILMAP.get(k); const key=x.po+"\u0001"+x.col+(k==="__ALL__"?"\u0001"+x.b:"");
+        if(!g.has(key))g.set(key,{po:x.po,col:x.col,b:x.b,q:0,rows:0}); const e=g.get(key); e.q+=short; e.rows++; } } }
   const list=[...by.values()].filter(o=>o.d||o.m).sort((a,b)=>b.d-a.d);
   const t=list.reduce((t,o)=>({d:t.d+o.d,m:t.m+o.m,o:t.o+o.o}),{d:0,m:0,o:0});
-  const line=(name,o,cls)=>{const fail=Math.max(0,o.d-o.m-o.o),hit=o.d>0?(o.m+o.o)/o.d*100:0,k=hit>=95?"good":hit>=70?"mid":"bad";
-    return `<tr${cls}><td>${esc(name)}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n">${o.o?fmt(o.o):"–"}</td><td class="n ${fail>0.5?"fail":""}">${fail>0.5?fmt(fail):"0"}</td><td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="flex:1;min-width:90px"><i style="width:${Math.min(100,hit).toFixed(1)}%"></i></div><span class="hit ${k}" style="min-width:58px;text-align:right">${hit.toFixed(1)}%</span></div></td></tr>`};
-  let h=head+"<tbody>"+(list.length?list.map(o=>line(o.b,o,"")).join(""):`<tr><td colspan="6" style="color:var(--muted)">No demand in this period.</td></tr>`);
-  if(list.length) h+=line("Total",t,' class="tot"');
+  const line=(name,o,cls,key)=>{const fail=Math.max(0,o.d-o.m-o.o),hit=o.d>0?(o.m+o.o)/o.d*100:0,k=hit>=95?"good":hit>=70?"mid":"bad";
+    const hov=FAILMAP.has(key)?` hov" data-fk="${esc(key)}" tabindex="0`:"";
+    return `<tr${cls}><td>${esc(name)}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n">${o.o?fmt(o.o):"–"}</td><td class="n ${fail>0.5?"fail":""}${fail>0.5?hov:""}">${fail>0.5?fmt(fail):"0"}</td><td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="flex:1;min-width:90px"><i style="width:${Math.min(100,hit).toFixed(1)}%"></i></div><span class="hit ${k}" style="min-width:58px;text-align:right">${hit.toFixed(1)}%</span></div></td></tr>`};
+  let h=head+"<tbody>"+(list.length?list.map(o=>line(o.b,o,"",o.b)).join(""):`<tr><td colspan="6" style="color:var(--muted)">No demand in this period.</td></tr>`);
+  if(list.length) h+=line("Total",t,' class="tot"',"__ALL__");
   $("demTbl").innerHTML=h+"</tbody>";
-  $("demNote").textContent=`${R.label} · qty in m`; $("dpLabel").textContent=demSel.mode==="ytd"?`Up to yesterday · ${R.label.replace("Up to ","")}`:R.label;
-  drawTBC();
+  $("demNote").textContent=`${R.label} · qty in m · hover a failed qty to see PO & colour`; $("dpLabel").textContent=demSel.mode==="ytd"?`Up to yesterday · ${R.label.replace("Up to ","")}`:R.label;
+  drawDays(R); drawTBC();
+}
+function showTip(td,x,y){
+  const key=td.dataset.fk, g=FAILMAP.get(key); if(!g)return;
+  const all=key==="__ALL__", items=[...g.values()].sort((a,b)=>b.q-a.q), top=items.slice(0,14), tot=items.reduce((s,e)=>s+e.q,0);
+  let h=`<h4>${all?"All buyers":esc(key)} · short by PO & colour</h4><table><thead><tr><th>PO</th><th>Colour</th>${all?"<th>Buyer</th>":""}<th class="n">Short qty</th></tr></thead><tbody>`;
+  for(const e of top) h+=`<tr><td>${esc(e.po||"—")}</td><td>${esc(e.col||"—")}</td>${all?`<td>${esc(e.b)}</td>`:""}<td class="n">${fmt(e.q)}</td></tr>`;
+  h+=`</tbody></table>`; if(items.length>top.length) h+=`<div class="more">+ ${items.length-top.length} more PO · colour lines</div>`;
+  h+=`<div class="more">${items.length} lines · ${fmt(tot)} m short (row level, before over-delivery offsets)</div>`;
+  const tip=$("tip"); tip.innerHTML=h; tip.hidden=false;
+  const r=tip.getBoundingClientRect(); let L=x+14, T=y+14;
+  if(L+r.width>innerWidth-8)L=Math.max(8,x-r.width-14); if(T+r.height>innerHeight-8)T=Math.max(8,y-r.height-14);
+  tip.style.left=L+"px"; tip.style.top=T+"px";
+}
+function hideTip(){$("tip").hidden=true}
+function drawDays(R){
+  const head=`<thead><tr><th>Date</th><th class="n">Plan qty</th><th class="n">RFD + recovered</th><th class="n">Failed qty</th><th style="min-width:190px">Performance %</th></tr></thead>`;
+  if(!DEM||!R){$("dayChart").innerHTML='<p class="status">Run the update to see each day\'s plan vs performance.</p>';$("dayTbl").innerHTML=head;$("dayNote").textContent="";return}
+  const by=new Map();
+  for(const x of DEM){ if(!inRange(x,R))continue; if(!by.has(x.s))by.set(x.s,{s:x.s,d:0,a:0}); const o=by.get(x.s); o.d+=x.L; o.a+=x.M+x.O; }
+  const days=[...by.values()].filter(o=>o.d>0).sort((a,b)=>a.s-b.s);
+  if(!days.length){$("dayChart").innerHTML='<p class="status">No plan in this period.</p>';$("dayTbl").innerHTML=head;return}
+  const pc=o=>o.d>0?o.a/o.d*100:0, cls=p=>p>=95?"good":p>=70?"mid":"bad";
+  // chart
+  const colW=Math.max(34,Math.min(70,Math.floor(900/days.length))), top=28, ph=170, left=56, W=left+days.length*colW+10, H=top+ph+44;
+  const mx=Math.max(...days.map(o=>Math.max(o.d,o.a))), step=niceStep(mx/4), yMax=Math.ceil(mx/step)*step||1, y=v=>top+ph-v/yMax*ph;
+  let g=`<svg viewBox="0 0 ${W} ${H}" style="min-width:${Math.min(W,560)}px;width:${W}px;max-width:100%" role="img" aria-label="Plan vs RFD by date">`;
+  for(let v=0;v<=yMax+1e-9;v+=step) g+=`<line x1="${left}" x2="${W-6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="mut" x="${left-6}" y="${y(v)+4}" text-anchor="end">${fmtK(v)}</text>`;
+  days.forEach((o,i)=>{const x0=left+i*colW, bw=Math.max(6,(colW-10)/2), p=pc(o), d=sDate(o.s);
+    g+=`<rect x="${x0+4}" y="${y(o.d)}" width="${bw}" height="${top+ph-y(o.d)}" rx="2" fill="var(--q20)"><title>${fromSerial(o.s)} plan ${fmt(o.d)} m</title></rect>`;
+    g+=`<rect x="${x0+4+bw+1}" y="${y(Math.min(o.a,yMax))}" width="${bw}" height="${top+ph-y(Math.min(o.a,yMax))}" rx="2" fill="var(--accent)"><title>${fromSerial(o.s)} RFD ${fmt(o.a)} m · ${p.toFixed(1)}%</title></rect>`;
+    g+=`<text x="${x0+colW/2}" y="${Math.min(y(o.d),y(Math.min(o.a,yMax)))-6}" text-anchor="middle" class="pct ${cls(p)}">${Math.round(p)}%</text>`;
+    g+=`<text class="mut" x="${x0+colW/2}" y="${top+ph+16}" text-anchor="middle">${d.getUTCDate()}</text>`;
+    if(i===0||d.getUTCDate()===1) g+=`<text class="mut" x="${x0+colW/2}" y="${top+ph+32}" text-anchor="middle">${MON[d.getUTCMonth()]}</text>`;});
+  $("dayChart").innerHTML=g+"</svg>";
+  // table (latest first)
+  let h=head+"<tbody>", T={d:0,a:0};
+  for(const o of days.slice().reverse()){ const p=pc(o), f=Math.max(0,o.d-o.a); T.d+=o.d; T.a+=o.a;
+    h+=`<tr><td>${fromSerial(o.s)} <span style="color:var(--muted)">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][sDate(o.s).getUTCDay()]}</span></td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.a)}</td><td class="n ${f>0.5?"fail":""}">${fmt(f)}</td><td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="flex:1;min-width:90px"><i style="width:${Math.min(100,p).toFixed(1)}%"></i></div><span class="hit ${cls(p)}" style="min-width:58px;text-align:right">${p.toFixed(1)}%</span></div></td></tr>`;}
+  const tp=T.d>0?T.a/T.d*100:0;
+  h+=`<tr class="tot"><td>Total · ${days.length} days</td><td class="n">${fmt(T.d)}</td><td class="n">${fmt(T.a)}</td><td class="n">${fmt(Math.max(0,T.d-T.a))}</td><td><span class="hit ${cls(tp)}">${tp.toFixed(1)}%</span></td></tr>`;
+  $("dayTbl").innerHTML=h+"</tbody>";
+  $("dayNote").textContent=`${R.label} · ${days.length} plan days · latest first`;
 }
 function drawTBC(){
-  const head=`<thead><tr><th>Buyer</th><th class="n">Rows</th><th class="n">Demand qty (TBC)</th><th class="n">RFD qty</th><th class="n">Balance qty</th></tr></thead>`;
-  if(!DEM){$("tbcTbl").innerHTML=head+`<tbody><tr><td colspan="5" style="color:var(--muted)">Run the update to see Plan TBC qty by buyer.</td></tr></tbody>`;return}
+  const head=`<thead><tr><th>Buyer</th><th class="n">Demand qty (TBC)</th><th class="n">RFD qty</th><th class="n">Balance qty</th></tr></thead>`;
+  if(!DEM){$("tbcTbl").innerHTML=head+`<tbody><tr><td colspan="4" style="color:var(--muted)">Run the update to see Plan TBC qty by buyer.</td></tr></tbody>`;return}
   const by=new Map();
   for(const x of DEM){ if(!x.tbc)continue; if(!by.has(x.b))by.set(x.b,{b:x.b,n:0,d:0,m:0,o:0}); const o=by.get(x.b); o.n++; o.d+=x.L; o.m+=x.M; o.o+=x.O; }
   const list=[...by.values()].sort((a,b)=>b.d-a.d);
-  if(!list.length){$("tbcTbl").innerHTML=head+`<tbody><tr><td colspan="5" style="color:var(--muted)">No Plan TBC rows in this file.</td></tr></tbody>`;return}
+  if(!list.length){$("tbcTbl").innerHTML=head+`<tbody><tr><td colspan="4" style="color:var(--muted)">No Plan TBC rows in this file.</td></tr></tbody>`;return}
   const t=list.reduce((t,o)=>({n:t.n+o.n,d:t.d+o.d,m:t.m+o.m,o:t.o+o.o}),{n:0,d:0,m:0,o:0});
-  const line=(name,o,cls)=>{const bal=Math.max(0,o.d-o.m-o.o);return `<tr${cls}><td>${esc(name)}</td><td class="n">${o.n}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n ${bal>0.5?"fail":""}">${fmt(bal)}</td></tr>`};
+  const line=(name,o,cls)=>{const bal=Math.max(0,o.d-o.m-o.o);return `<tr${cls}><td>${esc(name)}</td><td class="n">${fmt(o.d)}</td><td class="n">${fmt(o.m)}</td><td class="n ${bal>0.5?"fail":""}">${fmt(bal)}</td></tr>`};
   $("tbcTbl").innerHTML=head+"<tbody>"+list.map(o=>line(o.b,o,"")).join("")+line("Total",t,' class="tot"')+"</tbody>";
 }
 function drawSummary(buyers){
@@ -818,6 +879,12 @@ document.addEventListener("click",e=>{if(!$("dpPop").hidden&&!$("dp").contains(e
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("dpPop").hidden)dpClose()});
 $("runDate").addEventListener("change",()=>{if(DEM)drawDemand()});
 drawTBC();
+$("demTbl").addEventListener("mousemove",e=>{const td=e.target.closest("td.hov");if(td)showTip(td,e.clientX,e.clientY);else hideTip()});
+$("demTbl").addEventListener("mouseleave",hideTip);
+$("demTbl").addEventListener("click",e=>{const td=e.target.closest("td.hov");if(td){const r=td.getBoundingClientRect();showTip(td,r.left,r.bottom)}});
+$("demTbl").addEventListener("focusin",e=>{const td=e.target.closest("td.hov");if(td){const r=td.getBoundingClientRect();showTip(td,r.left,r.bottom)}});
+$("demTbl").addEventListener("focusout",hideTip);
+window.addEventListener("scroll",hideTip,{passive:true});
 drawSummary(null);
 refresh();
 </script>
