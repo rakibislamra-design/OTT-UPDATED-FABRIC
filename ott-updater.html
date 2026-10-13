@@ -201,6 +201,14 @@ td.fail.hov:hover{background:var(--red-soft)}
 .dlb svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #poTbl td{white-space:normal}
 #poTbl td.n{white-space:nowrap}
+.posearch{position:relative;max-width:420px}
+.posearch input{font-size:15px;padding:9px 12px}
+.posug{position:absolute;z-index:30;left:0;right:0;top:100%;margin:4px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(43,32,39,.18);max-height:320px;overflow:auto}
+.posug li{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:13.5px}
+.posug li b{font-family:var(--f-mono);font-weight:600}
+.posug li span{color:var(--muted);font-size:12.5px;text-align:right}
+.posug li.act,.posug li:hover{background:var(--q10)}
+.posug mark{background:var(--q20);color:inherit;border-radius:2px}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .chartbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px;overflow-x:auto}
 .chartbox svg{display:block;width:100%;min-width:560px;height:auto}
@@ -331,17 +339,14 @@ td.fail.hov:hover{background:var(--red-soft)}
         <div class="chartbox"><div class="legend"><span><i style="background:var(--accent)"></i>RFD qty (+ recovered)</span><span>% above bar = achieve % vs plan</span></div><div id="dayChart"></div></div>
         <div class="row2" style="margin-top:6px"><h2>Plan TBC · buyer-wise <span class="stamp" data-stamp></span></h2><span class="status" id="tbcNote">Rows where Agreed RFD Date-Hues is “Plan TBC” · not date-filtered</span></div>
         <div class="tbl"><table id="tbcTbl"></table></div>
-        <div class="row2" style="margin-top:6px"><h2>PO details <span class="stamp" data-stamp></span></h2>
-          <label class="f" for="q" style="min-width:280px">Filter by PO, colour, article or buyer
-            <input type="search" id="q" placeholder="e.g. 459112 or Navy Blazer or LIDL">
+        <div class="row2" style="margin-top:6px"><h2>PO details <span class="stamp" data-stamp></span></h2></div>
+        <div class="posearch">
+          <label class="f" for="q">Search a PO
+            <input type="search" id="q" placeholder="Type a PO number, e.g. 4512…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="poSug">
           </label>
+          <ul class="posug" id="poSug" role="listbox" hidden></ul>
         </div>
-        <div class="filters" role="group" aria-label="Show">
-          <button type="button" class="chip pochip" data-po="behind" aria-pressed="true">Behind only</button>
-          <button type="button" class="chip pochip" data-po="all" aria-pressed="false">All POs</button>
-        </div>
-        <div class="tbl scroll" style="max-height:520px"><table id="poTbl"></table></div>
-        <div class="status" id="poNote"></div>
+        <div id="poOut"><div class="tbl"><table id="poTbl"></table></div><div class="status" id="poNote"></div></div>
       </section>
   </section>
 
@@ -713,30 +718,46 @@ function render(R){
   drawSummary(DASH.buyers);
 
 }
-let poMode="behind";
+let POIDX=null, sugAct=-1;
+function buildPOIndex(){
+  const m=new Map();
+  for(const x of DEM){ if(!x.po||!(x.L||x.M||x.O))continue; if(!m.has(x.po))m.set(x.po,{po:x.po,b:new Set(),req:0,del:0}); const o=m.get(x.po); o.b.add(x.b); o.req+=x.L; o.del+=x.M+x.O; }
+  POIDX=[...m.values()].map(o=>({...o,b:[...o.b].join(", "),beh:Math.max(0,o.req-o.del)}));
+}
+function drawSug(){
+  const q=($("q").value||"").trim().toLowerCase(), ul=$("poSug");
+  if(!POIDX||!q){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
+  const hits=POIDX.filter(o=>o.po.toLowerCase().includes(q)).sort((a,b)=>(a.po.toLowerCase().startsWith(q)?0:1)-(b.po.toLowerCase().startsWith(q)?0:1)||b.beh-a.beh).slice(0,10);
+  if(!hits.length||(hits.length===1&&hits[0].po.toLowerCase()===q)){ ul.hidden=true; $("q").setAttribute("aria-expanded","false"); return; }
+  sugAct=-1;
+  ul.innerHTML=hits.map((o,i)=>{const i0=o.po.toLowerCase().indexOf(q); const hl=esc(o.po.slice(0,i0))+"<mark>"+esc(o.po.slice(i0,i0+q.length))+"</mark>"+esc(o.po.slice(i0+q.length));
+    return `<li role="option" data-po="${esc(o.po)}" id="sug${i}"><b>${hl}</b><span>${esc(o.b)} · ${o.beh>0.5?`<span style="color:var(--red)">${fmt(o.beh)} behind</span>`:"complete"}</span></li>`}).join("");
+  ul.hidden=false; $("q").setAttribute("aria-expanded","true");
+}
+function pickSug(po){ $("q").value=po; $("poSug").hidden=true; $("q").setAttribute("aria-expanded","false"); drawPO(); }
 function drawPO(){
-  const head=`<thead><tr><th>Buyer</th><th>PO</th><th>Colour</th><th>Article</th><th class="n">Req qty</th><th class="n">Delivered qty</th><th class="n">Behind qty</th><th class="n">Done %</th></tr></thead>`;
-  if(!DEM){$("poTbl").innerHTML=head;$("poNote").textContent="";return}
-  const g=new Map();
-  for(const x of DEM){ if(!(x.L||x.M||x.O))continue; const k=x.b+"\u0001"+x.po+"\u0001"+x.col+"\u0001"+(x.art||"");
-    if(!g.has(k))g.set(k,{b:x.b,po:x.po,col:x.col,art:x.art||"",req:0,del:0}); const o=g.get(k); o.req+=x.L; o.del+=x.M+x.O; }
-  const q=($("q").value||"").toLowerCase().trim().split(/\s+/).filter(Boolean);
-  let list=[...g.values()].map(o=>({...o,beh:Math.max(0,o.req-o.del)}));
-  if(q.length) list=list.filter(o=>{const t=(o.b+" "+o.po+" "+o.col+" "+o.art).toLowerCase();return q.every(w=>t.includes(w))});
-  if(poMode==="behind") list=list.filter(o=>o.beh>0.5);
-  list.sort((a,b)=>b.beh-a.beh||b.req-a.req);
-  const T=list.reduce((t,o)=>({r:t.r+o.req,d:t.d+o.del,b:t.b+o.beh}),{r:0,d:0,b:0});
-  const pc=o=>o.req>0?Math.min(100,o.del/o.req*100):0, cls=p=>p>=95?"good":p>=70?"mid":"bad";
-  let h=head+"<tbody>";
-  if(!list.length) h+=`<tr><td colspan="8" style="color:var(--muted)">No PO lines match.</td></tr>`;
-  else{
-    h+=`<tr class="tot"><td colspan="4">Total · ${list.length.toLocaleString()} lines${q.length?" (filtered)":""}</td><td class="n">${fmt(T.r)}</td><td class="n">${fmt(T.d)}</td><td class="n ${T.b>0.5?"fail":""}">${fmt(T.b)}</td><td class="n"><span class="hit ${cls(T.r?T.d/T.r*100:0)}">${(T.r?Math.min(100,T.d/T.r*100):0).toFixed(1)}%</span></td></tr>`;
-    for(const o of list.slice(0,600)){const p=pc(o);
-      h+=`<tr><td>${esc(o.b)}</td><td>${esc(o.po||"—")}</td><td>${esc(o.col||"—")}</td><td style="color:var(--muted);font-size:12.5px">${esc(o.art||"—")}</td><td class="n">${fmt(o.req)}</td><td class="n">${fmt(o.del)}</td><td class="n ${o.beh>0.5?"fail":""}">${fmt(o.beh)}</td><td class="n"><span class="hit ${cls(p)}">${p.toFixed(0)}%</span></td></tr>`}
-    if(list.length>600) h+=`<tr><td colspan="8" style="color:var(--muted)">Showing 600 of ${list.length.toLocaleString()} lines. Type in the filter to narrow down.</td></tr>`;
+  const head=`<thead><tr><th>Buyer</th><th>Colour</th><th>Article</th><th class="n">Req qty</th><th class="n">Delivered qty</th><th class="n">Behind qty</th><th class="n">Done %</th></tr></thead>`;
+  if(!DEM){$("poOut").hidden=true;return}
+  if(!POIDX) buildPOIndex();
+  const q=($("q").value||"").trim().toLowerCase();
+  const exact=POIDX.filter(o=>o.po.toLowerCase()===q);
+  const pos=exact.length?exact:(q.length>=4?POIDX.filter(o=>o.po.toLowerCase().includes(q)):[]);
+  if(!q||!pos.length||pos.length>5){ $("poOut").hidden=true; return; }
+  const want=new Set(pos.map(o=>o.po)); const g=new Map();
+  for(const x of DEM){ if(!want.has(x.po)||!(x.L||x.M||x.O))continue; const k=x.po+"\u0001"+x.b+"\u0001"+x.col+"\u0001"+(x.art||"");
+    if(!g.has(k))g.set(k,{po:x.po,b:x.b,col:x.col,art:x.art||"",req:0,del:0}); const o=g.get(k); o.req+=x.L; o.del+=x.M+x.O; }
+  const pc=(d,r)=>r>0?Math.min(100,d/r*100):0, cls=p=>p>=95?"good":p>=70?"mid":"bad";
+  let h="";
+  for(const po of want){
+    const list=[...g.values()].filter(o=>o.po===po).map(o=>({...o,beh:Math.max(0,o.req-o.del)})).sort((a,b)=>b.beh-a.beh||b.req-a.req);
+    const T=list.reduce((t,o)=>({r:t.r+o.req,d:t.d+o.del,b:t.b+o.beh}),{r:0,d:0,b:0});
+    h+=`<tbody><tr class="tot"><td colspan="3">PO ${esc(po)} · ${list.length} colour/article line${list.length>1?"s":""}</td><td class="n">${fmt(T.r)}</td><td class="n">${fmt(T.d)}</td><td class="n ${T.b>0.5?"fail":""}">${fmt(T.b)}</td><td class="n"><span class="hit ${cls(pc(T.d,T.r))}">${pc(T.d,T.r).toFixed(1)}%</span></td></tr>`;
+    for(const o of list){const p=pc(o.del,o.req);
+      h+=`<tr><td>${esc(o.b)}</td><td>${esc(o.col||"—")}</td><td style="color:var(--muted);font-size:12.5px">${esc(o.art||"—")}</td><td class="n">${fmt(o.req)}</td><td class="n">${fmt(o.del)}</td><td class="n ${o.beh>0.5?"fail":""}">${fmt(o.beh)}</td><td class="n"><span class="hit ${cls(p)}">${p.toFixed(0)}%</span></td></tr>`}
+    h+="</tbody>";
   }
-  $("poTbl").innerHTML=h+"</tbody>";
-  $("poNote").textContent=`Whole file (all dates) · grouped by buyer, PO, colour and article · delivered = RFD + recovered · qty in m`;
+  $("poTbl").innerHTML=head+h; $("poOut").hidden=false;
+  $("poNote").textContent=`Whole file (all dates) · delivered = RFD + recovered · qty in m`;
 }
 function ord(n){const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
 function outNames(){
@@ -853,7 +874,7 @@ function stampText(iso){ if(!iso)return ""; const d=new Date(iso); return `Last 
 function showDash(){
   $("dash").hidden=false;
   document.querySelectorAll("[data-stamp]").forEach(el=>el.textContent=stampText(DASH.at));
-  drawDemand(); drawPO();
+  POIDX=null; drawDemand(); drawPO();
 }
 /* ---- snapshot: only dashboard figures, no Excel file ---- */
 function buildSnapshot(){
@@ -938,8 +959,14 @@ bindDrop("dropDOC","fileDOC","nameDOC","DOC","okDOC","badDOC");
 (function(){const d=new Date();$("runDate").value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`})();
 $("runDate").addEventListener("change",refresh);
 $("runBtn").addEventListener("click",run);
-$("q").addEventListener("input",drawPO);
-document.querySelectorAll(".pochip").forEach(b=>b.addEventListener("click",()=>{poMode=b.dataset.po;document.querySelectorAll(".pochip").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));drawPO()}));
+$("q").addEventListener("input",()=>{drawSug();drawPO()});
+$("q").addEventListener("focus",drawSug);
+$("q").addEventListener("keydown",e=>{const ul=$("poSug"),li=[...ul.querySelectorAll("li")]; if(ul.hidden||!li.length)return;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault(); sugAct=(sugAct+(e.key==="ArrowDown"?1:-1)+li.length)%li.length; li.forEach((x,i)=>x.classList.toggle("act",i===sugAct)); $("q").setAttribute("aria-activedescendant","sug"+sugAct); li[sugAct].scrollIntoView({block:"nearest"});}
+  else if(e.key==="Enter"){e.preventDefault(); pickSug((li[sugAct>=0?sugAct:0]).dataset.po);}
+  else if(e.key==="Escape"){ul.hidden=true;}});
+$("poSug").addEventListener("mousedown",e=>{const li=e.target.closest("li");if(li){e.preventDefault();pickSug(li.dataset.po)}});
+$("q").addEventListener("blur",()=>setTimeout(()=>{$("poSug").hidden=true},120));
 async function save(blobP,name){
   const blob=await blobP; $("dlStatus").textContent="";
   if(dlNS){ try{ await dlNS.save({filename:name,data:blob}); $("dlStatus").textContent=`Saved ${name}`; }catch(e){ $("dlStatus").textContent=e&&e.code==="declined"?"Download cancelled.":`Download failed (${e&&e.code||"error"}).`; } return; }
