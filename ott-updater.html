@@ -189,10 +189,28 @@ td.fail.hov:hover{background:var(--red-soft)}
 .tip .more{color:var(--muted);margin-top:6px}
 .stamp{display:inline-block;vertical-align:middle;margin-left:8px;font:500 11.5px var(--f-mono);color:var(--muted);background:var(--q5);border:1px solid var(--line);border-radius:999px;padding:3px 9px;letter-spacing:0}
 .stamp:empty{display:none}
+.gear{background:none;border:1px solid transparent;border-radius:8px;width:30px;height:30px;padding:4px;cursor:pointer;opacity:.35}
+.gear:hover,.gear:focus-visible{opacity:1;border-color:var(--line)}
+.gear svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hdr-right{flex-direction:row!important;align-items:center!important;flex-wrap:wrap}
+.setdlg{display:grid;gap:10px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--q);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(43,32,39,.12)}
+.setdlg h2{margin:0}.setdlg p{margin:0;color:var(--muted);font-size:13.5px}
+.setdlg input{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.setrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.savechip{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--f-body);border-radius:999px;padding:5px 11px;background:var(--ok-soft);color:var(--ok)}
+.savechip.bad{background:var(--red-soft);color:var(--red)}
+.viewbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.viewbar .viewbanner{flex:1;min-width:280px}
 .viewbanner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--q10);border-left:4px solid var(--q);border-radius:10px;padding:10px 14px;font-size:14px}
 .viewbanner b{font-family:var(--f-display)}
 .pub{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
 .pubtxt{margin:0;color:var(--muted);font-size:13.5px}
+.pubsteps{margin:0;padding-left:20px;display:grid;gap:8px;font-size:14px}
+.pubsteps li{line-height:1.9}
+.pubsteps .dlb{padding:5px 12px;font-size:13px;vertical-align:middle}
+.newupd{display:inline-flex;align-items:center;gap:8px}
+.vdl{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:600 14px var(--f-body);background:var(--accent);color:var(--accent-ink);border-radius:9px;padding:8px 14px}
+.vdl svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .pubrow{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
 .pubrow input[type=password]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
 .ck{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--fg);padding-bottom:8px}
@@ -245,8 +263,22 @@ td.fail.hov:hover{background:var(--red-soft)}
         <p class="sub">Updates Fab Plan-Final from DOC-280+217. The files are processed in your browser and aren't uploaded anywhere.</p>
       </div>
     </div>
-    <div class="hdr-right"><a class="back" id="backLink" href="./">← All tools</a><div class="tag">Quality Seeks Quality</div></div>
+    <div class="hdr-right"><button type="button" class="gear" id="gearBtn" aria-label="Site settings" title="Site settings (owner)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button><a class="back" id="backLink" href="./">← All tools</a><div class="tag">Quality Seeks Quality</div></div>
   </header>
+
+  <div class="setdlg" id="setDlg" role="dialog" aria-label="Site settings" hidden>
+    <h2>Auto-save to the site</h2>
+    <p>Paste your GitHub key once. After that, every <b>Run update</b> saves the Fabric Plan file and dashboards to the site automatically and replaces the previous one. The key stays only in this browser; visitors never see it.</p>
+    <label class="f" for="siteKey">GitHub key (fine-grained token · Contents: read and write)
+      <input type="password" id="siteKey" autocomplete="off" placeholder="github_pat_…">
+    </label>
+    <div class="setrow"><span class="status" id="setStatus"></span><span><button type="button" class="ghost sm" id="keyRemove">Remove key</button> <button type="button" class="ghost sm" id="setClose">Close</button> <button type="button" class="primary sm" id="keySave">Save key</button></span></div>
+  </div>
+
+  <div class="viewbar" id="viewBar" hidden>
+    <div class="viewbanner" id="viewBanner"></div>
+    <button class="ghost newupd" id="newUpdBtn" type="button">＋ Run a new update</button>
+  </div>
 
   <section class="inputs" aria-label="Input files">
     <div class="drop" id="dropFP">
@@ -283,6 +315,7 @@ td.fail.hov:hover{background:var(--red-soft)}
     </span>
     <span class="status" id="status">Add both files to start.</span>
     <span class="status" id="dlStatus"></span>
+    <span class="savechip" id="saveChip" hidden></span>
   </div>
 
   <div class="prog" id="prog" hidden>
@@ -293,22 +326,9 @@ td.fail.hov:hover{background:var(--red-soft)}
   <section id="results" hidden>
     <div style="display:grid;gap:16px">
       <div id="flags" style="display:grid;gap:8px"></div>
-      <div class="pub" id="pubBox" hidden>
-        <div class="row2"><h2>Publish dashboard to the site</h2><span class="status" id="pubStatus"></span></div>
-        <p class="pubtxt">Saves only the dashboard figures (no Excel file) so everyone who opens the site sees this update. The figures, including buyer, PO and colour quantities, can be seen by anyone with the site link.</p>
-        <div class="pubrow">
-          <label class="f" for="ghToken" style="flex:1;min-width:240px">GitHub token (repo contents: read and write)
-            <input type="password" id="ghToken" autocomplete="off" placeholder="github_pat_…">
-          </label>
-          <label class="ck"><input type="checkbox" id="ghRemember"> Remember on this computer</label>
-          <label class="ck"><input type="checkbox" id="ghAuto"> Publish automatically after each update</label>
-          <button class="primary" id="pubBtn" type="button">Publish dashboard</button>
-        </div>
-      </div>
     </div>
   </section>
 
-  <div class="viewbanner" id="viewBanner" hidden></div>
 
   <section id="daySec" class="dem" hidden aria-label="Date-wise RFD and achieve %">
         <div class="row2"><h2>Date-wise RFD · achieve % <span class="stamp" data-stamp></span></h2><span class="status" id="dayNote"></span></div>
@@ -618,8 +638,8 @@ async function run(){
     prog(98,"Building the update log…");
     outputs={ott:ottBlob,log:logBlob,ottName:outNames().ott,logName:outNames().log};
     render({rows:rows.length,step2,report,nGroups,added,totBefore,totAfter,buyers,anChanged,anComparable,open,docRows:D.rows});
-    $("viewBanner").hidden=true;
-    if(GH){ $("pubBox").hidden=false; if($("ghAuto").checked&&$("ghToken").value.trim()) publishSnapshot(); }
+    setViewer(false);
+    autoSave();
     status(`Done · ${rows.length.toLocaleString()} plan rows processed.`);
     prog(100,"Done · ready to download");
   }catch(e){
@@ -961,37 +981,47 @@ function buildSnapshot(){
   const bIdx=new Map(), B=[]; const bi=b=>{if(!bIdx.has(b)){bIdx.set(b,B.length);B.push(b)}return bIdx.get(b)};
   const aIdx=new Map(), A=[]; const ai=a=>{a=a||"";if(!aIdx.has(a)){aIdx.set(a,A.length);A.push(a)}return aIdx.get(a)};
   const rows=DEM.filter(x=>x.L||x.M||x.O).map(x=>[bi(x.b),x.s,x.tbc?1:0,r3(x.L),r3(x.M),r3(x.O),x.po,x.col,ai(x.art)]);
-  return {v:1,articles:A,tool:"ott-fabric-plan-updater",at:DASH.at,report:DASH.report,fp:DASH.fp,doc:DASH.doc,summary:DASH.buyers,buyers:B,rows};
+  return {v:1,articles:A,ott:outputs?outputs.ottName:"",ottPath:OTT_PATH,tool:"ott-fabric-plan-updater",at:DASH.at,report:DASH.report,fp:DASH.fp,doc:DASH.doc,summary:DASH.buyers,buyers:B,rows};
+}
+function setViewer(on){
+  $("viewBar").hidden=!on;
+  document.querySelector("section.inputs").hidden=on; document.querySelector(".runbar").hidden=on;
+  if(on){ $("prog").hidden=true; $("results").hidden=true; }
 }
 function loadSnapshot(j){
   if(!j||j.v!==1||!Array.isArray(j.rows))return false;
   DEM=j.rows.map(r=>({b:j.buyers[r[0]],s:r[1],tbc:!!r[2],L:r[3],M:r[4],O:r[5],po:r[6]||"",col:r[7]||"",art:(j.articles&&r[8]!=null)?j.articles[r[8]]:""}));
   DASH={at:j.at,report:j.report,fp:j.fp||"",doc:j.doc||"",buyers:j.summary||[],live:false};
   drawSummary(DASH.buyers); showDash();
-  const vb=$("viewBanner"); vb.hidden=false;
-  vb.innerHTML=`<b>Showing the last published update</b><span>${esc(stampText(j.at))}</span><span>Report date ${esc(j.report?fromSerial(toSerial(j.report)):"–")}</span><span style="color:var(--muted)">Source: ${esc(j.fp||"")}</span>`;
+  const ott=j.ott||"";
+  $("viewBanner").innerHTML=`<b>Last update</b><span>${esc(stampText(j.at).replace("Last updated ",""))}</span><span>Report date ${esc(j.report?fromSerial(toSerial(j.report)):"–")}</span>${ott?`<a class="vdl" href="${encodeURI(j.ottPath||ott)}?v=${encodeURIComponent(j.at||"")}" download="${esc(ott)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download Fabric Plan file</a>`:""}`;
+  setViewer(true);
   return true;
 }
-const GH=(()=>{ const h=location.hostname; if(!/\.github\.io$/.test(h))return null; const owner=h.split(".")[0]; const seg=location.pathname.split("/").filter(Boolean); const repo=seg.length&&!/\.html?$/.test(seg[0])?seg[0]:`${owner}.github.io`; return {owner,repo,path:"data/latest.json"} })();
-async function fetchSnapshot(){ try{ const r=await fetch("data/latest.json?ts="+Date.now(),{cache:"no-store"}); if(!r.ok)return; const j=await r.json(); if(!DASH.live) loadSnapshot(j); }catch(e){} }
-function b64utf8(str){ const bytes=new TextEncoder().encode(str); let bin=""; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(bin); }
-async function publishSnapshot(){
-  const st=$("pubStatus"), tok=$("ghToken").value.trim();
-  if(!GH){ st.textContent="Publishing works on the GitHub site only."; return; }
-  if(!tok){ st.textContent="Paste your GitHub token first."; $("ghToken").focus(); return; }
-  try{ if($("ghRemember").checked) localStorage.setItem("sqhues.gh.token",tok); else localStorage.removeItem("sqhues.gh.token"); }catch(e){}
-  const api=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`, hdr={"Authorization":"Bearer "+tok,"Accept":"application/vnd.github+json"};
-  $("pubBtn").disabled=true; st.textContent="Publishing…";
-  try{
-    let sha; const g=await fetch(api+"?ref=main&ts="+Date.now(),{headers:hdr,cache:"no-store"});
-    if(g.status===200){ sha=(await g.json()).sha; } else if(g.status!==404){ throw new Error(g.status===401?"Token not accepted. Check it hasn't expired.":g.status===403?"Token has no write access to this repository.":"GitHub said "+g.status); }
-    const body={message:`Dashboard update ${DASH.report} (${new Date().toLocaleString("en-GB")})`,content:b64utf8(JSON.stringify(buildSnapshot())),branch:"main"}; if(sha)body.sha=sha;
-    const p=await fetch(api,{method:"PUT",headers:{...hdr,"Content-Type":"application/json"},body:JSON.stringify(body)});
-    if(!p.ok){ const t=await p.json().catch(()=>({})); throw new Error(p.status===404?"Repository not found, or the token can't see it.":(t.message||("GitHub said "+p.status))); }
-    st.textContent=`✓ Published · visible to everyone in about 1 minute`;
-  }catch(e){ st.textContent="✕ "+e.message; }
-  finally{ $("pubBtn").disabled=false; }
+const SITE=(()=>{ const h=location.hostname; if(!/\.github\.io$/i.test(h))return null; const owner=h.split(".")[0]; const seg=location.pathname.split("/").filter(Boolean); const repo=seg.length&&!/\.html?$/i.test(seg[0])?seg[0]:`${owner}.github.io`; return {owner,repo}; })();
+const OTT_PATH="latest/fabric-plan.xlsx";
+const getKey=()=>{try{return localStorage.getItem("sqhues.sitekey")||""}catch(e){return ""}};
+function b64bytes(bytes){ let bin=""; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(bin); }
+async function ghPut(path,b64,msg,key){
+  const api=`https://api.github.com/repos/${SITE.owner}/${SITE.repo}/contents/${path}`, hdr={"Authorization":"Bearer "+key,"Accept":"application/vnd.github+json"};
+  let sha; const g=await fetch(api+"?ref=main&ts="+Date.now(),{headers:hdr,cache:"no-store"});
+  if(g.status===200) sha=(await g.json()).sha; else if(g.status!==404) throw new Error(g.status===401?"key not accepted (expired?)":g.status===403?"key has no write access":"GitHub error "+g.status);
+  const body={message:msg,content:b64,branch:"main"}; if(sha)body.sha=sha;
+  const r=await fetch(api,{method:"PUT",headers:{...hdr,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok){ const t=await r.json().catch(()=>({})); throw new Error(r.status===404?"repository not found for this key":(t.message||"GitHub error "+r.status)); }
 }
+async function autoSave(){
+  const key=getKey(), chip=$("saveChip"); if(!SITE||!key){ chip.hidden=true; return; }
+  chip.hidden=false; chip.className="savechip"; chip.textContent="Saving to site…";
+  try{
+    const msg=`OTT update ${DASH.report}`;
+    const xbytes=new Uint8Array(await (await outputs.ott).arrayBuffer());
+    await ghPut(OTT_PATH,b64bytes(xbytes),msg+" · Fabric Plan file",key);
+    await ghPut("dashboard.json",b64bytes(new TextEncoder().encode(JSON.stringify(buildSnapshot()))),msg+" · dashboard",key);
+    chip.textContent="✓ Saved to site · live in about 1 minute";
+  }catch(e){ chip.className="savechip bad"; chip.textContent="✕ Not saved to site: "+e.message; }
+}
+async function fetchSnapshot(){ try{ const r=await fetch("dashboard.json?ts="+Date.now(),{cache:"no-store"}); if(!r.ok)return; const j=await r.json(); if(!DASH.live) loadSnapshot(j); }catch(e){} }
 function drawSummary(buyers){
   const head=`<thead><tr><th>Buyer</th><th class="n">Total Req Qty</th><th class="n">RFD Qty · last update</th><th class="n">RFD Qty · now</th><th class="n">Added qty</th><th style="min-width:200px">Completion % (RFD ÷ Req)</th></tr></thead>`;
   if(!buyers){
@@ -1119,9 +1149,11 @@ $("tip").addEventListener("mouseover",e=>{const tr=e.target.closest("tr.pick"); 
 $("tip").addEventListener("click",e=>{const tr=e.target.closest("tr.pick"); if(tr) showTip2(tr); });
 $("tip").addEventListener("keydown",e=>{const tr=e.target.closest("tr.pick"); if(tr&&(e.key==="Enter"||e.key===" ")){e.preventDefault();showTip2(tr);} });
 window.addEventListener("scroll",hideTip,{passive:true});
-try{ const t=localStorage.getItem("sqhues.gh.token"); if(t){$("ghToken").value=t;$("ghRemember").checked=true} $("ghAuto").checked=localStorage.getItem("sqhues.gh.auto")==="1"; }catch(e){}
-$("ghAuto").addEventListener("change",()=>{try{localStorage.setItem("sqhues.gh.auto",$("ghAuto").checked?"1":"0")}catch(e){}});
-$("pubBtn").addEventListener("click",publishSnapshot);
+$("gearBtn").addEventListener("click",()=>{ const d=$("setDlg"); d.hidden=!d.hidden; if(!d.hidden){ $("siteKey").value=getKey(); $("setStatus").textContent=!SITE?"Auto-save works on the GitHub site only.":getKey()?`Auto-save is ON for ${SITE.owner}/${SITE.repo}`:"Auto-save is off"; $("siteKey").focus(); } });
+$("setClose").addEventListener("click",()=>{$("setDlg").hidden=true});
+$("keySave").addEventListener("click",()=>{ const v=$("siteKey").value.trim(); if(!v){$("setStatus").textContent="Paste the key first.";return} try{localStorage.setItem("sqhues.sitekey",v)}catch(e){} $("setStatus").textContent=SITE?`✓ Saved · auto-save is ON for ${SITE.owner}/${SITE.repo}`:"✓ Saved (auto-save runs on the GitHub site)"; });
+$("keyRemove").addEventListener("click",()=>{ try{localStorage.removeItem("sqhues.sitekey")}catch(e){} $("siteKey").value=""; $("setStatus").textContent="Key removed · auto-save is off"; });
+$("newUpdBtn").addEventListener("click",()=>{ setViewer(false); $("fileFP").focus(); });
 drawSummary(null);
 fetchSnapshot();
 refresh();
