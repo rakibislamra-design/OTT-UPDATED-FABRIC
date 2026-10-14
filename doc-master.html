@@ -255,7 +255,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
       <b>Last update</b>
       <span id="lastWhen" class="muted">checking…</span>
       <span id="lastInfo" class="muted"></span>
-      <button class="btn" id="lastDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download DOC file</button>
+      <button class="btn" id="lastDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download 217+280 file</button>
     </div>
     <button class="btn light newrun" id="newRun" type="button" aria-expanded="false" aria-controls="updater">+ Run a new update</button>
   </div>
@@ -305,9 +305,16 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
   <section class="dash">
     <div class="dhead">
       <h2 class="sec">Daily output summary</h2>
-      <span class="tag" id="dayTag"></span>
       <span class="tag" id="dashSrc"></span>
+      <div class="filters">
+        <button class="chip" data-r="y" type="button">Yesterday</button>
+        <button class="chip" data-r="7" type="button">Last 7 days</button>
+        <button class="chip" data-r="m" type="button">This month</button>
+        <label>From <input type="date" id="dFrom"></label>
+        <label>To <input type="date" id="dTo"></label>
+      </div>
     </div>
+    <p class="dsub" id="dSub"></p>
     <div class="kpis" id="kpis"></div>
 
     <div class="dhead">
@@ -1483,29 +1490,63 @@ function openPop(e,title,sub,ba,total){
 document.addEventListener('click',e=>{if(!pop.hidden&&!pop.contains(e.target))pop.hidden=true;if(!$('cal').hidden&&!$('cal').contains(e.target)&&!$('rngBtn').contains(e.target))closeCal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){pop.hidden=true;closeCal();}});
 
-/* -- yesterday cards -- */
+/* -- daily cards (date filter + 14-day mini chart) -- */
+const parseD=s=>{const v=s.split('-').map(Number);return new Date(v[0],v[1]-1,v[2]);};
+function setDaily(kind){
+  const y=yday();let f=y;
+  if(kind==='7')f=addDays(y,-6);else if(kind==='m')f=new Date(y.getFullYear(),y.getMonth(),1);
+  $('dFrom').value=isoD(f);$('dTo').value=isoD(y);
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.r===kind));drawDaily();
+}
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>setDaily(c.dataset.r)));
+['dFrom','dTo'].forEach(id=>$(id).addEventListener('change',()=>{document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));drawDaily();}));
+function miniTrend(bucket,from,to){
+  const end=to,start=addDays(end,-13),days=[];for(let d=new Date(start);d<=end;d=addDays(d,1))days.push(new Date(d));
+  const vals=days.map(d=>(bucket[isoD(d)]||{kg:0}).kg),nice=niceMax(Math.max(1,...vals));
+  const W=420,H=120,pl=34,pb=18,bw=(W-pl)/days.length,ns='http://www.w3.org/2000/svg';
+  const mk=(tag,at)=>{const e=document.createElementNS(ns,tag);for(const a in at)e.setAttribute(a,at[a]);return e;};
+  const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Last 14 days, kg per day'});
+  for(const g of [0,.5,1]){const y=(H-pb)-(H-pb-6)*g;svg.appendChild(mk('line',{x1:pl,x2:W,y1:y,y2:y,stroke:'currentColor','stroke-opacity':'.12'}));
+    const tx=mk('text',{x:pl-6,y:y+4,'text-anchor':'end'});const v=nice*g;tx.textContent=v>=1000?(v/1000)+'t':v;svg.appendChild(tx);}
+  days.forEach((d,i)=>{const o=bucket[isoD(d)]||{kg:0,ba:{}},v=o.kg,h=(H-pb-6)*v/nice,x=pl+i*bw+bw*.18,w=bw*.64,y=(H-pb)-h,inR=d>=from&&d<=to,rr=Math.min(4,w/2,h);
+    if(h>0)svg.appendChild(mk('path',{d:`M${x},${H-pb}V${y+rr}Q${x},${y} ${x+rr},${y}H${x+w-rr}Q${x+w},${y} ${x+w},${y+rr}V${H-pb}Z`,fill:inR?'#664356':'#D2C7CB'}));
+    const hit=mk('rect',{x:pl+i*bw,y:0,width:bw,height:H-pb,fill:'transparent',style:'cursor:pointer'});
+    hit.addEventListener('mousemove',e=>showTip(e,`${dl(d)} · ${nf(v)} kg`+(o.in!==undefined||o.out!==undefined?` (Inhouse ${nf(o.in)} · Outside ${nf(o.out)})`:'')));hit.addEventListener('mouseleave',hideTip);
+    hit.addEventListener('click',e=>openPop(e,dl(d),`${nf(v)} kg · buyer & article-wise`,o.ba,v));svg.appendChild(hit);
+    if(i%2===days.length%2||i===days.length-1){const tx=mk('text',{x:pl+i*bw+bw/2,y:H-4,'text-anchor':'middle'});tx.textContent=pad(d.getDate());svg.appendChild(tx);}
+  });
+  return svg;
+}
 function drawDaily(){
   const box=$('kpis');box.innerHTML='';
-  if(!summary){box.innerHTML='<div class="empty">No summary yet — it appears after the next update is run with this page.</div>';$('dayTag').textContent='';return;}
-  const d=yday(),key=isoD(d);$('dayTag').textContent='Yesterday · '+dl(d);
+  if(!summary){box.innerHTML='<div class="empty">No summary yet — it appears after the next update is run with this page.</div>';$('dSub').textContent='';return;}
+  let from=parseD($('dFrom').value),to=parseD($('dTo').value);if(from>to)[from,to]=[to,from];
+  const nDays=Math.round((to-from)/864e5)+1;
+  $('dSub').textContent=(nDays===1?dl(from):`${dl(from)} to ${dl(to)} · ${nDays} days`)+' · click a buyer or bar for article-wise';
   for(const [k,title,unitN] of KP){
-    const o=(summary[k]||{})[key]||{kg:0,n:0,by:{},ba:{}};
+    const bucket=summary[k]||{};let kg=0,n=0,kin=0,kout=0,hasSide=false;const by={},ba={};
+    for(let d=new Date(from);d<=to;d=addDays(d,1)){const o=bucket[isoD(d)];if(!o)continue;kg+=o.kg;n+=o.n;
+      if(o.in!==undefined||o.out!==undefined){hasSide=true;kin+=o.in||0;kout+=o.out||0;}
+      for(const b in o.by)by[b]=(by[b]||0)+o.by[b];
+      for(const b in (o.ba||{})){const t2=ba[b]||(ba[b]={});for(const a in o.ba[b])t2[a]=(t2[a]||0)+o.ba[b][a];}}
     const el=document.createElement('div');el.className='kpi';
-    el.innerHTML=`<div class="kt">${title}</div><div class="kv">${nf(o.kg)}<small>kg</small></div><div class="ks">${nf(o.n)} ${unitN}</div>`+
-      (k==='rfd'?`<div class="kv2"><span><i class="sw" style="background:${C_IN}"></i>Inhouse <b>${nf(o.in)}</b> kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside <b>${nf(o.out)}</b> kg</span></div>`:'')+
-      `<h4>By buyer · click for article-wise</h4><div class="bl"></div>`;
-    const bl=el.querySelector('.bl');const arr=Object.entries(o.by).sort((a,b)=>b[1]-a[1]);
-    if(!arr.length)bl.innerHTML='<div class="empty">Nothing recorded yesterday.</div>';
-    const mx=arr.length?arr[0][1]:1;
-    for(const [b,v] of arr.slice(0,10)){
+    el.innerHTML=`<div class="kt">${title}</div><div class="kv">${nf(kg)}<small>kg</small></div><div class="ks">${nf(n)} ${unitN}${nDays>1?` · ${nf(kg/nDays)} kg/day avg`:''}</div>`+
+      (k==='rfd'?(hasSide?`<div class="kv2"><span><i class="sw" style="background:${C_IN}"></i>Inhouse <b>${nf(kin)}</b> kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside <b>${nf(kout)}</b> kg</span></div>`:`<div class="kv2">Inhouse / Outside shows after the next update</div>`):'')+
+      `<h4>Last 14 days</h4><div class="tr"></div><h4>By buyer · click for article-wise</h4><div class="bl"></div>`;
+    el.querySelector('.tr').appendChild(miniTrend(bucket,from,to));
+    const bl=el.querySelector('.bl');const arr=Object.entries(by).sort((a,b)=>b[1]-a[1]);
+    if(!arr.length)bl.innerHTML='<div class="empty">Nothing recorded for this date.</div>';
+    let top=arr.slice(0,7);if(arr.length>7)top.push(['Others',arr.slice(7).reduce((s,x)=>s+x[1],0)]);
+    const mx=top.length?Math.max(...top.map(x=>x[1])):1;
+    for(const [b,v] of top){
       const r=document.createElement('div');r.className='brow';r.tabIndex=0;r.innerHTML='<span class="bn"></span><span class="bt"><i></i></span><span class="bv"></span>';
-      r.querySelector('.bn').textContent=b;r.querySelector('i').style.width=(100*v/mx).toFixed(1)+'%';r.querySelector('.bv').textContent=nf(v)+' kg';
-      r.addEventListener('mousemove',e=>showTip(e,`${b} · ${nf(v)} kg · ${(100*v/o.kg).toFixed(1)}% — click for articles`));r.addEventListener('mouseleave',hideTip);
-      const open=e=>openPop(e,`${b} · ${title}`,`Yesterday ${dl(d)} · ${nf(v)} kg · article-wise`,{[b]:o.ba[b]||{}},0);
+      r.querySelector('.bn').textContent=b;r.querySelector('.bn').title=b;r.querySelector('i').style.width=(100*v/mx).toFixed(1)+'%';r.querySelector('.bv').textContent=nf(v)+' kg';
+      r.addEventListener('mousemove',e=>showTip(e,`${b} · ${nf(v)} kg · ${(100*v/kg).toFixed(1)}%`));r.addEventListener('mouseleave',hideTip);
+      const sel=b==='Others'?Object.fromEntries(arr.slice(7).map(([x])=>[x,ba[x]||{}])):{[b]:ba[b]||{}};
+      const open=e=>openPop(e,`${b} · ${title}`,`${nDays===1?dl(from):dl(from)+' – '+dl(to)} · ${nf(v)} kg · article-wise`,sel,b==='Others'?v:0);
       r.addEventListener('click',open);r.addEventListener('keydown',e=>{if(e.key==='Enter'){const rc=r.getBoundingClientRect();open({clientX:rc.left,clientY:rc.bottom,stopPropagation(){}});}});
       bl.appendChild(r);
     }
-    if(arr.length>10){const m=document.createElement('div');m.className='empty';m.textContent=`+ ${arr.length-10} more buyers (${nf(arr.slice(10).reduce((s,x)=>s+x[1],0))} kg)`;bl.appendChild(m);}
     box.appendChild(el);
   }
 }
@@ -1530,7 +1571,7 @@ function trendChart(k,title,days){
   const step=n>20?Math.ceil(n/16):1;
   rows.forEach(({d,o},i)=>{
     const x=pl+i*bw+bw*.16,w=bw*.68,base=H-pb,sc=v=>(H-pb-pt)*v/max;
-    if(k==='rfd'){const hi=sc(o.in||0),ho=sc(o.out||0);
+    if(k==='rfd'&&(o.in!==undefined||o.out!==undefined)){const hi=sc(o.in||0),ho=sc(o.out||0);
       const a=bar(x,base-hi,w,hi,C_IN,!ho);if(a)svg.appendChild(a);
       const b=bar(x,base-hi-ho-(hi&&ho?2:0),w,ho,C_OUT,true);if(b)svg.appendChild(b);}
     else{const p=bar(x,base-sc(o.kg),w,sc(o.kg),C_ONE,true);if(p)svg.appendChild(p);}
@@ -1552,7 +1593,7 @@ function drawMtd(){
   for(const [k,title,unitN] of KP){
     let kg=0,n=0,i=0,o2=0;for(const d of days){const o=(summary[k]||{})[isoD(d)];if(o){kg+=o.kg;n+=o.n;i+=o.in||0;o2+=o.out||0;}}
     const el=document.createElement('div');el.className='mk';
-    el.innerHTML=`<div class="kt">${title} · MTD</div><div class="kv">${nf(kg)}<small>kg</small></div><div class="ks">${nf(n)} ${unitN}`+(k==='rfd'?` · Inhouse ${nf(i)} · Outside ${nf(o2)}`:` · avg ${nf(kg/days.length)} kg/day`)+'</div>';
+    el.innerHTML=`<div class="kt">${title} · MTD</div><div class="kv">${nf(kg)}<small>kg</small></div><div class="ks">${nf(n)} ${unitN}`+(k==='rfd'&&(i||o2)?` · Inhouse ${nf(i)} · Outside ${nf(o2)}`:` · avg ${nf(kg/days.length)} kg/day`)+'</div>';
     mk.appendChild(el);
   }
   for(const [k,title] of KP)tr.appendChild(trendChart(k,title,days));
@@ -1595,7 +1636,7 @@ document.querySelectorAll('.presets button').forEach(b=>b.addEventListener('clic
 
 function useSummary(s,label){summary=s;$('dashSrc').textContent=label||'';drawDaily();drawMtd();}
 $('newRun').addEventListener('click',()=>{const u=$('updater');u.hidden=!u.hidden;$('newRun').setAttribute('aria-expanded',String(!u.hidden));$('newRun').textContent=u.hidden?'+ Run a new update':'− Hide update';if(!u.hidden)u.scrollIntoView({behavior:'smooth',block:'start'});});
-drawDaily();drawMtd();
+setDaily('y');drawMtd();
 render();loadLatest();
 })();
 </script>
