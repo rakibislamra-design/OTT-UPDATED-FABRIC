@@ -5,155 +5,202 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#664356">
 <title>DOC Master Update</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23664356'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='36' font-weight='700' text-anchor='middle' fill='%23fff'%3EQ%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23664356'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='34' font-weight='700' text-anchor='middle' fill='%23fff'%3EQ%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --q:#664356;--q80:#7C5D6D;--q60:#957B87;--q40:#B29EA6;--q20:#D2C7CB;--q10:#E6DFE1;--q5:#EFECED;
-  --bg:#FBF8F9;--card:#FFFFFF;--fg:#2E2329;--muted:#6F6168;--line:#E6DFE1;--dash:#D7C3CA;
-  --ok:#3C7A57;--okbg:#E7F1EA;--red:#AF4F5A;--red20:#F3E3E1;
+  --blue:#366083;--blue20:#CCD0DB;--blue10:#E3E8EF;--gray:#929597;--red:#AF4F5A;--red20:#E7D1CE;
+  --bg:#F7F6F6;--card:#FFFFFF;--fg:#231B20;--muted:#6B6268;--line:#E4E0E2;--ok:#3C7A57;
+  --sans:"Source Sans 3","Segoe UI",system-ui,sans-serif;--disp:"Space Grotesk","Segoe UI",system-ui,sans-serif;--mono:"JetBrains Mono",Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#1C1619;--card:#251D21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--dash:#5A4650;--q5:#2B2227;--q10:#33282E;
-  --okbg:#1F3328;--ok:#86C7A0;--red20:#3D2629}}
-:root[data-theme="dark"]{--bg:#1C1619;--card:#251D21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--dash:#5A4650;--q5:#2B2227;--q10:#33282E;--okbg:#1F3328;--ok:#86C7A0;--red20:#3D2629}
+  --bg:#1A1518;--card:#241C21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3A2F35;--q10:#3A2D34;--q5:#2B2227;--blue10:#22303F;--blue20:#3A4C60;--red20:#3D2629}}
+:root[data-theme="dark"]{--bg:#1A1518;--card:#241C21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3A2F35;--q10:#3A2D34;--q5:#2B2227;--blue10:#22303F;--blue20:#3A4C60;--red20:#3D2629}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 "Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans)}
 button,input{font:inherit;color:inherit}
-:focus-visible{outline:2px solid #366083;outline-offset:2px}
-.wrap{max-width:1400px;margin:0 auto;padding:16px 16px 48px}
-@media (min-width:900px){.wrap{padding:20px 32px 56px}}
-.home{display:inline-block;margin-bottom:6px;color:var(--q60);text-decoration:none;font-size:12.5px;font-weight:600}
-.home:hover{color:var(--q)}
-h1{font:700 22px/1.25 "Source Serif 4",Georgia,"Times New Roman",serif;color:var(--q);margin:0 0 6px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) h1{color:var(--q40)}}
-:root[data-theme="dark"] h1{color:var(--q40)}
-.lede{margin:0 0 18px;color:var(--muted);font-size:13.5px}
-code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
-.boxes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media (max-width:760px){.boxes{grid-template-columns:1fr}}
-.box{border:2px dashed var(--dash);border-radius:4px;background:var(--card);padding:20px 22px;min-height:150px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
-.box:hover,.box.over{border-color:var(--q60);background:var(--q5)}
-.box.done{border-style:solid;border-color:var(--q20)}
-.lbl{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--q80);margin-bottom:14px}
-.big{font-size:14.5px;color:var(--fg);margin:0 0 6px;overflow-wrap:anywhere}
-.small{font-size:12.5px;color:var(--muted);margin:0}
-.ok{color:var(--ok);font-weight:600}
-.taps{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;list-style:none;margin:0;padding:0}
-.taps li{color:var(--muted);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.taps li .c{display:inline-block;width:12px;margin-right:4px;color:var(--q40)}
-.taps li.got{color:var(--fg)}
-.taps li.got .c{color:var(--ok)}
-.taps li small{color:var(--muted)}
-.fix{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:18px 0 14px;align-items:start}
-.fix input{width:16px;height:16px;margin:4px 0 0;accent-color:#2563eb}
-.fix label{font-size:14px;cursor:pointer}
-.fix label span{color:var(--muted)}
-.fix p{grid-column:2;margin:0;font-size:12.5px;color:var(--muted)}
-.act{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.btn{appearance:none;border:0;border-radius:4px;background:var(--q);color:#fff;font-weight:600;padding:8px 14px;min-height:38px;cursor:pointer;font-size:14px}
-.btn:hover{background:var(--q80)}
-.btn:disabled{background:var(--q40);cursor:not-allowed}
-.need{font-size:13px;color:var(--muted)}
-.need .ok{font-weight:600}
-.need a{color:var(--q);font-weight:600}
-.mini{display:inline-block;width:120px;height:6px;border-radius:99px;background:var(--q10);overflow:hidden;vertical-align:middle;margin-right:8px}
-.mini i{display:block;height:100%;width:0;background:var(--q);transition:width .25s}
-.run{display:none;margin-top:22px;max-width:860px}
-.run.show{display:block}
-.bar{height:8px;border-radius:99px;background:var(--q10);overflow:hidden;margin:8px 0 10px}
-.bar i{display:block;height:100%;width:0;background:var(--q);transition:width .25s}
-.status{font-weight:600}
-.log{list-style:none;margin:6px 0 0;padding:0;font-size:13.5px;color:var(--muted)}
-.log li{padding:3px 0 3px 20px;position:relative}
-.log li:before{content:"✓";position:absolute;left:2px;color:var(--ok);font-weight:700}
-.log li.now:before{content:"•";color:var(--q)}
-.err{color:var(--red);font-weight:600}
-.warn{display:none;padding:6px 10px;border-radius:4px;background:var(--red20);font-size:13px}
-.warn.show{display:inline-block}
-.result{display:none;margin-top:18px;padding:16px;border-radius:4px;background:var(--okbg)}
-.result.show{display:block}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0 14px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
-.stat b{display:block;font-size:17px;color:var(--q);font-variant-numeric:tabular-nums}
-.stat span{font-size:12.5px;color:var(--muted)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1380px;margin:0 auto;padding:20px 16px 56px}
+@media (min-width:900px){.wrap{padding:24px 30px 64px}}
 
-.last{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--q10);border-left:4px solid var(--q);border-radius:6px;padding:10px 16px;margin:0 0 18px;font-size:13.5px}
-.last b{font-size:14px}
+/* top bar */
+.nav{background:var(--q);border-radius:14px;padding:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:#fff}
+.nav .home{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--q);border-radius:9px;padding:9px 16px;font-weight:600;text-decoration:none}
+.nav .home svg{width:18px;height:18px}
+.crumb{font-weight:600;font-size:16px;display:flex;gap:8px;align-items:center;min-width:0}
+.crumb span{opacity:.85;font-weight:500}
+.nav .all{margin-left:auto;color:#fff;text-decoration:none;font-weight:600;border:1px solid rgba(255,255,255,.6);border-radius:999px;padding:7px 14px}
+.nav .all:hover{background:rgba(255,255,255,.12)}
+
+/* header */
+.head{display:flex;align-items:flex-end;gap:16px;padding:22px 0 14px;border-bottom:2px solid var(--q);flex-wrap:wrap}
+.logo{width:54px;height:54px;border-radius:10px;background:var(--q);color:#fff;display:grid;place-items:center;font:700 28px var(--disp);flex:none;align-self:center}
+.htext{min-width:0;flex:1 1 420px}
+.eyebrow{font:500 12.5px var(--mono);letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+h1{font:700 clamp(26px,3.4vw,38px)/1.1 var(--disp);margin:2px 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:15px;margin:0}
+.qsq{display:flex;align-items:center;gap:10px;font:500 13px var(--mono);letter-spacing:.16em;color:var(--muted);background:none;border:0;padding:6px 0;cursor:pointer}
+.qsq svg{width:22px;height:22px;color:var(--q40);transition:transform .3s}
+.qsq:hover svg{transform:rotate(60deg);color:var(--q)}
+
+/* last update strip */
+.lastrow{display:flex;gap:16px;align-items:stretch;margin:22px 0 0;flex-wrap:wrap}
+.last{flex:1 1 520px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--q10);border-left:4px solid var(--q);border-radius:10px;padding:12px 18px;font-size:15px}
+.last b{font-weight:700}
 .last .muted{color:var(--muted)}
-.btn.dlb{display:inline-flex;align-items:center;gap:8px}
-.btn.ghost{background:transparent;color:var(--q);border:1px solid var(--q40)}
-.btn.ghost:hover{background:var(--q5)}
-.btn.ghost:disabled{color:var(--q40);background:transparent;border-color:var(--q20)}
-.act .right{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}
-.act .right label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)}
-.act .right a{color:var(--q60);text-decoration:none;font-weight:600}
-.gh{display:none;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);max-width:760px;font-size:13px}
+
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr minmax(260px,.62fr);gap:18px;margin-top:22px}
+@media (max-width:1000px){.cards{grid-template-columns:1fr 1fr}.cards .side{grid-column:1/-1}}
+@media (max-width:640px){.cards{grid-template-columns:1fr}}
+.card{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:20px 22px;min-height:170px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.card:hover,.card.over{border-color:var(--blue)}
+.card.done{background:var(--blue10);border-color:var(--blue)}
+.card .lbl{font:600 13px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--q)}
+.card .check{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;display:none;place-items:center}
+.card.done .check{display:grid}
+.card .check svg{width:18px;height:18px}
+.fname{font-weight:600;font-size:16.5px;margin:22px 0 0;overflow-wrap:anywhere}
+.hint{color:var(--muted);font-size:14px;margin-top:6px}
+.meta{position:absolute;left:22px;right:22px;bottom:16px;color:var(--blue);font-weight:600;font-size:14px}
+.taps{list-style:none;margin:16px 0 34px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.taps li{font-size:14.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.taps li.got{color:var(--fg);font-weight:600}
+.taps li .c{display:inline-block;width:14px;color:var(--q40)}
+.taps li.got .c{color:var(--blue)}
+.side{cursor:default}
+.side:hover{border-color:var(--line)}
+.side label{display:block;color:var(--muted);font-size:14.5px}
+.side input[type=date]{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--card)}
+.side .out{font:500 12.5px var(--mono);letter-spacing:.1em;color:var(--muted);margin-top:14px}
+.side .outn{font:500 14px var(--mono);overflow-wrap:anywhere;margin-top:2px}
+.side .fix{display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:13.5px;color:var(--muted);cursor:pointer}
+.side .fix input{margin-top:3px;accent-color:var(--q)}
+
+/* actions */
+.act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px}
+.btn{appearance:none;display:inline-flex;align-items:center;gap:10px;border:1px solid var(--q);background:var(--q);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700;font-size:16px;cursor:pointer;min-height:48px;text-decoration:none}
+.btn:hover{background:var(--q80)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.light{background:var(--card);color:var(--q);border-color:var(--q40)}
+.btn.light:hover{background:var(--q5)}
+.btn svg{width:18px;height:18px}
+.msg{font:400 14.5px var(--mono);color:var(--muted)}
+.pill{display:none;align-items:center;gap:6px;background:var(--q10);color:var(--q);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600}
+.pill.show{display:inline-flex}
+.pill.err{background:var(--red20);color:var(--red)}
+
+/* progress */
+.prog{display:none;margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+.prog.show{display:block}
+.track{height:12px;border-radius:99px;background:var(--blue10);overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--blue);border-radius:99px;transition:width .25s}
+.pline{display:flex;justify-content:space-between;margin-top:8px;font:600 14.5px var(--mono);color:var(--blue)}
+.note{display:none;margin-top:22px;background:var(--blue10);border-left:4px solid var(--blue);border-radius:8px;padding:14px 18px;font-size:15px}
+.note.show{display:block}
+.note.err{background:var(--red20);border-color:var(--red)}
+
+/* setup */
+.gh{display:none;margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-size:14px;max-width:860px}
 .gh.show{display:block}
-.gh .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0}
-.gh input{width:100%;border:1px solid var(--q20);border-radius:4px;padding:7px 9px;background:var(--card);font-size:13px}
-.gh p{margin:0;color:var(--muted)}
+.gh h3{font:700 16px var(--disp);margin:0 0 6px}
+.gh p{margin:0 0 6px;color:var(--muted)}
+.gh .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0}
+.gh label{font-size:13px;color:var(--muted)}
+.gh input[type=text],.gh input[type=password]{display:block;width:100%;margin-top:4px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card);font-size:14px}
+.gh .btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.gh .btn{min-height:40px;padding:8px 16px;font-size:14px}
+.gh .chk{display:flex;gap:8px;align-items:center;color:var(--fg)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="home" href="index.html">🏠 Home</a>
-  <h1>280+217 — DOC master update</h1>
-  <p class="lede">Upload today’s <code>DOC -280+217.xlsx</code> and the six fresh TAPS exports. You get the DOC file back with 217, 280, Dye Q, Knit Q, HS and Y-LOT refreshed — your other sheets, pivots, colours and own columns untouched. Everything runs in this browser; the files are not uploaded anywhere.</p>
+  <nav class="nav" aria-label="Site">
+    <a class="home" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>Home</a>
+    <div class="crumb">SQ Hues Tools <span>›</span> <span>DOC Master Update</span></div>
+    <a class="all" href="index.html">All tools →</a>
+  </nav>
 
-  <div class="last" id="last">
-    <b>Last update</b>
-    <span id="lastWhen" class="muted">checking…</span>
-    <span id="lastInfo" class="muted"></span>
-    <button class="btn dlb" id="lastDl" type="button" hidden>⬇ Download DOC file</button>
+  <header class="head">
+    <div class="logo" aria-hidden="true">Q</div>
+    <div class="htext">
+      <div class="eyebrow">SQ Biricina · Fabric Planning</div>
+      <h1>DOC Master Update</h1>
+      <p class="sub">Builds DOC -280+217 from the six TAPS exports. The files are processed in your browser and aren't uploaded anywhere.</p>
+    </div>
+    <button class="qsq" id="gear" type="button" title="Publish settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>QUALITY SEEKS QUALITY</button>
+  </header>
+
+  <div class="gh" id="gh">
+    <h3>Publish settings</h3>
+    <p>Only the person who publishes needs this — everyone else just opens the page and downloads. Each publish <b>replaces</b> the previous file in the <code>doc-master-data</code> storage area, so GitHub storage stays flat.</p>
+    <div class="row">
+      <label>Owner<input type="text" id="ghOwner" placeholder="GitHub user name"></label>
+      <label>Repository<input type="text" id="ghRepo" placeholder="sq-hues-tools"></label>
+      <label>Storage branch<input type="text" id="ghBranch" placeholder="doc-master-data"></label>
+    </div>
+    <label>Key (fine-grained token · this repository · Contents: Read and write)<input type="password" id="ghToken" placeholder="github_pat_…" autocomplete="off"></label>
+    <div class="btns">
+      <label class="chk"><input type="checkbox" id="autoPub" checked> Save to the site automatically after each update</label>
+    </div>
+    <div class="btns">
+      <button class="btn" id="ghSave" type="button">Save</button>
+      <button class="btn light" id="ghForget" type="button">Forget key</button>
+      <span class="msg" id="ghMsg"></span>
+    </div>
+    <p style="margin-top:8px">The key stays in this browser only; it is never written into the page or the repository.</p>
   </div>
 
-  <div class="boxes">
-    <div class="box" id="boxDoc" tabindex="0" role="button" aria-label="Choose the DOC master file">
-      <div class="lbl">1 · DOC master</div>
-      <p class="big" id="docMain">Drop DOC -280+217.xlsx here, or click</p>
-      <p class="small" id="docSub">The latest copy — including today’s own edits.</p>
+  <div class="lastrow">
+    <div class="last" id="last">
+      <b>Last update</b>
+      <span id="lastWhen" class="muted">checking…</span>
+      <span id="lastInfo" class="muted"></span>
+      <button class="btn" id="lastDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download DOC file</button>
+    </div>
+  </div>
+
+  <section class="cards">
+    <div class="card" id="boxDoc" tabindex="0" role="button" aria-label="Choose the DOC master file">
+      <div class="lbl">1 · DOC -280+217</div>
+      <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+      <p class="fname" id="docName">Drop DOC -280+217.xlsx here, or click</p>
+      <div class="hint" id="docHint">The latest copy — including today’s own edits.</div>
+      <div class="meta" id="docMeta"></div>
       <input type="file" id="pickDoc" accept=".xlsx" hidden>
     </div>
-    <div class="box" id="boxTaps" tabindex="0" role="button" aria-label="Choose the six TAPS exports">
-      <div class="lbl">2 · TAPS exports (all six at once)</div>
+    <div class="card" id="boxTaps" tabindex="0" role="button" aria-label="Choose the six TAPS exports">
+      <div class="lbl">2 · TAPS exports (all six)</div>
+      <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
       <ul class="taps" id="taps"></ul>
+      <div class="meta" id="tapsMeta"></div>
       <input type="file" id="pickTaps" accept=".xls,.xlsx" multiple hidden>
     </div>
-  </div>
-
-  <div class="fix">
-    <input type="checkbox" id="fix" checked>
-    <label for="fix">Fix the two template slips <span>(recommended)</span></label>
-    <p>280 CY “Wip Ageing Slot” read CW4772 (another batch’s ageing) instead of its own row; Dye Q AC “Order Created Date” read FOC Qty (column AN) instead of AO. Untick to reproduce the sheet exactly as before.</p>
-  </div>
+    <div class="card side">
+      <label for="rdate">Report date (used in file name)</label>
+      <input type="date" id="rdate">
+      <div class="out">OUTPUT</div>
+      <div class="outn" id="outName"></div>
+      <label class="fix"><input type="checkbox" id="fix" checked><span>Fix the two template slips (280 CY read CW4772; Dye Q AC read FOC Qty). Untick to reproduce the sheet exactly as before.</span></label>
+    </div>
+  </section>
 
   <div class="act">
-    <button class="btn" id="go" type="button" disabled>Update DOC file</button>
-    <span class="need" id="need" aria-live="polite"></span>
-    <span class="warn" id="warn"></span>
-    <span class="right">
-      <label><input type="checkbox" id="autoPub"> Auto-publish after update</label>
-      <button class="btn ghost" id="pub" type="button" disabled>Publish to site</button>
-      <a href="#" id="ghLink">⚙ GitHub setup</a>
-    </span>
-  </div>
-  <div class="gh" id="gh">
-    <p><b>Publish setup</b> (only the person who publishes needs this; viewers just open the page and download). The file is stored on its own branch and the old file is <b>replaced</b> on every publish, so GitHub storage does not grow.</p>
-    <div class="row">
-      <label>Owner<input id="ghOwner" placeholder="your GitHub user name"></label>
-      <label>Repository<input id="ghRepo" placeholder="sq-hues-tools"></label>
-      <label>Branch<input id="ghBranch" placeholder="doc-master-data"></label>
-    </div>
-    <label>Token (fine-grained, this repo only, Contents: Read and write)<input id="ghToken" type="password" placeholder="github_pat_…" autocomplete="off"></label>
-    <div class="row" style="grid-template-columns:auto auto 1fr;align-items:center">
-      <button class="btn" id="ghSave" type="button">Save</button>
-      <button class="btn ghost" id="ghForget" type="button">Forget token</button>
-      <p id="ghMsg"></p>
-    </div>
-    <p>The token stays in this browser only and is never put in the page or the repository.</p>
+    <button class="btn" id="go" type="button" disabled>Run update</button>
+    <button class="btn" id="dlBtn" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Updated DOC</button>
+    <button class="btn light" id="pubBtn" type="button" disabled>Save to site</button>
+    <span class="msg" id="msg"></span>
+    <span class="pill" id="pill"></span>
   </div>
 
+  <section class="prog" id="prog" aria-live="polite">
+    <div class="track"><i id="bar"></i></div>
+    <div class="pline"><span id="pText"></span><span id="pPct"></span></div>
+  </section>
+  <div class="note" id="note"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1074,36 +1121,41 @@ root.DocBuilder = { build, detect, _test: { formulaGen, calc280, SEARCH, CONCAT,
 'use strict';
 const LIBS=['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'];
 const TAPS=[['s217','217.xls'],['s280','280.xls'],['dyeq','Inside Dye Q.xls'],['knitq','Knit Q.xls'],['heatset','Heatset.xls'],['lot','Lot.xls']];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const $=id=>document.getElementById(id);
-const files={};let outBlob=null,busy=false;
+const files={};let outBlob=null,busy=false,lastReport=null;
 const coreText=$('core-src').textContent;(0,eval)(coreText);
 const fmt=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const pad=n=>String(n).padStart(2,'0');
 
+/* ---------- report date / output name ---------- */
+const d0=new Date();$('rdate').value=`${d0.getFullYear()}-${pad(d0.getMonth()+1)}-${pad(d0.getDate())}`;
+function rdate(){const v=($('rdate').value||'').split('-').map(Number);return v.length===3&&v[0]?new Date(v[0],v[1]-1,v[2]):new Date();}
+function outName(d=rdate()){return `DOC -280+217 ${pad(d.getDate())}-${MON[d.getMonth()]}-${d.getFullYear()}.xlsx`;}
+$('rdate').addEventListener('change',()=>{$('outName').textContent=outName();});
+$('outName').textContent=outName();
+
+/* ---------- files ---------- */
 function render(){
   const m=files.master;
   $('boxDoc').classList.toggle('done',!!m);
-  $('docMain').innerHTML='';
-  if(m){const s=document.createElement('span');s.className='ok';s.textContent='✓ '+m.name;$('docMain').appendChild(s);$('docSub').textContent=fmt(m.size)+' · click to change';}
-  else{$('docMain').textContent='Drop DOC -280+217.xlsx here, or click';$('docSub').textContent='The latest copy — including today’s own edits.';}
-  const ul=$('taps');ul.innerHTML='';
-  for(const [k,label] of TAPS){
-    const f=files[k];const li=document.createElement('li');if(f)li.className='got';
-    const c=document.createElement('span');c.className='c';c.textContent=f?'●':'○';li.appendChild(c);
-    li.appendChild(document.createTextNode(label));
-    if(f){const sm=document.createElement('small');sm.textContent='  '+fmt(f.size);li.appendChild(sm);li.title=f.name;}
-    ul.appendChild(li);
-  }
-  $('boxTaps').classList.toggle('done',TAPS.every(t=>files[t[0]]));
-  const missT=TAPS.filter(t=>!files[t[0]]).length,missD=!m;
-  $('go').disabled=busy||missT>0||missD;
-  if(busy)return;
-  $('need').textContent=(missD&&missT?`DOC file and ${missT} TAPS file(s) still needed`:missD?'DOC file still needed':missT?`${missT} TAPS file(s) still needed`:'Ready to update');
+  $('docName').textContent=m?m.name:'Drop DOC -280+217.xlsx here, or click';
+  $('docHint').textContent=m?'':'The latest copy — including today’s own edits.';
+  $('docMeta').textContent=m?`✓ Uploaded · ${fmt(m.size)}`:'';
+  const ul=$('taps');ul.innerHTML='';let got=0,size=0;
+  for(const [k,label] of TAPS){const f=files[k];const li=document.createElement('li');if(f){li.className='got';got++;size+=f.size;li.title=f.name;}
+    const c=document.createElement('span');c.className='c';c.textContent=f?'●':'○';li.appendChild(c);li.appendChild(document.createTextNode(label));ul.appendChild(li);}
+  $('boxTaps').classList.toggle('done',got===6);
+  $('tapsMeta').textContent=got?`✓ ${got} of 6 uploaded · ${fmt(size)}`:'';
+  $('go').disabled=busy||!m||got<6;
+  if(!busy&&!outBlob)$('msg').textContent=!m&&got<6?`DOC file and ${6-got} TAPS file(s) still needed`:!m?'DOC file still needed':got<6?`${6-got} TAPS file(s) still needed`:'Ready.';
 }
-function setWarn(t){$('warn').textContent=t||'';$('warn').classList.toggle('show',!!t);}
-function addTaps(list){
+function note(t,err){const n=$('note');n.textContent=t||'';n.classList.toggle('show',!!t);n.classList.toggle('err',!!err);}
+function addFiles(list){
   const bad=[];
-  for(const f of list){const k=DocBuilder.detect(f.name);if(k&&k!=='master')files[k]=f;else if(k==='master')files.master=f;else bad.push(f.name);}
-  render();if(bad.length){setWarn('Not recognised: '+bad.join(', ')+' — the name must contain 217, 280, Dye Q, Knit Q, Heatset or Lot.');}
+  for(const f of list){const k=DocBuilder.detect(f.name);if(k)files[k]=f;else bad.push(f.name);}
+  outBlob=null;$('dlBtn').disabled=true;$('pubBtn').disabled=true;render();
+  if(bad.length)note('Not recognised: '+bad.join(', ')+' — the name must contain 217, 280, Dye Q, Knit Q, Heatset or Lot.',true);
 }
 function wire(box,input,onFiles){
   box.addEventListener('click',()=>input.click());
@@ -1113,14 +1165,12 @@ function wire(box,input,onFiles){
   ['dragleave','drop'].forEach(t=>box.addEventListener(t,e=>{e.preventDefault();box.classList.remove('over');}));
   box.addEventListener('drop',e=>onFiles(e.dataTransfer.files));
 }
-wire($('boxDoc'),$('pickDoc'),list=>{const f=[...list].find(x=>/\.xlsx$/i.test(x.name));if(f){files.master=f;render();}else if(list.length)addTaps(list);});
-wire($('boxTaps'),$('pickTaps'),addTaps);
+wire($('boxDoc'),$('pickDoc'),list=>{const f=[...list].find(x=>/\.xlsx$/i.test(x.name));if(f&&list.length===1){files.master=f;outBlob=null;render();}else addFiles(list);});
+wire($('boxTaps'),$('pickTaps'),addFiles);
 
+/* ---------- run ---------- */
 function todaySerial(){const d=new Date();return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/864e5);}
-function progress(p,msg){
-  const n=$('need');n.innerHTML='<span class="mini"><i style="width:'+Math.max(2,Math.min(100,p)).toFixed(0)+'%"></i></span>';
-  n.appendChild(document.createTextNode(msg+' …'));
-}
+function progress(p,m){$('prog').classList.add('show');$('bar').style.width=Math.max(1,Math.min(100,p)).toFixed(1)+'%';$('pText').textContent=p>=100?'Done · ready to download':m;$('pPct').textContent=Math.round(p)+'%';}
 async function readAll(){const b={sources:{}};b.master=new Uint8Array(await files.master.arrayBuffer());for(const [k] of TAPS)b.sources[k]=new Uint8Array(await files[k].arrayBuffer());return b;}
 function makeWorker(){
   const glue=`importScripts(${LIBS.map(u=>JSON.stringify(u)).join(',')});\n${coreText}\n
@@ -1129,11 +1179,11 @@ self.postMessage({t:'done',bytes:r.bytes,report:r.report},[r.bytes.buffer]);}cat
   return new Worker(URL.createObjectURL(new Blob([glue],{type:'text/javascript'})));
 }
 async function run(){
-  busy=true;render();setWarn('');
+  busy=true;outBlob=null;render();note('');pill('');$('dlBtn').disabled=true;$('pubBtn').disabled=true;$('msg').textContent='Working…';
   const t0=performance.now();progress(1,'Loading files');
   const fix=$('fix').checked,today=todaySerial();
-  const done=(bytes,rep)=>{busy=false;render();show(bytes,rep,(performance.now()-t0)/1000);};
-  const fail=m=>{busy=false;render();$('need').textContent='';setWarn('Could not update: '+m);};
+  const done=(bytes,rep)=>{busy=false;finished(bytes,rep,(performance.now()-t0)/1000);render();};
+  const fail=m=>{busy=false;render();$('msg').textContent='';$('prog').classList.remove('show');note('Could not update: '+m,true);};
   const fallback=async()=>{try{const r=await DocBuilder.build(await readAll(),{today,fixSlips:fix,onProgress:progress});done(r.bytes,r.report);}catch(e){fail(String(e&&e.message||e));}};
   let w=null;try{w=makeWorker();}catch(e){}
   if(!w)return fallback();
@@ -1142,52 +1192,55 @@ async function run(){
   w.onerror=e=>{e.preventDefault();w.terminate();fallback();};
   w.postMessage({files:bufs,today,fix},[bufs.master.buffer,...Object.values(bufs.sources).map(b=>b.buffer)]);
 }
-const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function outName(){const d=new Date();return `DOC -280+217 ${String(d.getDate()).padStart(2,'0')}-${MON[d.getMonth()]}-${d.getFullYear()}.xlsx`;}
-function save(){if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download=outName();document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}
-function show(bytes,rep,secs){
-  outBlob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  save();                                                  // auto-download, named with today's date
-  const n=$('need');n.innerHTML='';
-  const s=document.createElement('span');s.className='ok';s.textContent=`✓ Done in ${secs.toFixed(0)} s — ${outName()} downloaded. `;n.appendChild(s);
-  const a=document.createElement('a');a.href='#';a.textContent='Download again';a.addEventListener('click',e=>{e.preventDefault();save();});n.appendChild(a);
-  if(rep.warnings&&rep.warnings.length)setWarn(rep.warnings.join(' '));
-  lastReport=rep;$('pub').disabled=false;
-  if($('autoPub').checked)publish();
+function saveLocal(){if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download=outName();document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}
+function finished(bytes,rep,secs){
+  outBlob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});lastReport=rep;
+  progress(100,'');
+  $('dlBtn').disabled=false;$('pubBtn').disabled=false;
+  const r=rep.rows;
+  $('msg').textContent=`Done · ${r['280'].toLocaleString()} batches processed in ${secs.toFixed(0)} s.`;
+  const parts=[`217: ${r['217'].toLocaleString()} rows after removing duplicates`,`Melange ${r.melange} · Rib ${r.rib}`];
+  if(rep.ld)parts.push(`LD New ${rep.ld.New} · Repeat ${rep.ld.Repeat} (Dye Q ${rep.ld.col})`);
+  parts.push(`${rep.pivotTables} pivots refresh on open`);
+  if(rep.warnings&&rep.warnings.length)parts.push(rep.warnings.join(' '));
+  note(parts.join(' · '));
+  saveLocal();                                   // auto-download with the report date
+  if(cfg.token&&$('autoPub').checked)publish();
 }
+$('go').addEventListener('click',run);
+$('dlBtn').addEventListener('click',saveLocal);
 
-/* ---------------- publish to GitHub (single replaced copy) ---------------- */
+/* ---------- publish: one copy on its own branch, replaced every time ---------- */
 const LS='docmaster-gh-v1';
 function cfgLoad(){let c={};try{c=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
   const h=location.hostname,seg=location.pathname.split('/').filter(Boolean);
   if(!c.owner&&h.endsWith('.github.io'))c.owner=h.split('.')[0];
   if(!c.repo&&h.endsWith('.github.io'))c.repo=seg.length&&!/\.html?$/i.test(seg[0])?seg[0]:h;
-  c.branch=c.branch||'doc-master-data';return c;}
-function cfgSave(c){try{localStorage.setItem(LS,JSON.stringify(c))}catch(e){}}
+  c.branch=c.branch||'doc-master-data';if(c.auto===undefined)c.auto=true;return c;}
 let cfg=cfgLoad();
+function cfgSave(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 const DATA_FILE='DOC -280+217.xlsx';
 const rawUrl=(f,v)=>`https://raw.githubusercontent.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${encodeURIComponent(cfg.branch)}/${encodeURIComponent(f)}?v=${encodeURIComponent(v||Date.now())}`;
-const MON3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const fmtWhen=iso=>{const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}-${MON3[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+const fmtWhen=iso=>{const d=new Date(iso);return `${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 let latest=null;
+async function fetchLatest(){const r=await fetch(rawUrl('latest.json'),{cache:'no-store'});if(!r.ok)throw new Error('none');return r.json();}
 async function loadLatest(){
   const w=$('lastWhen'),inf=$('lastInfo'),b=$('lastDl');
-  if(!cfg.owner||!cfg.repo){w.textContent='not set up yet — use ⚙ GitHub setup';inf.textContent='';b.hidden=true;return;}
-  try{const r=await fetch(rawUrl('latest.json'),{cache:'no-store'});if(!r.ok)throw 0;latest=await r.json();
-    w.textContent=fmtWhen(latest.updated);
-    inf.textContent=latest.ld?`217 ${latest.rows['217'].toLocaleString()} · 280 ${latest.rows['280'].toLocaleString()} · LD New ${latest.ld.New} / Repeat ${latest.ld.Repeat}`:'';
-    b.hidden=false;
-  }catch(e){w.textContent='no published file yet';inf.textContent='';b.hidden=true;}
+  if(!cfg.owner||!cfg.repo){w.textContent='not set up yet';inf.textContent='';b.hidden=true;return;}
+  try{latest=await fetchLatest();showLatest();}catch(e){w.textContent='no published file yet';inf.textContent='';b.hidden=true;}
+}
+function showLatest(){
+  $('lastWhen').textContent=fmtWhen(latest.updated);
+  $('lastInfo').textContent=latest.reportDate?`Report date ${latest.reportDate}`:'';
+  $('lastDl').hidden=false;
 }
 $('lastDl').addEventListener('click',async()=>{
-  if(!latest)return;const b=$('lastDl'),old=b.textContent;b.disabled=true;b.textContent='Downloading…';
+  if(!latest)return;const b=$('lastDl'),html=b.innerHTML;b.disabled=true;b.lastChild.textContent='Downloading…';
   try{const r=await fetch(rawUrl(DATA_FILE,latest.updated));if(!r.ok)throw new Error('HTTP '+r.status);
-    const blob=await r.blob();const d=new Date(latest.updated);
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download=`DOC -280+217 ${String(d.getDate()).padStart(2,'0')}-${MON3[d.getMonth()]}-${d.getFullYear()}.xlsx`;
-    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
-  }catch(e){setWarn('Download failed: '+(e.message||e));}
-  b.disabled=false;b.textContent=old;
+    const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=latest.name||outName(new Date(latest.updated));document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+  }catch(e){note('Download failed: '+(e.message||e),true);}
+  b.disabled=false;b.innerHTML=html;
 });
 function b64(bytes){let s='';const CH=0x8000;for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(s);}
 async function gh(path,opt={}){
@@ -1195,38 +1248,40 @@ async function gh(path,opt={}){
   if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}const err=new Error(`GitHub ${r.status}${m?': '+m:''}`);err.status=r.status;throw err;}
   return r.status===204?null:r.json();
 }
-let lastReport=null;
+let tick=null;
+function pill(t,err){const p=$('pill');p.textContent=t||'';p.classList.toggle('show',!!t);p.classList.toggle('err',!!err);}
 async function publish(){
   if(!outBlob)return;
-  if(!cfg.owner||!cfg.repo||!cfg.token){$('gh').classList.add('show');setWarn('Add owner, repository and token in GitHub setup first.');return;}
-  const p=$('pub');p.disabled=true;p.textContent='Publishing…';setWarn('');
+  if(!cfg.owner||!cfg.repo||!cfg.token){$('gh').classList.add('show');fillGh();pill('Add the key in settings (⚙) first',true);return;}
+  $('pubBtn').disabled=true;pill('Saving…');clearInterval(tick);
   try{
     const bytes=new Uint8Array(await outBlob.arrayBuffer());
     const blob=await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:b64(bytes),encoding:'base64'})});
-    const meta={updated:new Date().toISOString(),file:DATA_FILE,size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:$('fix').checked};
+    const d=rdate();
+    const meta={updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:$('fix').checked};
     const tree=await gh('/git/trees',{method:'POST',body:JSON.stringify({tree:[
       {path:DATA_FILE,mode:'100644',type:'blob',sha:blob.sha},
       {path:'latest.json',mode:'100644',type:'blob',content:JSON.stringify(meta,null,2)}]})});
-    // parentless commit + force-move the branch = the previous file is replaced, history never grows
+    // parentless commit + force-moved branch: the previous file is wiped, no history builds up
     const commit=await gh('/git/commits',{method:'POST',body:JSON.stringify({message:'DOC master update '+meta.updated,tree:tree.sha,parents:[]})});
     try{await gh(`/git/refs/heads/${encodeURIComponent(cfg.branch)}`,{method:'PATCH',body:JSON.stringify({sha:commit.sha,force:true})});}
     catch(e){if(e.status!==404&&e.status!==422)throw e;await gh('/git/refs',{method:'POST',body:JSON.stringify({ref:'refs/heads/'+cfg.branch,sha:commit.sha})});}
-    p.textContent='Published ✓';latest=meta;
-    $('lastWhen').textContent=fmtWhen(meta.updated);$('lastDl').hidden=false;
-    setTimeout(()=>{p.textContent='Publish to site';p.disabled=false;},4000);
-  }catch(e){p.textContent='Publish to site';p.disabled=false;setWarn('Publish failed — '+(e.message||e)+(e.status===401||e.status===403?' (check the token: Contents read & write on this repository).':''));}
+    latest=meta;showLatest();
+    const t0=Date.now();let n=0;
+    const show=()=>{const s=Math.floor((Date.now()-t0)/1000);pill(`✓ Saved · going live… ${Math.floor(s/60)}:${pad(s%60)}`);};
+    show();tick=setInterval(async()=>{show();if(++n%5)return;
+      try{const l=await fetchLatest();if(l.updated===meta.updated){clearInterval(tick);pill('✓ Saved · live');}}catch(e){}
+      if(Date.now()-t0>180000){clearInterval(tick);pill('✓ Saved · live within a few minutes');}},1000);
+  }catch(e){pill('Save to site failed',true);note('Save to site failed — '+(e.message||e)+(e.status===401||e.status===403||e.status===404?' (check the key: Contents read & write on this repository).':''),true);}
+  $('pubBtn').disabled=false;
 }
-$('pub').addEventListener('click',publish);
-try{$('autoPub').checked=localStorage.getItem(LS+'-auto')==='1'}catch(e){}
-$('autoPub').addEventListener('change',()=>{try{localStorage.setItem(LS+'-auto',$('autoPub').checked?'1':'0')}catch(e){}});
-function fillGh(){$('ghOwner').value=cfg.owner||'';$('ghRepo').value=cfg.repo||'';$('ghBranch').value=cfg.branch||'';$('ghToken').value=cfg.token||'';}
-$('ghLink').addEventListener('click',e=>{e.preventDefault();fillGh();$('gh').classList.toggle('show');});
-$('ghSave').addEventListener('click',()=>{cfg={owner:$('ghOwner').value.trim(),repo:$('ghRepo').value.trim(),branch:$('ghBranch').value.trim()||'doc-master-data',token:$('ghToken').value.trim()};
-  const keep=Object.assign({},cfg);cfgSave(keep);$('ghMsg').textContent='Saved in this browser.';loadLatest();});
-$('ghForget').addEventListener('click',()=>{cfg.token='';cfgSave(cfg);$('ghToken').value='';$('ghMsg').textContent='Token removed from this browser.';});
-loadLatest();
-$('go').addEventListener('click',run);
-render();
+$('pubBtn').addEventListener('click',publish);
+function fillGh(){$('ghOwner').value=cfg.owner||'';$('ghRepo').value=cfg.repo||'';$('ghBranch').value=cfg.branch||'';$('ghToken').value=cfg.token||'';$('autoPub').checked=cfg.auto!==false;}
+$('gear').addEventListener('click',()=>{fillGh();$('gh').classList.toggle('show');});
+$('ghSave').addEventListener('click',()=>{cfg={owner:$('ghOwner').value.trim(),repo:$('ghRepo').value.trim(),branch:$('ghBranch').value.trim()||'doc-master-data',token:$('ghToken').value.trim(),auto:$('autoPub').checked};cfgSave();$('ghMsg').textContent='Saved in this browser.';loadLatest();});
+$('ghForget').addEventListener('click',()=>{cfg.token='';cfgSave();$('ghToken').value='';$('ghMsg').textContent='Key removed from this browser.';});
+$('autoPub').checked=cfg.auto!==false;
+render();loadLatest();
 })();
 </script>
 </body>
