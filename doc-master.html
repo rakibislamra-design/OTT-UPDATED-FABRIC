@@ -227,6 +227,25 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
 .daychip{display:inline-flex;gap:4px;align-items:center;background:var(--q10);color:var(--q);border-radius:999px;padding:1px 2px 1px 10px;font-size:12.5px;font-weight:600}
 .daychip button{border:0;background:none;color:var(--q);cursor:pointer;font-size:14px;padding:0 6px}
 .rng{margin-top:10px}
+
+.na{margin-top:8px}
+.natabs{margin-left:auto;margin-top:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.natabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:var(--fg)}
+.natabs button[aria-selected=true]{background:var(--q);border-color:var(--q);color:#fff}
+.natabs select{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:13px;background:var(--card);color:var(--fg)}
+.art{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.art .ah{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:baseline;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--q5)}
+.art .ah b{font:700 15px var(--disp)}
+.art .ah span{font-size:12.5px;color:var(--muted)}
+.art .ah .st{margin-left:auto;font-weight:700;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--q10);color:var(--q)}
+.art .tw{overflow-x:auto}
+.art table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.art th{text-align:right;font-weight:600;color:var(--muted);padding:6px 10px;white-space:nowrap}
+.art td{text-align:right;padding:6px 10px;white-space:nowrap;border-top:1px solid var(--line)}
+.art th.l,.art td.l{text-align:left}
+.art td.bn{max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.art td.pl{font-weight:700}
+.art td.hi{color:var(--red)}
 </style>
 </head>
 <body>
@@ -328,6 +347,20 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
     <div class="kpis" id="kpis"></div>
 
 
+  </section>
+
+  <section class="na" id="na">
+    <div class="dhead">
+      <h2 class="sec">New articles · Fabric/Yarn</h2>
+      <span class="tag" id="naTag"></span>
+      <div class="natabs" role="tablist">
+        <button type="button" role="tab" id="tabWait" aria-selected="true">Waiting for dyeing</button>
+        <button type="button" role="tab" id="tabStart" aria-selected="false">Dyeing started</button>
+        <select id="naWin" aria-label="Started within"><option value="30">first dyed · last 30 days</option><option value="60" selected>first dyed · last 60 days</option><option value="90">first dyed · last 90 days</option></select>
+      </div>
+    </div>
+    <p class="dsub" id="naSub"></p>
+    <div id="naList"></div>
   </section>
   <div class="pop" id="pop" role="dialog" hidden></div>
   <div class="tip" id="tip" role="tooltip"></div>
@@ -1045,7 +1078,7 @@ function dailySummary(d280, grp280, dlot, today) {
   const iso = serial => new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 864e5).toISOString().slice(0, 10);
   const minSerial = today - 120;
   const out = { knit: {}, dye: {}, rfd: {} };
-  const clean = v => (String(v ?? '').trim() || 'Unknown');
+  const clean = v => (String(v ?? '').replace(/\s+/g, ' ').trim() || 'Unknown');
   const add = (bucket, ser, buyer, art, kg, side) => {
     if (typeof ser !== 'number' || ser < minSerial || ser > today + 1 || typeof kg !== 'number' || !kg) return;
     const day = iso(ser), b = clean(buyer), a = clean(art);
@@ -1061,13 +1094,50 @@ function dailySummary(d280, grp280, dlot, today) {
   };
   for (const r of dlot) add(out.knit, r[0], r[2], r[6], r[12]);                       // Y-LOT: production date, buyer, fabrication, knitted kg (M)
   d280.forEach((r, i) => {
-    const side = /outside/i.test(grp280[i] || '') ? 'out' : 'in';                       // TAPS group: 01.In-House / 02.Outside
+    const om = r[COL('C')];
+    const side = om !== null && om !== undefined && String(om).trim() !== '' ? 'out' : 'in';   // column C Outside Mill: blank = SQHL in-house, filled = outside
     add(out.dye, r[COL('R')], r[COL('E')], r[COL('N')], r[COL('W')]);                 // 280: dyeing date, plan qty kg
     add(out.rfd, r[COL('U')], r[COL('E')], r[COL('N')], r[COL('AB')], side);          // 280: RFD date, RFD qty kg
   });
   const rnd = o => { for (const k in o) o[k] = typeof o[k] === 'object' ? rnd(o[k]) : Math.round(o[k]); return o; };
   for (const b of Object.values(out)) for (const d of Object.values(b)) { const n = d.n, sn = d.sides ? Object.fromEntries(Object.entries(d.sides).map(([k, v]) => [k, v.n])) : null; rnd(d); d.n = n; if (sn) for (const k in sn) d.sides[k].n = sn[k]; }
   return out;
+}
+
+/* ------------------------------------------- new articles (Fabric/Yarn) */
+function newArticles(d280, grp280, c280, today) {
+  const iso = v => typeof v === 'number' ? new Date(Date.UTC(1899, 11, 30) + Math.floor(v) * 864e5).toISOString().slice(0, 10) : null;
+  const num = v => typeof v === 'number' ? Math.round(v * 10) / 10 : 0;
+  const CA = c280.out.CA;
+  const art = new Map();
+  d280.forEach((r, i) => {
+    const a = String(r[COL('N')] ?? '').trim(); if (!a) return;
+    const o = art.get(a) || { a, rows: [] }; o.rows.push(i); art.set(a, o);
+  });
+  const bat = i => { const r = d280[i], plan = r[COL('W')], rfd = r[COL('AB')], ca = CA[i];
+    return { b: r[COL('H')], buyer: r[COL('E')], po: r[COL('F')], color: r[COL('L')], side: String(r[COL('C')] ?? '').trim() ? 'Outside' : 'Inhouse',
+      ott: iso(r[COL('A')]), kd: iso(r[COL('K')]), dd: iso(r[COL('R')]), fd: iso(r[COL('S')]), rd: iso(r[COL('U')]),
+      plan: num(plan), knit: num(r[COL('X')]), dyed: num(r[COL('Y')]), rfd: num(rfd),
+      pl: typeof plan === 'number' && plan > 0 && typeof rfd === 'number' && rfd > 0 ? Math.round((plan - rfd) / plan * 1000) / 10 : null,
+      popl: typeof ca === 'number' && isFinite(ca) ? Math.round(ca * 1000) / 10 : null };
+  };
+  const isDyed = i => typeof d280[i][COL('R')] === 'number' || (typeof d280[i][COL('Y')] === 'number' && d280[i][COL('Y')] > 0);
+  const waiting = [], started = [];
+  for (const o of art.values()) {
+    const dyed = o.rows.filter(isDyed);
+    if (!dyed.length) {
+      if (!o.rows.some(i => !String(d280[i][COL('C')] ?? '').trim())) continue;     // outside-only: no dyeing date ever comes back
+      const rows = o.rows.slice().sort((x, y) => (d280[x][COL('A')] || 0) - (d280[y][COL('A')] || 0));
+      waiting.push({ a: o.a, n: o.rows.length, plan: num(o.rows.reduce((s, i) => s + (d280[i][COL('W')] || 0), 0)), batches: rows.slice(0, 5).map(bat) });
+    } else {
+      const first = Math.min(...dyed.map(i => typeof d280[i][COL('R')] === 'number' ? d280[i][COL('R')] : Infinity));
+      if (!(first >= today - 90)) continue;
+      const rows = dyed.slice().sort((x, y) => (d280[x][COL('R')] ?? Infinity) - (d280[y][COL('R')] ?? Infinity));
+      started.push({ a: o.a, n: o.rows.length, nDyed: dyed.length, first: iso(first), batches: rows.slice(0, 5).map(bat) });
+    }
+  }
+  started.sort((x, y) => (y.first || '').localeCompare(x.first || ''));
+  return { asOf: iso(today), waiting, started };
 }
 /* ------------------------------------------------------------ main build */
 const EXPECT_280_TEMPLATES = 60;   // AU..DB
@@ -1255,6 +1325,7 @@ async function build(files, opts = {}) {
     m => log(92 + m.percent * 0.07, 'Compressing workbook'));
   note(100, 'Done');
   report.summary = dailySummary(d280, grp280, dlot, today);
+  report.newArt = newArticles(d280, grp280, c280, today);
   report.rows = { '217': d217.length, '280': d280.length, 'Dye Q': ddq.length, 'Knit Q': dkq.length, HS: dhs.length, 'Y-LOT': dlot.length, melange: mel, rib };
   return { bytes: out, report, debug: opts.debug ? { c280, cdq } : undefined };
 }
@@ -1366,7 +1437,7 @@ function finished(bytes,rep,secs){
   parts.push(`${rep.pivotTables} pivots refresh on open`);
   if(rep.warnings&&rep.warnings.length)parts.push(rep.warnings.join(' '));
   note(parts.join(' · '));
-  if(rep.summary){localSummary=true;useSummary(rep.summary,'From this update');}
+  if(rep.summary){localSummary=true;useSummary(rep.summary,'From this update');useNewArt(rep.newArt);}
   saveLocal();                                   // auto-download with the report date
   if(cfg.token&&$('autoPub').checked)publish();
 }
@@ -1394,7 +1465,7 @@ async function loadLatest(){
   try{latest=await fetchLatest();showLatest();}catch(e){w.textContent='no published file yet';inf.textContent='';b.hidden=true;openUpdater();}
 }
 function showLatest(){
-  if(latest.summary&&!localSummary)useSummary(latest.summary,'Last updated '+fmtWhen(latest.updated));
+  if(latest.summary&&!localSummary){useSummary(latest.summary,'Last updated '+fmtWhen(latest.updated));useNewArt(latest.newArt);}
   $('lastWhen').textContent=fmtWhen(latest.updated);
   $('lastInfo').textContent=latest.reportDate?`Report date ${latest.reportDate}`:'';
   $('lastDl').hidden=false;
@@ -1423,7 +1494,7 @@ async function publish(){
     const bytes=new Uint8Array(await outBlob.arrayBuffer());
     const blob=await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:b64(bytes),encoding:'base64'})});
     const d=rdate();
-    const meta={summary:lastReport&&lastReport.summary,updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:$('fix').checked};
+    const meta={summary:lastReport&&lastReport.summary,newArt:lastReport&&lastReport.newArt,updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:$('fix').checked};
     const tree=await gh('/git/trees',{method:'POST',body:JSON.stringify({tree:[
       {path:DATA_FILE,mode:'100644',type:'blob',sha:blob.sha},
       {path:'latest.json',mode:'100644',type:'blob',content:JSON.stringify(meta,null,2)}]})});
@@ -1498,7 +1569,8 @@ function agg(bucket,from,to,side){
 }
 function articleTip(e,b,arts,tot){
   const list=Object.entries(arts||{}).sort((x,y)=>y[1]-x[1]);
-  let h=`<h5>${esc(b)}</h5><div class="ps">${nf(tot)} kg · article-wise</div>`;
+  let h=`<h5>${esc(b)}</h5><div class="ps">${nf(tot)} kg · article-wise (Fabric/Yarn)</div>`;
+  if(!list.length)h+='<div class="empty">Article-wise detail appears after the next update is run with this page.</div>';
   for(const [a,v] of list.slice(0,12))h+=`<div class="pa"><span title="${esc(a)}">${esc(a)}</span><span>${nf(v)} kg</span></div>`;
   if(list.length>12)h+=`<div class="pa"><span>+ ${list.length-12} more</span><span>${nf(list.slice(12).reduce((s,x)=>s+x[1],0))} kg</span></div>`;
   pop.innerHTML=h;pop.hidden=false;pop.classList.add('hover');
@@ -1507,7 +1579,7 @@ function articleTip(e,b,arts,tot){
   pop.style.top=Math.max(12,Math.min(e.clientY+14,innerHeight-hh-12))+'px';
 }
 function hideArticle(){if(pop.classList.contains('hover')){pop.hidden=true;pop.classList.remove('hover');}}
-function miniTrend(bucket,from,to,side,selDay,onPick,avail){
+function miniTrend(bucket,from,to,side,onHover,onLeave,onPick,getPin,avail){
   const m0=new Date(to.getFullYear(),to.getMonth(),1),start=m0<addDays(to,-13)?m0:addDays(to,-13),days=[];for(let d=new Date(start);d<=to;d=addDays(d,1))days.push(new Date(d));
   const vals=days.map(d=>{const o=view(bucket[isoD(d)],side);return o?o.kg:0;}),nice=niceMax(Math.max(1,...vals));
   const pl=46,pb=20,H=130,slot=Math.max(22,Math.floor(((avail||400)-pl-6)/days.length)),W=pl+days.length*slot+6,ns='http://www.w3.org/2000/svg';
@@ -1515,53 +1587,64 @@ function miniTrend(bucket,from,to,side,selDay,onPick,avail){
   const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H,role:'img','aria-label':'kg per day'});
   for(const g of [0,.5,1]){const y=(H-pb)-(H-pb-8)*g;svg.appendChild(mk('line',{x1:pl,x2:W,y1:y,y2:y,stroke:'currentColor','stroke-opacity':'.12'}));
     const tx=mk('text',{x:pl-6,y:y+4,'text-anchor':'end'});const v=nice*g;tx.textContent=v>=1000?(v/1000)+'t':v;svg.appendChild(tx);}
-  days.forEach((d,i)=>{const v=vals[i],h=(H-pb-8)*v/nice,x=pl+i*slot+4,w=slot-8,y=(H-pb)-h,inR=d>=from&&d<=to,rr=Math.min(4,w/2,h);
-    const isSel=!!selDay&&d.getTime()===selDay.getTime();
-    const fill=selDay?(isSel?'#664356':'#D2C7CB'):(inR?'#664356':'#D2C7CB');
-    if(h>0)svg.appendChild(mk('path',{d:`M${x},${H-pb}V${y+rr}Q${x},${y} ${x+rr},${y}H${x+w-rr}Q${x+w},${y} ${x+w},${y+rr}V${H-pb}Z`,fill}));
-    const hit=mk('rect',{x:pl+i*slot,y:0,width:slot,height:H-pb,fill:'transparent',style:'cursor:pointer'});
-    hit.addEventListener('mousemove',e=>showTip(e,`${dl(d)} · ${nf(v)} kg — click to show this day's buyers`));hit.addEventListener('mouseleave',hideTip);
-    hit.addEventListener('click',e=>{e.stopPropagation();hideTip();onPick(isSel?null:d);});svg.appendChild(hit);
+  const bars=[];
+  const paint=hi=>bars.forEach(({p,d})=>{if(!p)return;const inR=d>=from&&d<=to;p.setAttribute('fill',hi?(d.getTime()===hi.getTime()?'#664356':'#D2C7CB'):(inR?'#664356':'#D2C7CB'));});
+  days.forEach((d,i)=>{const v=vals[i],h=(H-pb-8)*v/nice,x=pl+i*slot+4,w=slot-8,y=(H-pb)-h,rr=Math.min(4,w/2,h);
+    const p=h>0?mk('path',{d:`M${x},${H-pb}V${y+rr}Q${x},${y} ${x+rr},${y}H${x+w-rr}Q${x+w},${y} ${x+w},${y+rr}V${H-pb}Z`}):null;
+    if(p)svg.appendChild(p);bars.push({p,d});
+    const hit=mk('rect',{x:pl+i*slot,y:0,width:slot,height:H-pb,fill:'transparent'});
+    hit.addEventListener('mouseenter',()=>{paint(d);onHover(d);});
+    hit.addEventListener('mousemove',e=>showTip(e,`${dl(d)} · ${nf(v)} kg · click to keep`));
+    hit.addEventListener('click',e=>{e.stopPropagation();const pin=getPin();const nd=pin&&pin.getTime()===d.getTime()?null:d;onPick(nd);paint(nd||d);});
+    svg.appendChild(hit);
     if(days.length<=16||i%2===(days.length-1)%2){const tx=mk('text',{x:pl+i*slot+slot/2,y:H-5,'text-anchor':'middle'});tx.textContent=pad(d.getDate());svg.appendChild(tx);}
   });
+  svg.addEventListener('mouseleave',()=>{hideTip();paint(getPin());onLeave();});
+  paint(getPin());
   return svg;
 }
 function drawDaily(){
   const box=$('kpis');box.innerHTML='';
   if(!summary){box.innerHTML='<div class="empty">No summary yet — it appears after the next update is run with this page.</div>';$('dSub').textContent='';return;}
   const from=range.from,to=range.to,nDays=Math.round((to-from)/864e5)+1;
-  $('dSub').textContent=(nDays===1?dl(from):`${dl(from)} to ${dl(to)} · ${nDays} days`)+' · MTD on the right · click a column for that day · hover a buyer for article-wise';
+  $('dSub').textContent=(nDays===1?dl(from):`${dl(from)} to ${dl(to)} · ${nDays} days`)+' · MTD on the right · point at a column to see that day · hover a buyer for article-wise';
   const m0=new Date(to.getFullYear(),to.getMonth(),1),mDays=Math.round((to-m0)/864e5)+1;
   for(const [k,title,unitN] of KP){
     const st=state[k],bucket=summary[k]||{};
-    const f=st.day||from,t2=st.day||to,nd=st.day?1:nDays;
-    const A=agg(bucket,f,t2,st.side),M=agg(bucket,m0,to,st.side);
+    const M=agg(bucket,m0,to,st.side);
     const el=document.createElement('div');el.className='kpi';
     const sideTxt=st.side==='in'?' · Inhouse':st.side==='out'?' · Outside':'';
     el.innerHTML=`<div class="kt">${title}${sideTxt}</div><div class="mtd"><span>MTD</span><b>${nf(M.kg)} kg</b><span>Avg ${nf(M.kg/mDays)} kg/day</span></div>`+
-      `<div class="kv">${nf(A.kg)}<small>kg</small></div><div class="ks">${nf(A.n)} ${unitN}${nd>1?` · ${nf(A.kg/nd)} kg/day avg`:''}${st.day?' · '+dl(st.day):''}</div>`+
-      (k==='rfd'?(A.hasSide&&!st.side?`<div class="kv2"><span><i class="sw" style="background:${C_IN}"></i>Inhouse <b>${nf(A.kin)}</b> kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside <b>${nf(A.kout)}</b> kg</span></div>`:'')+
-        `<div class="sel"><button type="button" data-s="in">Inhouse RFD</button><button type="button" data-s="out">Outside RFD</button><button type="button" data-s="">Clear</button></div>`:'')+
-      `<h4>Day-wise${st.day?` <span class="daychip">${dl(st.day)}<button type="button" aria-label="Back to full range">×</button></span>`:''}</h4><div class="scroll"></div><h4>By buyer · hover for article-wise</h4><div class="bl"></div>`;
+      `<div class="kv"></div><div class="ks"></div>`+(k==='rfd'?`<div class="kv2 side2"></div><div class="sel"><button type="button" data-s="in">Inhouse RFD</button><button type="button" data-s="out">Outside RFD</button><button type="button" data-s="">Clear</button></div>`:'')+
+      `<h4 class="dw"></h4><div class="scroll"></div><h4 class="bh"></h4><div class="bl"></div>`;
+    const fill=day=>{
+      const f=day||from,t2=day||to,nd=day?1:nDays,A=agg(bucket,f,t2,st.side);
+      el.querySelector('.kv').innerHTML=nf(A.kg)+'<small>kg</small>';
+      el.querySelector('.ks').textContent=`${nf(A.n)} ${unitN}${nd>1?` · ${nf(A.kg/nd)} kg/day avg`:''} · ${nd>1?dl(f)+' – '+dl(t2):dl(f)}`;
+      const s2=el.querySelector('.side2');if(s2)s2.innerHTML=A.hasSide&&!st.side?`<span><i class="sw" style="background:${C_IN}"></i>Inhouse <b>${nf(A.kin)}</b> kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside <b>${nf(A.kout)}</b> kg</span>`:'';
+      el.querySelector('.bh').textContent=`By buyer · ${day?dl(day):(nd>1?'range':'yesterday')} · hover for article-wise`;
+      const bl=el.querySelector('.bl');bl.innerHTML='';const arr=Object.entries(A.by).sort((a,b)=>b[1]-a[1]);
+      if(!arr.length)bl.innerHTML='<div class="empty">Nothing recorded for this date.</div>';
+      let top=arr.slice(0,7);if(arr.length>7)top.push(['Others',arr.slice(7).reduce((s,x)=>s+x[1],0)]);
+      const mx=top.length?Math.max(...top.map(x=>x[1])):1;
+      for(const [b,v] of top){
+        const r=document.createElement('div');r.className='brow';r.innerHTML='<span class="bn"></span><span class="bt"><i></i></span><span class="bv"></span>';
+        r.querySelector('.bn').textContent=b;r.querySelector('i').style.width=(100*v/mx).toFixed(1)+'%';r.querySelector('.bv').textContent=nf(v)+' kg';
+        let arts;if(b==='Others'){arts={};for(const [x] of arr.slice(7))for(const a in (A.ba[x]||{}))arts[x+' · '+a]=A.ba[x][a];}else arts=A.ba[b]||{};
+        r.addEventListener('mousemove',e=>articleTip(e,b,arts,v));r.addEventListener('mouseleave',hideArticle);
+        bl.appendChild(r);
+      }
+    };
     if(k==='rfd'){const hasSides=Object.values(bucket).some(o=>o.sides);
       el.querySelectorAll('.sel button').forEach(b=>{b.classList.toggle('on',!!b.dataset.s&&st.side===b.dataset.s);if(!hasSides&&b.dataset.s)b.disabled=true;
         b.addEventListener('click',e=>{e.stopPropagation();st.side=b.dataset.s||null;if(!b.dataset.s)st.day=null;drawDaily();});});
       if(!hasSides){const p=document.createElement('div');p.className='ks';p.textContent='Inhouse / Outside filter works after the next update';el.querySelector('.sel').after(p);}}
-    const dc=el.querySelector('.daychip button');if(dc)dc.addEventListener('click',e=>{e.stopPropagation();st.day=null;drawDaily();});
-    const sc=el.querySelector('.scroll');
-    const bl=el.querySelector('.bl');const arr=Object.entries(A.by).sort((a,b)=>b[1]-a[1]);
-    if(!arr.length)bl.innerHTML='<div class="empty">Nothing recorded for this date.</div>';
-    let top=arr.slice(0,7);if(arr.length>7)top.push(['Others',arr.slice(7).reduce((s,x)=>s+x[1],0)]);
-    const mx=top.length?Math.max(...top.map(x=>x[1])):1;
-    for(const [b,v] of top){
-      const r=document.createElement('div');r.className='brow';r.innerHTML='<span class="bn"></span><span class="bt"><i></i></span><span class="bv"></span>';
-      r.querySelector('.bn').textContent=b;r.querySelector('i').style.width=(100*v/mx).toFixed(1)+'%';r.querySelector('.bv').textContent=nf(v)+' kg';
-      let arts;if(b==='Others'){arts={};for(const [x] of arr.slice(7))for(const a in (A.ba[x]||{}))arts[x+' · '+a]=A.ba[x][a];}else arts=A.ba[b]||{};
-      r.addEventListener('mousemove',e=>articleTip(e,b,arts,v));r.addEventListener('mouseleave',hideArticle);
-      bl.appendChild(r);
-    }
+    const head=()=>{const h=el.querySelector('.dw');h.innerHTML='Day-wise · point at a column, click to keep'+(st.day?` <span class="daychip">${dl(st.day)}<button type="button" aria-label="Back to yesterday">×</button></span>`:'');
+      const x=h.querySelector('.daychip button');if(x)x.addEventListener('click',e=>{e.stopPropagation();st.day=null;drawDaily();});};
+    head();fill(st.day);
     box.appendChild(el);
-    sc.appendChild(miniTrend(bucket,from,to,st.side,st.day,d=>{st.day=d;drawDaily();},sc.clientWidth));
+    const sc=el.querySelector('.scroll');
+    sc.appendChild(miniTrend(bucket,from,to,st.side,d=>fill(d),()=>fill(st.day),d=>{st.day=d;head();fill(d);},()=>st.day,sc.clientWidth));
     sc.scrollLeft=sc.scrollWidth;
   }
 }
@@ -1570,6 +1653,49 @@ function niceMax(m){if(m<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(m
 function useSummary(s,label){summary=s;$('dashSrc').textContent=label||'';drawDaily();}
 $('newRun').addEventListener('click',()=>{const u=$('updater');u.hidden=!u.hidden;$('newRun').setAttribute('aria-expanded',String(!u.hidden));$('newRun').textContent=u.hidden?'+ Run a new update':'− Hide update';if(!u.hidden)u.scrollIntoView({behavior:'smooth',block:'start'});});
 drawDaily();
+/* ---------- new articles ---------- */
+let newArt=null,naTab='wait';
+const fmtD=s=>{if(!s)return '–';const v=s.split('-').map(Number);return `${pad(v[2])}-${MON[v[1]-1]}-${String(v[0]).slice(2)}`;};
+const kgf=v=>v?Math.round(v).toLocaleString('en-US'):'–';
+const pct=v=>v===null||v===undefined?'–':v.toFixed(1)+'%';
+function drawNa(){
+  const list=$('naList');list.innerHTML='';
+  $('tabWait').setAttribute('aria-selected',String(naTab==='wait'));$('tabStart').setAttribute('aria-selected',String(naTab==='start'));
+  $('naWin').hidden=naTab!=='start';
+  if(!newArt){$('naTag').textContent='';$('naSub').textContent='';list.innerHTML='<div class="empty">New-article tracking appears after the next update is run with this page.</div>';return;}
+  const win=+$('naWin').value,v=newArt.asOf.split('-').map(Number),cut=isoD(addDays(new Date(v[0],v[1]-1,v[2]),-win));
+  const started=newArt.started.filter(a=>a.first>=cut);
+  $('tabWait').textContent=`Waiting for dyeing (${newArt.waiting.length})`;$('tabStart').textContent=`Dyeing started (${started.length})`;
+  $('naTag').textContent='As of '+fmtD(newArt.asOf);
+  if(naTab==='wait'){
+    $('naSub').textContent='Fabric/Yarn with no batch dyed yet (no dyeing date, no dyed qty) · stays here until dyeing starts';
+    if(!newArt.waiting.length)list.innerHTML='<div class="empty">No new article is waiting for dyeing.</div>';
+    for(const a of newArt.waiting){
+      const buyers=[...new Set(a.batches.map(b=>b.buyer))].join(', ');
+      let h=`<div class="art"><div class="ah"><b>${esc(a.a)}</b><span>${esc(buyers)}</span><span>${a.n} batch${a.n>1?'es':''} · plan ${kgf(a.plan)} kg</span><span class="st">Waiting for dyeing</span></div><div class="tw"><table><thead><tr>
+        <th class="l">Batch</th><th class="l">Buyer</th><th class="l">PO</th><th class="l">Color</th><th class="l">In / Out</th><th>OTT date</th><th>Knit date</th><th>Plan kg</th><th>Knit kg</th></tr></thead><tbody>`;
+      for(const b of a.batches)h+=`<tr><td class="l bn" title="${esc(b.b)}">${esc(b.b)}</td><td class="l">${esc(b.buyer||'')}</td><td class="l">${esc(b.po||'')}</td><td class="l">${esc(b.color||'')}</td><td class="l">${b.side}</td><td>${fmtD(b.ott)}</td><td>${fmtD(b.kd)}</td><td>${kgf(b.plan)}</td><td>${kgf(b.knit)}</td></tr>`;
+      if(a.n>5)h+=`<tr><td class="l" colspan="9" style="color:var(--muted)">+ ${a.n-5} more batches</td></tr>`;
+      list.insertAdjacentHTML('beforeend',h+'</tbody></table></div></div>');
+    }
+  }else{
+    $('naSub').textContent=`New Fabric/Yarn first dyed in the last ${win} days · first 5 dyed batches · process loss = (plan − RFD) ÷ plan · red ▲ when above the PO process loss`;
+    if(!started.length)list.innerHTML='<div class="empty">No new article started dyeing in this period.</div>';
+    for(const a of started){
+      const buyers=[...new Set(a.batches.map(b=>b.buyer))].join(', ');
+      let h=`<div class="art"><div class="ah"><b>${esc(a.a)}</b><span>${esc(buyers)}</span><span>first dyed ${fmtD(a.first)} · ${a.nDyed} of ${a.n} batches dyed</span><span class="st">Dyeing started</span></div><div class="tw"><table><thead><tr>
+        <th class="l">Batch</th><th class="l">Buyer</th><th class="l">Color</th><th class="l">In / Out</th><th>Dyeing date</th><th>Plan kg</th><th>Dyed kg</th><th>Finish date</th><th>RFD date</th><th>RFD kg</th><th>Process loss</th><th>PO process loss</th></tr></thead><tbody>`;
+      for(const b of a.batches){const hi=b.pl!==null&&b.popl!==null&&b.pl>b.popl;
+        h+=`<tr><td class="l bn" title="${esc(b.b)}">${esc(b.b)}</td><td class="l">${esc(b.buyer||'')}</td><td class="l">${esc(b.color||'')}</td><td class="l">${b.side}</td><td>${fmtD(b.dd)}</td><td>${kgf(b.plan)}</td><td>${kgf(b.dyed)}</td><td>${fmtD(b.fd)}</td><td>${fmtD(b.rd)}</td><td>${kgf(b.rfd)}</td><td class="pl${hi?' hi':''}">${pct(b.pl)}${hi?' ▲':''}</td><td>${pct(b.popl)}</td></tr>`;}
+      list.insertAdjacentHTML('beforeend',h+'</tbody></table></div></div>');
+    }
+  }
+}
+$('tabWait').addEventListener('click',()=>{naTab='wait';drawNa();});
+$('tabStart').addEventListener('click',()=>{naTab='start';drawNa();});
+$('naWin').addEventListener('change',drawNa);
+function useNewArt(n){newArt=n||null;drawNa();}
+drawNa();
 render();loadLatest();
 })();
 </script>
