@@ -77,6 +77,22 @@ code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
 .stat b{display:block;font-size:17px;color:var(--q);font-variant-numeric:tabular-nums}
 .stat span{font-size:12.5px;color:var(--muted)}
+
+.last{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--q10);border-left:4px solid var(--q);border-radius:6px;padding:10px 16px;margin:0 0 18px;font-size:13.5px}
+.last b{font-size:14px}
+.last .muted{color:var(--muted)}
+.btn.dlb{display:inline-flex;align-items:center;gap:8px}
+.btn.ghost{background:transparent;color:var(--q);border:1px solid var(--q40)}
+.btn.ghost:hover{background:var(--q5)}
+.btn.ghost:disabled{color:var(--q40);background:transparent;border-color:var(--q20)}
+.act .right{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}
+.act .right label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)}
+.act .right a{color:var(--q60);text-decoration:none;font-weight:600}
+.gh{display:none;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);max-width:760px;font-size:13px}
+.gh.show{display:block}
+.gh .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0}
+.gh input{width:100%;border:1px solid var(--q20);border-radius:4px;padding:7px 9px;background:var(--card);font-size:13px}
+.gh p{margin:0;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -84,6 +100,13 @@ code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
   <a class="home" href="index.html">🏠 Home</a>
   <h1>280+217 — DOC master update</h1>
   <p class="lede">Upload today’s <code>DOC -280+217.xlsx</code> and the six fresh TAPS exports. You get the DOC file back with 217, 280, Dye Q, Knit Q, HS and Y-LOT refreshed — your other sheets, pivots, colours and own columns untouched. Everything runs in this browser; the files are not uploaded anywhere.</p>
+
+  <div class="last" id="last">
+    <b>Last update</b>
+    <span id="lastWhen" class="muted">checking…</span>
+    <span id="lastInfo" class="muted"></span>
+    <button class="btn dlb" id="lastDl" type="button" hidden>⬇ Download DOC file</button>
+  </div>
 
   <div class="boxes">
     <div class="box" id="boxDoc" tabindex="0" role="button" aria-label="Choose the DOC master file">
@@ -109,6 +132,26 @@ code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
     <button class="btn" id="go" type="button" disabled>Update DOC file</button>
     <span class="need" id="need" aria-live="polite"></span>
     <span class="warn" id="warn"></span>
+    <span class="right">
+      <label><input type="checkbox" id="autoPub"> Auto-publish after update</label>
+      <button class="btn ghost" id="pub" type="button" disabled>Publish to site</button>
+      <a href="#" id="ghLink">⚙ GitHub setup</a>
+    </span>
+  </div>
+  <div class="gh" id="gh">
+    <p><b>Publish setup</b> (only the person who publishes needs this; viewers just open the page and download). The file is stored on its own branch and the old file is <b>replaced</b> on every publish, so GitHub storage does not grow.</p>
+    <div class="row">
+      <label>Owner<input id="ghOwner" placeholder="your GitHub user name"></label>
+      <label>Repository<input id="ghRepo" placeholder="sq-hues-tools"></label>
+      <label>Branch<input id="ghBranch" placeholder="doc-master-data"></label>
+    </div>
+    <label>Token (fine-grained, this repo only, Contents: Read and write)<input id="ghToken" type="password" placeholder="github_pat_…" autocomplete="off"></label>
+    <div class="row" style="grid-template-columns:auto auto 1fr;align-items:center">
+      <button class="btn" id="ghSave" type="button">Save</button>
+      <button class="btn ghost" id="ghForget" type="button">Forget token</button>
+      <p id="ghMsg"></p>
+    </div>
+    <p>The token stays in this browser only and is never put in the page or the repository.</p>
   </div>
 
 </div>
@@ -1109,7 +1152,79 @@ function show(bytes,rep,secs){
   const s=document.createElement('span');s.className='ok';s.textContent=`✓ Done in ${secs.toFixed(0)} s — ${outName()} downloaded. `;n.appendChild(s);
   const a=document.createElement('a');a.href='#';a.textContent='Download again';a.addEventListener('click',e=>{e.preventDefault();save();});n.appendChild(a);
   if(rep.warnings&&rep.warnings.length)setWarn(rep.warnings.join(' '));
+  lastReport=rep;$('pub').disabled=false;
+  if($('autoPub').checked)publish();
 }
+
+/* ---------------- publish to GitHub (single replaced copy) ---------------- */
+const LS='docmaster-gh-v1';
+function cfgLoad(){let c={};try{c=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
+  const h=location.hostname,seg=location.pathname.split('/').filter(Boolean);
+  if(!c.owner&&h.endsWith('.github.io'))c.owner=h.split('.')[0];
+  if(!c.repo&&h.endsWith('.github.io'))c.repo=seg.length&&!/\.html?$/i.test(seg[0])?seg[0]:h;
+  c.branch=c.branch||'doc-master-data';return c;}
+function cfgSave(c){try{localStorage.setItem(LS,JSON.stringify(c))}catch(e){}}
+let cfg=cfgLoad();
+const DATA_FILE='DOC -280+217.xlsx';
+const rawUrl=(f,v)=>`https://raw.githubusercontent.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${encodeURIComponent(cfg.branch)}/${encodeURIComponent(f)}?v=${encodeURIComponent(v||Date.now())}`;
+const MON3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtWhen=iso=>{const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}-${MON3[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+let latest=null;
+async function loadLatest(){
+  const w=$('lastWhen'),inf=$('lastInfo'),b=$('lastDl');
+  if(!cfg.owner||!cfg.repo){w.textContent='not set up yet — use ⚙ GitHub setup';inf.textContent='';b.hidden=true;return;}
+  try{const r=await fetch(rawUrl('latest.json'),{cache:'no-store'});if(!r.ok)throw 0;latest=await r.json();
+    w.textContent=fmtWhen(latest.updated);
+    inf.textContent=latest.ld?`217 ${latest.rows['217'].toLocaleString()} · 280 ${latest.rows['280'].toLocaleString()} · LD New ${latest.ld.New} / Repeat ${latest.ld.Repeat}`:'';
+    b.hidden=false;
+  }catch(e){w.textContent='no published file yet';inf.textContent='';b.hidden=true;}
+}
+$('lastDl').addEventListener('click',async()=>{
+  if(!latest)return;const b=$('lastDl'),old=b.textContent;b.disabled=true;b.textContent='Downloading…';
+  try{const r=await fetch(rawUrl(DATA_FILE,latest.updated));if(!r.ok)throw new Error('HTTP '+r.status);
+    const blob=await r.blob();const d=new Date(latest.updated);
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`DOC -280+217 ${String(d.getDate()).padStart(2,'0')}-${MON3[d.getMonth()]}-${d.getFullYear()}.xlsx`;
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+  }catch(e){setWarn('Download failed: '+(e.message||e));}
+  b.disabled=false;b.textContent=old;
+});
+function b64(bytes){let s='';const CH=0x8000;for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(s);}
+async function gh(path,opt={}){
+  const r=await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}${path}`,Object.assign({},opt,{headers:Object.assign({'Accept':'application/vnd.github+json','Authorization':'Bearer '+cfg.token,'X-GitHub-Api-Version':'2022-11-28'},opt.body?{'Content-Type':'application/json'}:{})}));
+  if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}const err=new Error(`GitHub ${r.status}${m?': '+m:''}`);err.status=r.status;throw err;}
+  return r.status===204?null:r.json();
+}
+let lastReport=null;
+async function publish(){
+  if(!outBlob)return;
+  if(!cfg.owner||!cfg.repo||!cfg.token){$('gh').classList.add('show');setWarn('Add owner, repository and token in GitHub setup first.');return;}
+  const p=$('pub');p.disabled=true;p.textContent='Publishing…';setWarn('');
+  try{
+    const bytes=new Uint8Array(await outBlob.arrayBuffer());
+    const blob=await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:b64(bytes),encoding:'base64'})});
+    const meta={updated:new Date().toISOString(),file:DATA_FILE,size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:$('fix').checked};
+    const tree=await gh('/git/trees',{method:'POST',body:JSON.stringify({tree:[
+      {path:DATA_FILE,mode:'100644',type:'blob',sha:blob.sha},
+      {path:'latest.json',mode:'100644',type:'blob',content:JSON.stringify(meta,null,2)}]})});
+    // parentless commit + force-move the branch = the previous file is replaced, history never grows
+    const commit=await gh('/git/commits',{method:'POST',body:JSON.stringify({message:'DOC master update '+meta.updated,tree:tree.sha,parents:[]})});
+    try{await gh(`/git/refs/heads/${encodeURIComponent(cfg.branch)}`,{method:'PATCH',body:JSON.stringify({sha:commit.sha,force:true})});}
+    catch(e){if(e.status!==404&&e.status!==422)throw e;await gh('/git/refs',{method:'POST',body:JSON.stringify({ref:'refs/heads/'+cfg.branch,sha:commit.sha})});}
+    p.textContent='Published ✓';latest=meta;
+    $('lastWhen').textContent=fmtWhen(meta.updated);$('lastDl').hidden=false;
+    setTimeout(()=>{p.textContent='Publish to site';p.disabled=false;},4000);
+  }catch(e){p.textContent='Publish to site';p.disabled=false;setWarn('Publish failed — '+(e.message||e)+(e.status===401||e.status===403?' (check the token: Contents read & write on this repository).':''));}
+}
+$('pub').addEventListener('click',publish);
+try{$('autoPub').checked=localStorage.getItem(LS+'-auto')==='1'}catch(e){}
+$('autoPub').addEventListener('change',()=>{try{localStorage.setItem(LS+'-auto',$('autoPub').checked?'1':'0')}catch(e){}});
+function fillGh(){$('ghOwner').value=cfg.owner||'';$('ghRepo').value=cfg.repo||'';$('ghBranch').value=cfg.branch||'';$('ghToken').value=cfg.token||'';}
+$('ghLink').addEventListener('click',e=>{e.preventDefault();fillGh();$('gh').classList.toggle('show');});
+$('ghSave').addEventListener('click',()=>{cfg={owner:$('ghOwner').value.trim(),repo:$('ghRepo').value.trim(),branch:$('ghBranch').value.trim()||'doc-master-data',token:$('ghToken').value.trim()};
+  const keep=Object.assign({},cfg);cfgSave(keep);$('ghMsg').textContent='Saved in this browser.';loadLatest();});
+$('ghForget').addEventListener('click',()=>{cfg.token='';cfgSave(cfg);$('ghToken').value='';$('ghMsg').textContent='Token removed from this browser.';});
+loadLatest();
 $('go').addEventListener('click',run);
 render();
 })();
