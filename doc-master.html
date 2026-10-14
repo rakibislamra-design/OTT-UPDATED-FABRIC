@@ -18,43 +18,47 @@
 :root[data-theme="dark"]{--bg:#1C1619;--card:#251D21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--dash:#5A4650;--q5:#2B2227;--q10:#33282E;--okbg:#1F3328;--ok:#86C7A0;--red20:#3D2629}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 "Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 "Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif}
 button,input{font:inherit;color:inherit}
 :focus-visible{outline:2px solid #366083;outline-offset:2px}
-.wrap{max-width:1380px;margin:0 auto;padding:18px 16px 56px}
-@media (min-width:900px){.wrap{padding:22px 40px 64px 200px}}
-.home{display:inline-block;margin-bottom:10px;color:var(--q60);text-decoration:none;font-size:13.5px;font-weight:600}
+.wrap{max-width:1400px;margin:0 auto;padding:16px 16px 48px}
+@media (min-width:900px){.wrap{padding:20px 32px 56px}}
+.home{display:inline-block;margin-bottom:6px;color:var(--q60);text-decoration:none;font-size:12.5px;font-weight:600}
 .home:hover{color:var(--q)}
-h1{font:700 26px/1.25 "Source Serif 4",Georgia,"Times New Roman",serif;color:var(--q);margin:0 0 6px}
+h1{font:700 22px/1.25 "Source Serif 4",Georgia,"Times New Roman",serif;color:var(--q);margin:0 0 6px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) h1{color:var(--q40)}}
 :root[data-theme="dark"] h1{color:var(--q40)}
-.lede{margin:0 0 24px;color:var(--muted);max-width:1340px}
+.lede{margin:0 0 18px;color:var(--muted);font-size:13.5px}
 code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
-.boxes{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.boxes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media (max-width:760px){.boxes{grid-template-columns:1fr}}
-.box{border:2px dashed var(--dash);border-radius:4px;background:var(--card);padding:26px 24px;min-height:166px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.box{border:2px dashed var(--dash);border-radius:4px;background:var(--card);padding:20px 22px;min-height:150px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
 .box:hover,.box.over{border-color:var(--q60);background:var(--q5)}
 .box.done{border-style:solid;border-color:var(--q20)}
-.lbl{font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--q80);margin-bottom:14px}
-.big{font-size:16px;color:var(--fg);margin:0 0 6px;overflow-wrap:anywhere}
-.small{font-size:13.5px;color:var(--muted);margin:0}
+.lbl{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--q80);margin-bottom:14px}
+.big{font-size:14.5px;color:var(--fg);margin:0 0 6px;overflow-wrap:anywhere}
+.small{font-size:12.5px;color:var(--muted);margin:0}
 .ok{color:var(--ok);font-weight:600}
 .taps{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;list-style:none;margin:0;padding:0}
-.taps li{color:var(--muted);font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.taps li{color:var(--muted);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .taps li .c{display:inline-block;width:12px;margin-right:4px;color:var(--q40)}
 .taps li.got{color:var(--fg)}
 .taps li.got .c{color:var(--ok)}
 .taps li small{color:var(--muted)}
-.fix{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:22px 0 18px;align-items:start}
+.fix{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:18px 0 14px;align-items:start}
 .fix input{width:16px;height:16px;margin:4px 0 0;accent-color:#2563eb}
-.fix label{font-size:15px;cursor:pointer}
+.fix label{font-size:14px;cursor:pointer}
 .fix label span{color:var(--muted)}
-.fix p{grid-column:2;margin:0;font-size:13.5px;color:var(--muted)}
+.fix p{grid-column:2;margin:0;font-size:12.5px;color:var(--muted)}
 .act{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.btn{appearance:none;border:0;border-radius:4px;background:var(--q);color:#fff;font-weight:600;padding:10px 16px;min-height:42px;cursor:pointer}
+.btn{appearance:none;border:0;border-radius:4px;background:var(--q);color:#fff;font-weight:600;padding:8px 14px;min-height:38px;cursor:pointer;font-size:14px}
 .btn:hover{background:var(--q80)}
 .btn:disabled{background:var(--q40);cursor:not-allowed}
-.need{font-size:14px;color:var(--muted)}
+.need{font-size:13px;color:var(--muted)}
+.need .ok{font-weight:600}
+.need a{color:var(--q);font-weight:600}
+.mini{display:inline-block;width:120px;height:6px;border-radius:99px;background:var(--q10);overflow:hidden;vertical-align:middle;margin-right:8px}
+.mini i{display:block;height:100%;width:0;background:var(--q);transition:width .25s}
 .run{display:none;margin-top:22px;max-width:860px}
 .run.show{display:block}
 .bar{height:8px;border-radius:99px;background:var(--q10);overflow:hidden;margin:8px 0 10px}
@@ -65,8 +69,8 @@ code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
 .log li:before{content:"✓";position:absolute;left:2px;color:var(--ok);font-weight:700}
 .log li.now:before{content:"•";color:var(--q)}
 .err{color:var(--red);font-weight:600}
-.warn{display:none;margin-top:14px;padding:10px 12px;border-radius:4px;background:var(--red20);font-size:14px}
-.warn.show{display:block}
+.warn{display:none;padding:6px 10px;border-radius:4px;background:var(--red20);font-size:13px}
+.warn.show{display:inline-block}
 .result{display:none;margin-top:18px;padding:16px;border-radius:4px;background:var(--okbg)}
 .result.show{display:block}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0 14px}
@@ -103,20 +107,10 @@ code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
 
   <div class="act">
     <button class="btn" id="go" type="button" disabled>Update DOC file</button>
-    <span class="need" id="need"></span>
+    <span class="need" id="need" aria-live="polite"></span>
+    <span class="warn" id="warn"></span>
   </div>
 
-  <section class="run" id="run" aria-live="polite">
-    <div class="status" id="status"></div>
-    <div class="bar"><i id="barI"></i></div>
-    <ul class="log" id="log"></ul>
-    <div class="warn" id="warn"></div>
-    <div class="result" id="result">
-      <b>Ready.</b> <span id="rtime"></span>
-      <div class="stats" id="stats"></div>
-      <button class="btn" id="dl" type="button">Download DOC -280+217.xlsx</button>
-    </div>
-  </section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1059,13 +1053,14 @@ function render(){
   $('boxTaps').classList.toggle('done',TAPS.every(t=>files[t[0]]));
   const missT=TAPS.filter(t=>!files[t[0]]).length,missD=!m;
   $('go').disabled=busy||missT>0||missD;
-  $('need').textContent=busy?'Working…':(missD&&missT?`DOC file and ${missT} TAPS file(s) still needed`:missD?'DOC file still needed':missT?`${missT} TAPS file(s) still needed`:'Ready to update');
+  if(busy)return;
+  $('need').textContent=(missD&&missT?`DOC file and ${missT} TAPS file(s) still needed`:missD?'DOC file still needed':missT?`${missT} TAPS file(s) still needed`:'Ready to update');
 }
 function setWarn(t){$('warn').textContent=t||'';$('warn').classList.toggle('show',!!t);}
 function addTaps(list){
   const bad=[];
   for(const f of list){const k=DocBuilder.detect(f.name);if(k&&k!=='master')files[k]=f;else if(k==='master')files.master=f;else bad.push(f.name);}
-  render();if(bad.length){$('run').classList.add('show');setWarn('Not recognised: '+bad.join(', ')+' — the name must contain 217, 280, Dye Q, Knit Q, Heatset or Lot.');}
+  render();if(bad.length){setWarn('Not recognised: '+bad.join(', ')+' — the name must contain 217, 280, Dye Q, Knit Q, Heatset or Lot.');}
 }
 function wire(box,input,onFiles){
   box.addEventListener('click',()=>input.click());
@@ -1079,12 +1074,9 @@ wire($('boxDoc'),$('pickDoc'),list=>{const f=[...list].find(x=>/\.xlsx$/i.test(x
 wire($('boxTaps'),$('pickTaps'),addTaps);
 
 function todaySerial(){const d=new Date();return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/864e5);}
-let lastMsg='';
 function progress(p,msg){
-  $('barI').style.width=Math.max(2,Math.min(100,p)).toFixed(1)+'%';
-  $('status').textContent=p<100?msg+' …':'Done';
-  if(msg!==lastMsg){const log=$('log');const prev=log.lastElementChild;if(prev)prev.classList.remove('now');
-    if(p<100){const li=document.createElement('li');li.className='now';li.textContent=msg;log.appendChild(li);}lastMsg=msg;}
+  const n=$('need');n.innerHTML='<span class="mini"><i style="width:'+Math.max(2,Math.min(100,p)).toFixed(0)+'%"></i></span>';
+  n.appendChild(document.createTextNode(msg+' …'));
 }
 async function readAll(){const b={sources:{}};b.master=new Uint8Array(await files.master.arrayBuffer());for(const [k] of TAPS)b.sources[k]=new Uint8Array(await files[k].arrayBuffer());return b;}
 function makeWorker(){
@@ -1094,11 +1086,11 @@ self.postMessage({t:'done',bytes:r.bytes,report:r.report},[r.bytes.buffer]);}cat
   return new Worker(URL.createObjectURL(new Blob([glue],{type:'text/javascript'})));
 }
 async function run(){
-  busy=true;render();setWarn('');$('result').classList.remove('show');$('log').innerHTML='';lastMsg='';$('run').classList.add('show');
+  busy=true;render();setWarn('');
   const t0=performance.now();progress(1,'Loading files');
   const fix=$('fix').checked,today=todaySerial();
   const done=(bytes,rep)=>{busy=false;render();show(bytes,rep,(performance.now()-t0)/1000);};
-  const fail=m=>{busy=false;render();$('barI').style.width='0';$('status').innerHTML='';const s=document.createElement('span');s.className='err';s.textContent='Could not update: '+m;$('status').appendChild(s);};
+  const fail=m=>{busy=false;render();$('need').textContent='';setWarn('Could not update: '+m);};
   const fallback=async()=>{try{const r=await DocBuilder.build(await readAll(),{today,fixSlips:fix,onProgress:progress});done(r.bytes,r.report);}catch(e){fail(String(e&&e.message||e));}};
   let w=null;try{w=makeWorker();}catch(e){}
   if(!w)return fallback();
@@ -1107,21 +1099,18 @@ async function run(){
   w.onerror=e=>{e.preventDefault();w.terminate();fallback();};
   w.postMessage({files:bufs,today,fix},[bufs.master.buffer,...Object.values(bufs.sources).map(b=>b.buffer)]);
 }
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function outName(){const d=new Date();return `DOC -280+217 ${String(d.getDate()).padStart(2,'0')}-${MON[d.getMonth()]}-${d.getFullYear()}.xlsx`;}
+function save(){if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download=outName();document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}
 function show(bytes,rep,secs){
-  progress(100,'Done');
   outBlob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  $('rtime').textContent=`Updated in ${secs.toFixed(1)} s · ${fmt(outBlob.size)}. Open it in Excel and let the pivots refresh (first open only), then save.`;
-  const r=rep.rows,st=[[r['217'].toLocaleString(),'217 rows (duplicates removed)'],[r['280'].toLocaleString(),'280 rows'],[r['Dye Q'].toLocaleString(),'Dye Q rows'],
-    [r['Knit Q'].toLocaleString(),'Knit Q rows'],[r.melange+' / '+r.rib,'Melange / Rib'],[r.HS,'HS rows'],[r['Y-LOT'].toLocaleString(),'Y-LOT rows'],
-    [rep.pivotTables+' / '+rep.pivotCaches,'Pivots / sources, refresh on open']];
-  if(rep.ld)st.splice(5,0,[rep.ld.New+' / '+rep.ld.Repeat,'LD New / Repeat (Dye Q '+rep.ld.col+')']);
-  if(rep.cfRemoved)st.push([rep.cfRemoved,'Slow highlight rules removed']);
-  $('stats').innerHTML='';for(const [b,s] of st){const d=document.createElement('div');d.className='stat';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=b;d.querySelector('span').textContent=s;$('stats').appendChild(d);}
+  save();                                                  // auto-download, named with today's date
+  const n=$('need');n.innerHTML='';
+  const s=document.createElement('span');s.className='ok';s.textContent=`✓ Done in ${secs.toFixed(0)} s — ${outName()} downloaded. `;n.appendChild(s);
+  const a=document.createElement('a');a.href='#';a.textContent='Download again';a.addEventListener('click',e=>{e.preventDefault();save();});n.appendChild(a);
   if(rep.warnings&&rep.warnings.length)setWarn(rep.warnings.join(' '));
-  $('result').classList.add('show');
 }
 $('go').addEventListener('click',run);
-$('dl').addEventListener('click',()=>{if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download='DOC -280+217.xlsx';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);});
 render();
 })();
 </script>
