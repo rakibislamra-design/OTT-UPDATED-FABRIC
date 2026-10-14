@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#664356">
+<title>DOC 280+217 Builder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23664356'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='36' font-weight='700' text-anchor='middle' fill='%23fff'%3EQ%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --q:#664356;--q80:#7C5D6D;--q60:#957B87;--q40:#B29EA6;--q20:#D2C7CB;--q10:#E6DFE1;--q5:#EFECED;
+  --tan:#B7A19B;--tan20:#ECE6E3;--blue:#366083;--blue20:#CCD0DB;--gray:#929597;--red:#AF4F5A;--red20:#E7D1CE;
+  --bg:#F7F4F5;--card:#FFFFFF;--fg:#2B2027;--muted:#6E6068;--line:#E6DFE1;--ok:#3C7A57;--okbg:#E3EFE7;
+  --radius:10px;--shadow:0 1px 2px rgba(43,32,39,.06),0 4px 16px rgba(43,32,39,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1C1619;--card:#261E22;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--q5:#2B2227;--q10:#33282E;--q20:#4A3A43;
+  --tan20:#3A302D;--blue20:#2A3442;--red20:#3D2629;--okbg:#1F3328;--ok:#86C7A0;--shadow:none}}
+:root[data-theme="dark"]{--bg:#1C1619;--card:#261E22;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--q5:#2B2227;--q10:#33282E;--q20:#4A3A43;
+  --tan20:#3A302D;--blue20:#2A3442;--red20:#3D2629;--okbg:#1F3328;--ok:#86C7A0;--shadow:none}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+header{background:var(--q);color:#fff;padding:14px 16px calc(14px + 0px)}
+.hwrap{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:36px;height:36px;border-radius:8px;background:#fff;color:var(--q);display:grid;place-items:center;font:700 22px Georgia,serif;flex:none}
+.htitle{min-width:0}
+.htitle b{display:block;font-size:18px;line-height:1.2}
+.htitle span{font-size:12.5px;opacity:.85;letter-spacing:.04em}
+.hright{font-size:12.5px;opacity:.85;flex-basis:100%}
+.home{margin-left:auto;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:7px 12px;border:1px solid rgba(255,255,255,.45);border-radius:8px}
+.home:hover{background:rgba(255,255,255,.12)}
+@media (min-width:821px){.hright{flex-basis:auto;order:3}}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
+.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+h2{font:700 13px/1.2 "Segoe UI",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--q60);margin:0 0 12px}
+:root[data-theme="dark"] h2{color:var(--q40)}
+.drop{border:2px dashed var(--q40);border-radius:var(--radius);padding:22px 16px;text-align:center;background:var(--q5);cursor:pointer;transition:background .15s,border-color .15s}
+.drop.over{background:var(--q10);border-color:var(--q)}
+.drop strong{display:block;font-size:16px;color:var(--q)}
+:root[data-theme="dark"] .drop strong{color:var(--q40)}
+.drop small{color:var(--muted)}
+.slots{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:6px}
+.slot{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.slot .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--q20);display:grid;place-items:center;font-size:11px;color:#fff}
+.slot.ok .dot{background:var(--ok);border-color:var(--ok)}
+.slot .nm{min-width:0}
+.slot .nm b{display:block;font-size:14px}
+.slot .nm span{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .sz{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+label.inline{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+input[type=date]{border:1px solid var(--q20);border-radius:6px;padding:7px 9px;background:var(--card)}
+.btn{appearance:none;border:1px solid var(--q20);background:var(--card);border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;min-height:44px}
+.btn:hover{border-color:var(--q60)}
+.btn.primary{background:var(--q);border-color:var(--q);color:#fff}
+.btn.primary:hover{background:var(--q80)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.block{width:100%}
+.progress{height:10px;border-radius:99px;background:var(--q10);overflow:hidden;margin:4px 0 10px}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--q),var(--q60));transition:width .25s}
+.status{font-weight:600;min-height:1.5em}
+.log{list-style:none;margin:10px 0 0;padding:0;font-size:13.5px;max-height:320px;overflow:auto}
+.log li{padding:5px 0 5px 22px;position:relative;border-top:1px solid var(--line)}
+.log li:before{content:"✓";position:absolute;left:2px;color:var(--ok);font-weight:700}
+.log li.run:before{content:"•";color:var(--q)}
+.result{display:none;margin-top:14px;border-radius:var(--radius);background:var(--okbg);padding:14px}
+.result.show{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:12px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums;color:var(--q)}
+:root[data-theme="dark"] .stat b{color:var(--q40)}
+.stat span{font-size:12px;color:var(--muted)}
+.warn{display:none;margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--red20);color:var(--fg);font-size:14px}
+.warn.show{display:block}
+.err{color:var(--red);font-weight:600}
+details{margin-top:16px}
+summary{cursor:pointer;font-weight:600;color:var(--q)}
+:root[data-theme="dark"] summary{color:var(--q40)}
+ol.steps{margin:10px 0 0;padding-left:20px;font-size:14px;color:var(--muted)}
+ol.steps li{margin:4px 0}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+footer{max-width:1080px;margin:0 auto;padding:0 16px 32px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <div class="logo" aria-hidden="true">Q</div>
+  <div class="htitle"><b>DOC 280+217 Builder</b><span>Hues · Excel Digitalisation</span></div>
+  <a class="home" href="index.html" title="Back to SQ Hues tools">🏠 Home</a>
+  <div class="hright" id="where">Runs in your browser · files never leave this device</div>
+</div></header>
+
+<main>
+  <div class="grid">
+    <section class="card" aria-labelledby="h-files">
+      <h2 id="h-files">1 · Files</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop the files">
+        <strong>Drop all 7 files here</strong>
+        <small>DOC -280+217.xlsx + the 6 TAPS downloads (217, 280, Inside Dye Q, Knit Q, Heatset, Lot) — or tap to choose</small>
+        <input type="file" id="pick" multiple accept=".xls,.xlsx" hidden>
+      </div>
+      <ul class="slots" id="slots"></ul>
+      <div class="row">
+        <label class="inline">Today's date for ageing / OTT <input type="date" id="today"></label>
+        <button class="btn" id="clear" type="button">Clear files</button>
+      </div>
+      <details>
+        <summary>What the builder does</summary>
+        <ol class="steps">
+          <li>217: Remove title rows, add the DUPLICATE column (<code>SUMIFS(M,E,H,G)−N</code>, values), Remove Duplicates on Order No+Item, PO, Color, Fabrication, paste A:AC; formulas AD:BA refitted.</li>
+          <li>280: new data in A:AT, row height 15. Row-1 <code>qq</code> templates AU:DB activated against the previous 280 (the "280 (2)" copy for comments / urgent / remarks), then pasted as values. 280 (2) is not kept.</li>
+          <li>Dye Q: D:AK cleared, Dye Q A:R → D:U, V:AK calculated as values, A:C formulas kept.</li>
+          <li>Knit Q: A:AE replaced by Knit Q A:AC; AD = Melange (orange R: Marl/B1/Melange/B0/BC), AE = Rib (orange W: RIB).</li>
+          <li>HS: A:N replaced by Heatset A:N. Y-LOT: A:P replaced by Lot A:P.</li>
+          <li>LD New / Repeat: Dye Q column AL marks each lab dip New or Repeat (same LD on an earlier order = Repeat; FY/PO/SQHUE/swatch references = Repeat); added as the last row field of the DQ P pivot (column T) and to the Dash Board pivot.</li>
+          <li>All pivots kept and set to refresh when the file opens. Old filters cleared, rows unhidden.</li>
+          <li>Speed: duplicate-value highlight rules merged, dead external link and broken names removed, calc chain rebuilt by Excel.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="h-build">
+      <h2 id="h-build">2 · Build</h2>
+      <button class="btn primary block" id="go" type="button" disabled>Build DOC -280+217</button>
+      <div class="note" id="need">Add the 7 files to start.</div>
+      <div style="margin-top:16px">
+        <div class="status" id="status" aria-live="polite"></div>
+        <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+        <ul class="log" id="log"></ul>
+      </div>
+      <div class="warn" id="warn"></div>
+      <div class="result" id="result">
+        <b>Ready.</b> <span id="rtime"></span>
+        <div class="stats" id="stats"></div>
+        <button class="btn primary block" id="dl" type="button">Download DOC -280+217.xlsx</button>
+        <div class="note">Open in Excel and let it finish refreshing pivots (first open only), then save.</div>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>Q Collection · Quality Seeks Quality · #SustainabilityAtQ</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script id="core-src" type="text/plain">/* DOC-280+217 master builder — runs fully in the browser (or Node for testing).
+   Needs globals: XLSX (SheetJS) and JSZip. Exposes DocBuilder.build(). */
+(function (root) {
+'use strict';
+
+/* ------------------------------------------------------------------ utils */
+const ci = s => { let n = 0; for (const ch of s) n = n * 26 + ch.charCodeAt(0) - 64; return n; };
+const cl = n => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; } return s; };
+const ILLEGAL = /[\x00-\x08\x0b\x0c\x0e-\x1f]/g;
+const esc = s => String(s).replace(ILLEGAL, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const unx = s => s.replace(/\r\n/g, '\n').replace(/&#xD;/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, d) => String.fromCharCode(+d)).replace(/&amp;/g, '&');
+const numStr = v => String(v);
+
+/* ------------------------------------------------- Excel value semantics */
+const ERR = c => ({ err: c });
+const NA = ERR('#N/A'), VALUE = ERR('#VALUE!'), DIV0 = ERR('#DIV/0!');
+const isErr = v => v !== null && typeof v === 'object' && 'err' in v;
+const NUMRE = /^\s*[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?\s*$/i;
+function N(v) {                       // value -> number (or error)
+  if (v === null || v === undefined || v === '') return v === '' ? VALUE : 0;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'boolean') return v ? 1 : 0;
+  if (isErr(v)) return v;
+  return NUMRE.test(v) ? parseFloat(v) : VALUE;
+}
+function T(v) {                       // value -> text (or error)
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (isErr(v)) return v;
+  if (Number.isInteger(v)) return String(v);
+  let s = parseFloat(v.toPrecision(15)).toString();
+  return s.includes('e') ? s.toUpperCase() : s;
+}
+function arith(a, b, f) {
+  const x = N(a); if (isErr(x)) return x;
+  const y = N(b); if (isErr(y)) return y;
+  return f(x, y);
+}
+const add = (a, b) => arith(a, b, (x, y) => x + y);
+const sub = (a, b) => arith(a, b, (x, y) => x - y);
+const mul = (a, b) => arith(a, b, (x, y) => x * y);
+const div = (a, b) => arith(a, b, (x, y) => y === 0 ? DIV0 : x / y);
+const rank = v => typeof v === 'number' ? 0 : typeof v === 'string' ? 1 : 2;
+function cmp(a, b) {                  // -1/0/1 or error
+  if (isErr(a)) return a; if (isErr(b)) return b;
+  if (a === null || a === undefined) a = b === null || b === undefined ? 0 : typeof b === 'string' ? '' : typeof b === 'boolean' ? false : 0;
+  if (b === null || b === undefined) b = typeof a === 'string' ? '' : typeof a === 'boolean' ? false : 0;
+  const ra = rank(a), rb = rank(b);
+  if (ra !== rb) return ra < rb ? -1 : 1;
+  if (ra === 1) { a = a.toLowerCase(); b = b.toLowerCase(); }
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+const rel = (a, b, f) => { const c = cmp(a, b); return isErr(c) ? c : f(c); };
+const eq = (a, b) => rel(a, b, c => c === 0);
+const gt = (a, b) => rel(a, b, c => c > 0);
+const lt = (a, b) => rel(a, b, c => c < 0);
+const lte = (a, b) => rel(a, b, c => c <= 0);
+function truth(v) {
+  if (isErr(v)) return v;
+  if (v === null || v === undefined) return false;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+  const u = v.toUpperCase(); if (u === 'TRUE') return true; if (u === 'FALSE') return false;
+  return VALUE;
+}
+function IF(c, a, b) { const t = truth(c); if (isErr(t)) return t; return t ? a() : b(); }
+const IFERROR = (v, alt) => isErr(v) ? alt : v;
+const IFNA = (v, alt) => isErr(v) && v.err === '#N/A' ? alt : v;
+function OR(...xs) { let r = false; for (const x of xs) { const t = truth(x); if (isErr(t)) return t; r = r || t; } return r; }
+function wild(p) { let s = ''; for (let i = 0; i < p.length; i++) { const ch = p[i];
+  if (ch === '~' && i + 1 < p.length) { s += p[++i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  else if (ch === '*') s += '[\\s\\S]*'; else if (ch === '?') s += '[\\s\\S]'; else s += ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  return s; }
+function SEARCH(find, within, start = 1) {
+  const f = T(find), w = T(within); if (isErr(f)) return f; if (isErr(w)) return w;
+  if (start < 1 || start > w.length + 1) return VALUE;
+  const re = new RegExp(wild(f), 'i'); const m = re.exec(w.slice(start - 1));
+  return m ? m.index + start : VALUE;
+}
+function FIND(find, within, start = 1) {
+  const f = T(find), w = T(within); if (isErr(f)) return f; if (isErr(w)) return w;
+  const s = N(start); if (isErr(s)) return s;
+  if (s < 1 || s > w.length + 1) return VALUE;
+  const i = w.indexOf(f, s - 1); return i < 0 ? VALUE : i + 1;
+}
+const TRIM = v => { const t = T(v); return isErr(t) ? t : t.replace(/ {2,}/g, ' ').replace(/^ | $/g, ''); };
+const LEN = v => { const t = T(v); return isErr(t) ? t : t.length; };
+function LEFT(v, n = 1) { const t = T(v); if (isErr(t)) return t; const k = N(n); if (isErr(k)) return k; if (k < 0) return VALUE; return t.slice(0, Math.floor(k)); }
+function RIGHT(v, n = 1) { const t = T(v); if (isErr(t)) return t; const k = N(n); if (isErr(k)) return k; if (k < 0) return VALUE; return Math.floor(k) === 0 ? '' : t.slice(-Math.floor(k)); }
+function MID(v, s, n) { const t = T(v); if (isErr(t)) return t; const a = N(s), b = N(n); if (isErr(a)) return a; if (isErr(b)) return b; if (a < 1 || b < 0) return VALUE; return t.substr(Math.floor(a) - 1, Math.floor(b)); }
+function SUBSTITUTE(v, o, nw, inst) {
+  const t = T(v), a = T(o), b = T(nw); for (const x of [t, a, b]) if (isErr(x)) return x;
+  if (a === '') return t;
+  if (inst === undefined) return t.split(a).join(b);
+  let idx = -1; for (let k = 0; k < inst; k++) { idx = t.indexOf(a, idx + 1); if (idx < 0) return t; }
+  return t.slice(0, idx) + b + t.slice(idx + a.length);
+}
+const CONCAT = (...xs) => { let s = ''; for (const x of xs) { const t = T(x); if (isErr(t)) return t; s += t; } return s; };
+const INT = v => { const x = N(v); return isErr(x) ? x : Math.floor(x); };
+const VALUEF = v => { if (typeof v === 'number') return v; const t = T(v); if (isErr(t)) return t; return NUMRE.test(t) ? parseFloat(t) : VALUE; };
+const ISNUMBER = v => typeof v === 'number';
+
+// exact-match index (VLOOKUP / MATCH with FALSE / 0)
+function lkey(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return 'n' + v;
+  if (typeof v === 'boolean') return 'b' + v;
+  if (isErr(v)) return null;
+  return 's' + v.toLowerCase();
+}
+function makeIndex(keys) {
+  const m = new Map();
+  keys.forEach((k, i) => { const kk = lkey(k); if (kk !== null && !m.has(kk)) m.set(kk, i); });
+  return { m, keys };
+}
+function MATCH(v, idx) {
+  if (isErr(v)) return v;
+  if (typeof v === 'string' && /[*?~]/.test(v)) {
+    const re = new RegExp('^' + wild(v) + '$', 'i');
+    for (let i = 0; i < idx.keys.length; i++) if (typeof idx.keys[i] === 'string' && re.test(idx.keys[i])) return i;
+    return NA;
+  }
+  const k = lkey(v); if (k === null) return NA;
+  const i = idx.m.get(k); return i === undefined ? NA : i;
+}
+// SUMIFS with every criterion = "equals the row's own value"; built as a grouped sum
+function ckey(v) {                    // criterion / cell key
+  if (v === null || v === undefined) return 'b';
+  if (typeof v === 'number') return 'n' + v;
+  if (typeof v === 'boolean') return 'B' + v;
+  if (isErr(v)) return 'e';
+  if (NUMRE.test(v)) return 'n' + parseFloat(v);
+  return 't' + v.toLowerCase();
+}
+function critKey(v) { return (v === null || v === undefined) ? 'n0' : ckey(v); }
+function sumifs(sumCol, critCols) {   // returns fn(critValues[]) -> sum
+  const m = new Map();
+  for (let i = 0; i < sumCol.length; i++) {
+    const k = critCols.map(c => ckey(c[i])).join('\u0001');
+    const v = sumCol[i];
+    const cur = m.get(k);
+    if (isErr(v)) { m.set(k, cur && isErr(cur) ? cur : v); continue; }
+    if (typeof v !== 'number') { if (cur === undefined) m.set(k, 0); continue; }
+    if (cur === undefined) m.set(k, v); else if (!isErr(cur)) m.set(k, cur + v);
+  }
+  return vals => {
+    for (const v of vals) if (isErr(v)) return v;
+    const k = vals.map(critKey).join('\u0001');
+    const r = m.get(k); return r === undefined ? 0 : r;
+  };
+}
+
+/* ------------------------------------------------------- source reading */
+function readSource(buf) {
+  const wb = XLSX.read(buf, { type: 'array', cellDates: false, cellNF: false, cellText: false, cellStyles: false });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rg = XLSX.utils.decode_range(ws['!ref']);
+  const rows = [];
+  for (let r = 0; r <= rg.e.r; r++) {
+    const row = [];
+    for (let c = 0; c <= rg.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })];
+      let v = null;
+      if (cell && cell.t !== 'z' && cell.t !== 'e') {
+        v = cell.v;
+        if (cell.t === 'd') v = (v.getTime() - Date.UTC(1899, 11, 30)) / 864e5;
+        if (v === '') v = null;
+      }
+      row.push(v);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+const nonEmpty = r => r.reduce((n, v) => n + (v !== null && v !== '' ? 1 : 0), 0);
+function srcRows(rows, first, { tail = 0, ncols, sparse = true }) {
+  const out = [];
+  for (let r = first - 1; r < rows.length - tail; r++) {
+    const row = rows[r];
+    if (sparse && nonEmpty(row) <= 3) continue;
+    const o = []; for (let c = 0; c < ncols; c++) o.push(c < row.length ? row[c] : null);
+    out.push(o);
+  }
+  return out;
+}
+
+/* --------------------------------------------------------- sheet XML model */
+const ROW_RE = /<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g;
+const CELL_RE = /<c\b[^>]*?\br="([A-Z]+)(\d+)"[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g;
+const styleOf = x => { if (!x) return null; const m = /\bs="(\d+)"/.exec(x.slice(0, x.indexOf('>') + 1)); return m ? m[1] : null; };
+function cellXml(ref, s, v) {
+  const sa = s ? ` s="${s}"` : '';
+  if (v === null || v === undefined) return `<c r="${ref}"${sa}/>`;
+  if (typeof v === 'boolean') return `<c r="${ref}"${sa} t="b"><v>${v ? 1 : 0}</v></c>`;
+  if (typeof v === 'number') return Number.isFinite(v) ? `<c r="${ref}"${sa}><v>${numStr(v)}</v></c>` : `<c r="${ref}"${sa} t="e"><v>#NUM!</v></c>`;
+  if (isErr(v)) return `<c r="${ref}"${sa} t="e"><v>${esc(v.err)}</v></c>`;
+  return `<c r="${ref}"${sa} t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+}
+const fcellXml = (ref, s, f) => `<c r="${ref}"${s ? ` s="${s}"` : ''}><f>${esc(f)}</f></c>`;
+
+class Sheet {
+  constructor(xml) {
+    const a = xml.indexOf('<sheetData'), b = xml.indexOf('</sheetData>');
+    const a2 = xml.indexOf('>', a) + 1;
+    this.head = xml.slice(0, a2); this.tail = xml.slice(b);
+    this.rows = new Map();
+    const body = xml.slice(a2, b);
+    for (const m of body.matchAll(ROW_RE)) {
+      const attrs = m[1], inner = m[2] || '';
+      const r = +/\br="(\d+)"/.exec(attrs)[1];
+      const cells = new Map();
+      for (const c of inner.matchAll(CELL_RE)) cells.set(ci(c[1]), c[0]);
+      this.rows.set(r, [attrs, cells]);
+    }
+  }
+  row(r, tmplAttrs) {
+    if (!this.rows.has(r)) {
+      const attrs = (tmplAttrs || '').replace(/\s*\br="\d+"/, '');
+      this.rows.set(r, [` r="${r}"` + attrs, new Map()]);
+    }
+    return this.rows.get(r);
+  }
+  get(r, c) { const x = this.rows.get(r); return x ? x[1].get(c) : undefined; }
+  serialize() {
+    const parts = [this.head];
+    const keys = [...this.rows.keys()].sort((a, b) => a - b);
+    for (const r of keys) {
+      let [attrs, cells] = this.rows.get(r);
+      attrs = attrs.replace(/\sspans="[^"]*"/, '');
+      if (!cells.size && !/\b(ht|s|hidden|customFormat)=/.test(attrs)) continue;
+      const cols = [...cells.keys()].sort((a, b) => a - b);
+      let body = ''; for (const c of cols) body += cells.get(c);
+      parts.push(body ? `<row${attrs}>${body}</row>` : `<row${attrs}/>`);
+    }
+    parts.push(this.tail);
+    return parts.join('');
+  }
+}
+function cellValue(x, sst) {        // value of an existing cell xml
+  if (!x) return null;
+  const tag = x.slice(0, x.indexOf('>') + 1);
+  const t = (/\bt="(\w+)"/.exec(tag) || [])[1];
+  if (t === 'inlineStr') { const m = x.match(/<t[^>]*>([\s\S]*?)<\/t>/g); return m ? unx(m.map(s => s.replace(/<[^>]+>/g, '')).join('')) : ''; }
+  const v = /<v>([\s\S]*?)<\/v>/.exec(x); if (!v) return null;
+  if (t === 's') return sst[+v[1]];
+  if (t === 'str') return unx(v[1]);
+  if (t === 'b') return v[1] === '1';
+  if (t === 'e') return ERR(v[1]);
+  return parseFloat(v[1]);
+}
+function lastDataRow(sh, c0, c1, first) {
+  let last = first - 1;
+  for (const [r, [, cells]] of sh.rows) if (r >= first)
+    for (const [c, x] of cells) if (c >= c0 && c <= c1 && (x.includes('<v>') || x.includes('<is>'))) { if (r > last) last = r; break; }
+  return last;
+}
+const stripHidden = a => (a || '').replace(/\shidden="1"/, '');
+function paste(sh, data, first, c0, ncols, oldLast, clearTo) {
+  clearTo = clearTo || c0 + ncols - 1;
+  const newLast = first + data.length - 1;
+  const tr = oldLast >= first ? oldLast : first;
+  const ta = stripHidden((sh.rows.get(tr) || [''])[0]);
+  for (let r = first; r <= Math.max(oldLast, newLast); r++) {
+    const [, cells] = sh.row(r, ta);
+    for (let c = c0; c <= clearTo; c++) {
+      const s = styleOf(cells.get(c)) || styleOf(sh.get(tr, c));
+      const v = r <= newLast && c - c0 < ncols ? data[r - first][c - c0] : null;
+      if (v === null && !cells.has(c) && r > newLast) continue;
+      cells.set(c, cellXml(cl(c) + r, s, v));
+    }
+  }
+  return newLast;
+}
+// formula -> generator for any row (relative A1 refs shifted)
+function formulaGen(f, originRow, originCol) {
+  const parts = []; let buf = '';
+  const flush = () => { if (buf) parts.push(buf); buf = ''; };
+  let i = 0;
+  while (i < f.length) {
+    const ch = f[i];
+    if (ch === '"' || ch === "'") {        // string literal or quoted sheet name
+      let j = i + 1; while (j < f.length) { if (f[j] === ch) { if (f[j + 1] === ch) { j += 2; continue; } break; } j++; }
+      buf += f.slice(i, j + 1); i = j + 1; continue;
+    }
+    const m = /^(\$?)([A-Z]{1,3})(\$?)(\d{1,7})(?![A-Za-z0-9_(])/.exec(f.slice(i, i + 16));
+    const prev = i ? f[i - 1] : '';
+    if (m && !/[A-Za-z0-9_.$]/.test(prev)) {
+      flush(); parts.push({ ac: !!m[1], col: ci(m[2]), ar: !!m[3], row: +m[4] }); i += m[0].length; continue;
+    }
+    buf += ch; i++;
+  }
+  flush();
+  return (r, c = originCol) => parts.map(p => typeof p === 'string' ? p :
+    (p.ac ? '$' : '') + cl(p.ac ? p.col : p.col + c - originCol) + (p.ar ? '$' : '') + (p.ar ? p.row : p.row + r - originRow)).join('');
+}
+function sharedMasters(sh) {
+  const out = {};
+  for (const [r, [, cells]] of sh.rows) for (const [c, x] of cells) {
+    const m = /<f t="shared" ref="[^"]+" si="(\d+)"[^>]*>([\s\S]*?)<\/f>/.exec(x);
+    if (m) out[m[1]] = { r, c, f: unx(m[2]) };
+  }
+  return out;
+}
+function formulaAt(sh, r, c, masters) {
+  const x = sh.get(r, c); if (!x || !x.includes('<f')) return null;
+  const tag = /<f\b([^>]*?)(\/?)>/.exec(x);
+  if (tag[2] === '/') { const si = /si="(\d+)"/.exec(tag[1])[1]; const m = masters[si]; return formulaGen(m.f, m.r, m.c)(r, c); }
+  return unx(/<f\b[^>]*>([\s\S]*?)<\/f>/.exec(x)[1]);
+}
+function refitFormulas(sh, cols, first, oldLast, newLast) {
+  const masters = sharedMasters(sh);
+  const ta = stripHidden((sh.rows.get(oldLast) || [''])[0]);
+  for (const c of cols) {
+    const f = formulaAt(sh, first, c, masters);
+    if (f === null) throw new Error(`No formula found at ${cl(c)}${first}`);
+    const gen = formulaGen(f, first, c);
+    for (let r = first; r <= Math.max(oldLast, newLast); r++) {
+      const [, cells] = sh.row(r, ta);
+      const s = styleOf(cells.get(c)) || styleOf(sh.get(oldLast, c));
+      if (r <= newLast) cells.set(c, fcellXml(cl(c) + r, s, gen(r)));
+      else if (cells.has(c)) cells.set(c, `<c r="${cl(c)}${r}"${s ? ` s="${s}"` : ''}/>`);
+    }
+  }
+}
+function writeValues(sh, c0, c1, first, vals, oldLast) {   // vals[i][j]
+  const newLast = first + vals.length - 1;
+  const ta = stripHidden((sh.rows.get(oldLast) || [''])[0]);
+  for (let r = first; r <= Math.max(oldLast, newLast); r++) {
+    const [, cells] = sh.row(r, ta);
+    for (let c = c0; c <= c1; c++) {
+      const s = styleOf(cells.get(c)) || styleOf(sh.get(oldLast, c));
+      if (r <= newLast) cells.set(c, cellXml(cl(c) + r, s, vals[r - first][c - c0]));
+      else if (cells.has(c)) cells.set(c, `<c r="${cl(c)}${r}"${s ? ` s="${s}"` : ''}/>`);
+    }
+  }
+}
+function resetFilter(sh, newLast) {
+  for (const v of sh.rows.values()) v[0] = stripHidden(v[0]);
+  sh.tail = sh.tail.replace(/<autoFilter ref="([^"]+)"/, (m, ref) => {
+    const [a, b] = ref.split(':'); return `<autoFilter ref="${a}:${/[A-Z]+/.exec(b)[0]}${newLast}"`; });
+  sh.tail = sh.tail.replace(/(<autoFilter [^>]*?)>[\s\S]*?<\/autoFilter>/, '$1/>');
+  sh.tail = sh.tail.replace(/<sortState\b[\s\S]*?<\/sortState>/g, '');
+  const m = /<autoFilter ref="([^"]+)"/.exec(sh.tail); return m ? m[1] : null;
+}
+function setDimension(sh) {
+  let minr = Infinity, maxr = 1, maxc = 1;
+  for (const [r, [, cells]] of sh.rows) if (cells.size) { minr = Math.min(minr, r); maxr = Math.max(maxr, r); for (const c of cells.keys()) maxc = Math.max(maxc, c); }
+  sh.head = sh.head.replace(/<dimension ref="[^"]+"\/>/, `<dimension ref="A${minr === Infinity ? 1 : minr}:${cl(maxc)}${maxr}"/>`);
+}
+// speed: collapse duplicate-value conditional formats (Excel recalculates each one separately)
+function slimDuplicateCF(sh) {
+  const blocks = [...sh.tail.matchAll(/<conditionalFormatting sqref="([^"]+)">([\s\S]*?)<\/conditionalFormatting>/g)];
+  const byCol = new Map(); let removed = 0;
+  for (const b of blocks) {
+    const rules = b[2].match(/<cfRule\b[\s\S]*?(?:\/>|<\/cfRule>)/g) || [];
+    if (!rules.length || !rules.every(x => /type="duplicateValues"/.test(x))) continue;
+    const areas = b[1].split(' ');
+    const cols = new Set(areas.map(a => a.split(':').map(p => /[A-Z]+/.exec(p)[0]).join(':')));
+    if (cols.size !== 1) continue;
+    const col = [...cols][0]; if (col.includes(':') && col.split(':')[0] !== col.split(':')[1]) continue;
+    const c = col.split(':')[0];
+    if (!byCol.has(c)) byCol.set(c, []);
+    byCol.get(c).push({ text: b[0], areas, full: areas.some(a => new RegExp(`^${c}1:${c}1048576$`).test(a)) });
+  }
+  for (const [c, list] of byCol) {
+    if (list.length < 2) continue;
+    const keep = list.find(x => x.full) || list[0];
+    let union = keep.areas;
+    if (!keep.full) {                          // merge every fragment into one rule
+      const iv = [];
+      for (const x of list) for (const a of x.areas) { const rr = a.split(':').map(p => +/\d+/.exec(p)[0]); iv.push([rr[0], rr[1] || rr[0]]); }
+      iv.sort((p, q) => p[0] - q[0]); const mg = [];
+      for (const [s, e] of iv) { if (mg.length && s <= mg[mg.length - 1][1] + 1) mg[mg.length - 1][1] = Math.max(mg[mg.length - 1][1], e); else mg.push([s, e]); }
+      union = mg.map(([s, e]) => s === e ? `${c}${s}` : `${c}${s}:${c}${e}`);
+    }
+    const firstRule = /<cfRule\b[\s\S]*?(?:\/>|<\/cfRule>)/.exec(keep.text)[0];
+    const merged = `<conditionalFormatting sqref="${union.join(' ')}">${firstRule}</conditionalFormatting>`;
+    let done = false;
+    for (const x of list) { { const rep = done ? '' : merged; sh.tail = sh.tail.replace(x.text, () => rep); } done = true; removed++; }
+    removed--;
+  }
+  return removed;
+}
+
+/* ---------------------------------------------------------------- the calc */
+const COL = name => ci(name) - 1;
+function calc280(d280, d217, knit, hs, lot, dyeq, old, today) {
+  const n = d280.length, g = (r, c) => d280[r][COL(c)];
+  const col = c => d280.map(r => r[COL(c)]);
+  const out = {}; const set = (c, arr) => { out[c] = arr; };
+  const A = (c) => out[c];
+  const rng = f => { const a = new Array(n); for (let i = 0; i < n; i++) a[i] = f(i); return a; };
+  const W = col('W'), AB = col('AB'), AC = col('AC'), AJ = col('AJ'), AK = col('AK'), F = col('F'), L = col('L'), Nn = col('N'), G = col('G'), H = col('H'), M = col('M'), D = col('D');
+  // old '280 (2)' lookups
+  const oldIdx = makeIndex(old.H);
+  const oldV = (key, c) => { const i = MATCH(key, oldIdx); if (isErr(i)) return i; const v = old.cols[c][i]; return v; };
+  const oldVal = (key, c) => { const v = oldV(key, c); return v === null || v === undefined ? 0 : v; };   // VLOOKUP of empty cell -> 0
+  const oldBlank = (key, c) => { const v = oldV(key, c); return isErr(v) ? v : (v === null || v === undefined); };
+  // other sheets
+  const knitIdx = makeIndex(knit.map(r => r[COL('E')])), knitAB = knit.map(r => r[COL('AB')]);
+  const hsIdx = makeIndex(hs.map(r => r[COL('E')])), hsM = hs.map(r => r[COL('M')]);
+  const lotIdx = makeIndex(lot.map(r => r[COL('D')])), lotI = lot.map(r => r[COL('I')]);
+  const dqIdx = makeIndex(dyeq.map(r => r[2])), dqU = dyeq.map(r => r[17]);
+  const vl = (key, idx, arr) => { const i = MATCH(key, idx); return isErr(i) ? i : (arr[i] === null || arr[i] === undefined ? 0 : arr[i]); };
+  const aop = i => SEARCH('AOP', M[i]);
+
+  set('AU', rng(i => IFERROR(div(sub(W[i], AB[i]), W[i]), '-')));
+  set('AV', rng(i => IFERROR(div(sub(W[i], AJ[i]), W[i]), '-')));
+  set('AW', rng(i => IFERROR(div(sub(AJ[i], AK[i]), AJ[i]), '-')));
+  set('AX', rng(i => IFERROR(div(sub(AK[i], AB[i]), AK[i]), '-')));
+  set('BG', rng(i => IFERROR(IF(aop(i), () => IF(gt(AB[i], 0), () => W[i], () => 0), () => IF(gt(AC[i], 0), () => W[i], () => 0)), IF(gt(AC[i], 0), () => W[i], () => 0))));
+  set('BH', rng(i => IFERROR(IF(aop(i), () => IF(gt(AB[i], 0), () => AB[i], () => 0), () => IF(gt(AC[i], 0), () => AB[i], () => 0)), IF(gt(AC[i], 0), () => AB[i], () => 0))));
+  const sBG = sumifs(A('BG'), [F, L, Nn]), sBH = sumifs(A('BH'), [F, L, Nn]);
+  set('BI', rng(i => sBG([F[i], L[i], Nn[i]])));
+  set('BJ', rng(i => sBH([F[i], L[i], Nn[i]])));
+  set('AY', rng(i => IFERROR(div(sub(A('BI')[i], A('BJ')[i]), A('BI')[i]), '-')));
+  set('AZ', rng(i => sub(AK[i], AB[i])));
+  set('BC', rng(i => TRIM(IF(eq(RIGHT(H[i], 3), '| 1'), () => TRIM(LEFT(H[i], sub(FIND('| 1', H[i], sub(LEN(H[i]), 4)), 1))), () => '-'))));
+  set('BE', rng(i => { for (const k of ['160', '120', '140', '180', '110', '150', '235', '135', '190', '155', '210', '165', '230', '245', '200', '185'])
+    if (!isErr(SEARCH(k, Nn[i]))) return k; return 'Not Found'; }));
+  set('BL', rng(i => CONCAT(F[i], Nn[i], L[i])));
+  set('CG', rng(i => CONCAT(G[i], Nn[i], L[i])));
+  set('BM', rng(i => IFERROR(vl(H[i], knitIdx, knitAB), 0)));
+  set('BR', rng(i => INT(g(i, 'A'))));
+  set('BS', rng(i => sub(today, g(i, 'AO'))));
+  set('BU', rng(i => IF(IFERROR(aop(i), 0), () => 'AOP', () => '')));
+  set('CD', rng(i => {
+    const p2 = add(FIND('|', H[i], add(FIND('|', H[i]), 1)), 1);
+    const mid = MID(H[i], p2, 99);
+    return TRIM(LEFT(mid, IFERROR(sub(FIND('/', mid), 1), 99)));
+  }));
+  set('CC', rng(i => IF(gt(A('CD')[i], '1'), () => 'Additional', () => 0)));
+  set('CX', rng(i => IF(ISNUMBER(SEARCH('/', RIGHT(H[i], 5))), () => {
+    const cnt = sub(LEN(H[i]), LEN(SUBSTITUTE(H[i], '/', '')));
+    return LEFT(H[i], sub(FIND('@', SUBSTITUTE(H[i], '/', '@', cnt)), 1)); }, () => H[i])));
+  set('BA', rng(i => {
+    const R = g(i, 'R'), S = g(i, 'S'), Tt = g(i, 'T'), U = g(i, 'U'), J = g(i, 'J'), C = g(i, 'C'), AF = g(i, 'AF'), AS = g(i, 'AS');
+    const CC = A('CC')[i], BM = A('BM')[i];
+    const tail3 = () => IF(gt(S, 0), () => 'QAD-Inhouse', () => IF(gt(R, 0), () => 'FINISHING', () => IF(lte(BM, 0), () => 'DYEING', () => 'KNITTING')));
+    return IF(lte(W[i], 0.01), () => 'CLOSED', () => IF(eq(D[i], 'Final Reject'), () => 'Final Reject', () => IF(gt(U, 0), () => 'RFD DONE',
+      () => IF(gt(IFERROR(SEARCH('Adjust', AF), 0), 0), () => 'QAD-Inhouse',
+      () => IF(gt(Tt, 0), () => IF(eq(J, 'Re-process'), () => IF(gt(AC[i], 0), () => 'CLOSED', () => IF(gt(S, 0), () => 'QAD', () => IF(gt(R, 0), () => 'FINISHING', () => 'DYEING'))), () => 'QAD-Outside'),
+      () => IF(gt(C, 0), () => IF(gt(CC, 0), tail3, () => IF(gt(AC[i], 0), () => 'RFD DONE', () => IF(gt(Tt, 0), () => 'QAD-Outside', () => IF(gt(AS, 0), () => 'DYEING', () => IF(lte(BM, 0), () => 'OUTSIDE DYEING', () => 'OUTSIDE KNITTING')))))
+      , tail3))))));
+  }));
+
+  // ---- 217 helper columns (same formulas as the live ones in the 217 sheet)
+  const m = d217.length, k = (r, c) => d217[r][COL(c)];
+  const s217 = {};
+  const r217 = f => { const a = new Array(m); for (let i = 0; i < m; i++) a[i] = f(i); return a; };
+  const aop217 = i => SEARCH('AOP', k(i, 'J'));
+  s217.AE = r217(i => IFERROR(IF(aop217(i), () => sub(k(i, 'L'), k(i, 'U')), () => sub(k(i, 'K'), k(i, 'V'))), sub(k(i, 'K'), k(i, 'V'))));
+  s217.AF = r217(i => IFERROR(IF(aop217(i), () => div(k(i, 'U'), k(i, 'L')), () => div(k(i, 'V'), k(i, 'K'))), div(k(i, 'V'), k(i, 'K'))));
+  s217.AG = r217(i => IFERROR(IF(aop217(i), () => div(k(i, 'L'), 0.98), () => div(k(i, 'K'), 0.98)), div(k(i, 'K'), 0.98)));
+  s217.AH = r217(i => IFERROR(IF(aop217(i), () => sub(s217.AG[i], k(i, 'U')), () => sub(s217.AG[i], k(i, 'V'))), sub(s217.AG[i], k(i, 'V'))));
+  s217.AS = r217(i => IFERROR(IF(aop217(i), () => div(k(i, 'L'), k(i, 'M')), () => div(k(i, 'K'), k(i, 'L'))), div(k(i, 'K'), k(i, 'L'))));
+  const bcIdx = makeIndex(A('BC'));
+  s217.AT = r217(i => { const j = MATCH(k(i, 'E'), bcIdx); return isErr(j) ? j : A('AY')[j]; });
+  s217.AU = r217(i => { const q = div(s217.AH[i], s217.AS[i]); return add(q, mul(q, s217.AT[i])); });
+  s217.AW = r217(i => { const q = div(s217.AE[i], s217.AS[i]); return add(q, mul(q, s217.AT[i])); });
+  s217.AY = r217(i => CONCAT(k(i, 'F'), k(i, 'H'), k(i, 'G')));
+  s217.AZ = r217(i => LEFT(k(i, 'E'), sub(FIND('|', k(i, 'E')), 2)));
+  s217.BA = r217(i => CONCAT(s217.AZ[i], k(i, 'H'), k(i, 'G')));
+  const eIdx = makeIndex(d217.map(r => r[COL('E')])), baIdx = makeIndex(s217.BA), ayIdx = makeIndex(s217.AY);
+  const idx217 = (key, idx, arr) => { const j = MATCH(key, idx); return isErr(j) ? j : (arr[j] === null || arr[j] === undefined ? 0 : arr[j]); };
+  const col217 = c => d217.map(r => r[COL(c)]);
+  const L217 = col217('L'), K217 = col217('K');
+  const sBZ = sumifs(L217, [s217.AZ, col217('G'), col217('H')]);
+
+  set('BD', rng(i => IFERROR(idx217(A('BC')[i], eIdx, s217.AE), 0)));
+  set('BF', rng(i => IFNA(idx217(A('BC')[i], eIdx, s217.AU), 0)));
+  set('BK', rng(i => idx217(A('CG')[i], baIdx, s217.AF)));
+  set('BO', rng(i => { const x = idx217(A('CG')[i], baIdx, s217.AW); return IF(lt(x, 0), () => mul(x, -1), () => x); }));
+  set('BZ', rng(i => sBZ([G[i], L[i], Nn[i]])));
+  set('CJ', rng(i => idx217(A('BL')[i], ayIdx, s217.AS)));
+  set('CK', rng(i => { const kk = () => idx217(A('CG')[i], baIdx, K217);
+    return IFERROR(IF(aop(i), () => idx217(A('CG')[i], baIdx, L217), kk), kk()); }));
+
+  set('BB', rng(i => { const BA = A('BA')[i];
+    return IFNA(IF(eq(oldVal(H[i], 'BB'), 'CLOSED'), () => 'CLOSED', () => IF(gt(A('BD')[i], 0), () => IF(eq(BA, 'RFD DONE'), () => 'PO PENDING', () => BA),
+      () => IF(OR(eq(BA, 'RFD DONE'), eq(BA, 'Final Reject'), eq(BA, 'CLOSED')), () => 'CLOSED', () => BA))), BA); }));
+  set('BN', rng(i => { const BB = A('BB')[i]; return IF(OR(eq(BB, 'CLOSED'), eq(BB, 'PO PENDING'), eq(BB, 'Final Reject')), () => 0, () => 1); }));
+  set('BP', rng(i => IF(eq(A('BB')[i], 'KNITTING'), () => 'Under Operation', () => IFNA(vl(H[i], hsIdx, hsM), 'H/S OK'))));
+  set('BQ', rng(i => IFNA(IF(eq(oldVal(H[i], 'BQ'), 'Urgent'), () => 'Urgent', () => IF(lte(A('BR')[i], today), () => 'OTT', () => 0)), 0)));
+  const blankOr = (i, c) => IFERROR(IF(oldBlank(H[i], c), () => '', () => oldVal(H[i], c)), '');
+  set('BT', rng(i => blankOr(i, 'BT')));
+  const CCcol = A('CC');
+  const sV = sumifs(W, [F, L, Nn, D, G]);
+  set('BV', rng(i => sV([F[i], L[i], Nn[i], 'Final Reject', G[i]])));
+  const sCE = sumifs(W, [G, L, Nn, CCcol]);
+  set('CE', rng(i => sCE([G[i], L[i], Nn[i], 'Additional'])));
+  set('CH', rng(i => IF(eq(CCcol[i], 'Additional'), () => 0, () => IF(OR(eq(D[i], 'Final Reject')), () => W[i], () => IF(gt(AB[i], 0), () => W[i], () => 0)))));
+  const sCH = sumifs(A('CH'), [G, L, Nn]); set('BW', rng(i => sCH([G[i], L[i], Nn[i]])));
+  const sW = sumifs(W, [G, L, Nn]); set('BY', rng(i => sub(sW([G[i], L[i], Nn[i]]), A('CE')[i])));
+  const sAB = sumifs(AB, [G, L, Nn]), sABa = sumifs(AB, [G, L, Nn, CCcol]);
+  const sAC = sumifs(AC, [G, L, Nn]), sACa = sumifs(AC, [G, L, Nn, CCcol]);
+  set('CF', rng(i => sub(sAB([G[i], L[i], Nn[i]]), sABa([G[i], L[i], Nn[i], 'Additional']))));
+  set('BX', rng(i => div(sub(A('BW')[i], A('CF')[i]), A('BW')[i])));
+  set('CA', rng(i => IFERROR(div(sub(A('BY')[i], A('BZ')[i]), A('BY')[i]), '')));
+  set('CB', rng(i => IFERROR(oldValRaw(i, 'CB'), '')));
+  function oldValRaw(i, c) { const v = oldV(H[i], c); return v === null || v === undefined ? 0 : v; }
+  set('CI', rng(i => IF(eq(CCcol[i], 'Additional'), () => div(W[i], A('BY')[i]), () => '')));
+  set('CL', rng(i => { const kk = [G[i], L[i], Nn[i]], ka = [G[i], L[i], Nn[i], 'Additional'];
+    const viaAC = () => sub(sAC(kk), sACa(ka));
+    return IFERROR(IF(aop(i), () => sub(sAB(kk), sABa(ka)), viaAC), viaAC()); }));
+  set('CM', rng(i => div(A('CL')[i], A('CK')[i])));
+  set('CN', rng(i => oldVal(H[i], 'CN')));
+  set('CO', rng(i => { const q = div(sub(A('CK')[i], A('CL')[i]), A('CJ')[i]); return add(q, mul(q, A('CA')[i])); }));
+  const BLc = A('BL');
+  const sCP = sumifs(W, [CCcol, BLc]); set('CP', rng(i => sCP(['Additional', BLc[i]])));
+  const sCQ = sumifs(A('BN'), [BLc]); set('CQ', rng(i => sCQ([BLc[i]])));
+  set('CR', rng(i => { const O = g(i, 'O') ?? 0;
+    return IFNA(IF(gt(oldVal(H[i], 'CR'), 0), () => oldVal(H[i], 'CR'), () => IF(gt(vl(H[i], lotIdx, lotI), 0), () => vl(H[i], lotIdx, lotI), () => O)), O); }));
+  set('CS', rng(i => blankOr(i, 'CS')));
+  set('CT', rng(i => blankOr(i, 'CT')));
+  set('CU', rng(i => IFERROR(vl(H[i], dqIdx, dqU), 0)));
+  set('CV', rng(i => { const R = g(i, 'R') ?? 0;
+    return IFERROR(IF(gt(oldVal(H[i], 'CV'), 0), () => oldVal(H[i], 'CV'), () => R),
+      IF(eq(g(i, 'J'), 'Re-process'), () => oldVal(A('CX')[i], 'R'), () => R)); }));
+  set('CW', rng(i => sub(today, A('CV')[i])));
+  set('CY', rng(i => { const w = A('CW')[i];
+    return IF(gt(w, 90), () => 'Above 90 Days', () => IF(gt(w, 30), () => '30-90 Days', () => IF(gt(w, 20), () => '20-30 Days', () => IF(gt(w, 10), () => '10-20 Days', () => '0-10 Days')))); }));
+  set('CZ', rng(i => sub(W[i], mul(W[i], A('CA')[i]))));
+  set('DA', rng(i => mul(A('CZ')[i], A('CJ')[i])));
+  set('DB', rng(i => blankOr(i, 'DB')));
+
+  const cols = []; for (let c = ci('AU'); c <= ci('DB'); c++) cols.push(cl(c));
+  const missing = cols.filter(c => !out[c]); if (missing.length) throw new Error('280 calc missing ' + missing);
+  const vals = rng(i => cols.map(c => out[c][i]));
+  return { vals, out };
+}
+function calcDyeQ(dyeq, d280, c280, knit, today) {
+  const hIdx = makeIndex(d280.map(r => r[COL('H')]));
+  const v280 = (key, arr) => { const i = MATCH(key, hIdx); return isErr(i) ? i : (arr[i] === null || arr[i] === undefined ? 0 : arr[i]); };
+  const c = col => d280.map(r => r[COL(col)]);
+  const AO = c('AO'), AP = c('AP'), P = c('P'), BB = c280.out.BB, BP = c280.out.BP;
+  const knitIdx = makeIndex(knit.map(r => r[COL('E')])), knitAB = knit.map(r => r[COL('AB')]);
+  return dyeq.map(row => {
+    const F = row[2], J = row[6], O = row[11], Pp = row[12], U = row[17];
+    const B = v280(F, AP);
+    const V = IFNA((() => { const i = MATCH(F, knitIdx); return isErr(i) ? i : (knitAB[i] ?? 0); })(), 0);
+    const W = sub(U, V);
+    const X = IF(gt(V, 0), () => 'KBL', () => 'KOK');
+    const AC = v280(F, AO);
+    const Y = sub(J, AC), Z = mul(Y, 0.4), AB = sub(today, AC);
+    const AA = IF(eq(O, 'Additional'), () => '', () => IF(eq(X, 'KBL'), () => sub(Z, AB), () => ''));
+    const AE = IFERROR(IF(OR(eq(O, 'Additional'), eq(O, 'Foc')), () => add(B, 3), () => IF(SEARCH('AOP', Pp), () => add(AC, 6), () => add(Z, AC))), add(Z, AC));
+    const AF = IF(eq(X, 'KBL'), () => IF(lt(AE, today), () => 'KNITTING OTT FAILED', () => 'TO BE KNIT'), () => '');
+    const p1 = FIND('|', F), p2 = FIND('|', F, add(p1, 1));
+    const AG = VALUEF(TRIM(MID(F, add(p1, 1), sub(sub(p2, p1), 1))));
+    const AH = TRIM(RIGHT(F, sub(LEN(F), p2)));
+    return [V, W, X, Y, Z, AA, AB, AC, '.', AE, AF, AG, AH, v280(F, BB), v280(F, P), v280(F, BP)];
+  });
+}
+
+/* --------------------------------------------- LD New / Repeat (Dye Q) */
+const LD_NAME = 'LD New / Repeat';
+const LD_MARK = ['SQHUE', 'FY2', 'PO:', 'PO-', 'PO ', 'PO#', '/PO', 'SWATCH', 'FOLLOW', 'MATCH WITH'];
+function ldKey(v) {                     // "FBK 13194 OP B" -> "13194-B"; reference texts -> ''
+  if (v === null || v === undefined) return '';
+  v = String(v).replace(/_x([0-9A-Fa-f]{4})_/g, (m, h) => String.fromCharCode(parseInt(h, 16)));
+  const t = v.replace(/\xa0/g, ' ').split(/\s+/).filter(Boolean).join(' ').toUpperCase();
+  const n = t.length;
+  if (!n || LD_MARK.some(m => t.includes(m))) return '';
+  const isD = c => c >= '0' && c <= '9', isA = c => c >= 'A' && c <= 'Z';
+  const dg = '0' + [...t].map(c => isD(c) ? '1' : '0').join('') + '000000';
+  const al = '0' + [...t].map(c => isA(c) ? '1' : '0').join('') + '0';
+  let p = 0;
+  for (let i = 1; i <= n; i++) {
+    const pre = ('   ' + t).slice(i - 1, i + 2);
+    const hf = pre.slice(1) === 'HF' || pre === 'HF-' || pre === 'HF ';
+    if (dg[i - 1] === '0' && t[i - 1] !== '0' && (dg.slice(i, i + 5) === '11110' || dg.slice(i, i + 6) === '111110') && !hf) { p = i; break; }
+  }
+  if (!p) return '';
+  const nl = dg[p + 4] === '1' ? 5 : 4;
+  const num = t.slice(p - 1, p - 1 + nl);
+  const qs = ['OP', 'REF', 'SHADE', 'DIP'].map(w => t.indexOf(w)).filter(x => x >= 0).map(x => x + 1);
+  const q = qs.length ? Math.min(...qs) : 9999;
+  const sa = []; for (let i = 1; i <= n; i++) if (al[i] === '1' && al[i - 1] === '0' && al[i + 1] === '0') sa.push(i);
+  const st = q < 9999 ? q : p + nl;
+  const o1 = sa.find(i => i >= st) || 0;
+  const o2 = o1 ? o1 : (q < 9999 ? 0 : (sa.length ? sa[0] : 0));
+  const ch = (' ' + t)[p - 1];
+  const pfx = al[p - 1] === '1' || ((ch === '-' || ch === ' ') && al[Math.max(p - 1, 1) - 1] === '1');
+  return o2 ? num + '-' + t[o2 - 1] : (pfx ? num : '');
+}
+const fnum = v => typeof v === 'number' ? v : (typeof v === 'string' && NUMRE.test(v) ? parseFloat(v) : null);
+function ldCompute(d280, ddq, cdq) {
+  const pool = new Map(); const push = (k, d, o) => { if (!pool.has(k)) pool.set(k, []); pool.get(k).push([d, o]); };
+  for (const r of d280) { const k = ldKey(r[COL('AG')]); if (k) push(k, fnum(r[COL('AO')]), r[COL('G')]); }
+  const info = ddq.map((r, i) => {
+    if (r[2] === null || r[2] === '') return null;
+    const txt = r[13], k = ldKey(txt), d = fnum(cdq[i][7]), o = r[1];
+    if (k) push(k, d, o); return [txt, k, d, o];
+  });
+  const res = info.map(x => {
+    if (!x) return null;
+    const [txt, k, d, o] = x;
+    if (txt === null || !String(txt).replace(/\xa0/g, ' ').trim()) return '';
+    if (!k) return 'Repeat';
+    const arr = pool.get(k) || [];
+    if (d === null) return arr.some(([, oo]) => oo !== o) ? 'Repeat' : 'New';
+    return arr.some(([dd, oo]) => dd !== null && dd < d && oo !== o) ? 'Repeat' : 'New';
+  });
+  const batch2ld = new Map(); ddq.forEach((r, i) => { if (res[i] !== null) batch2ld.set(r[2], res[i]); });
+  return { res, batch2ld };
+}
+// adds the field to the Dye Q pivot cache, DQ P (last row field, own column) and every other pivot on that cache
+async function ldPivots(zip, rd, wr, wbx, rels, pathOf, SST, batch2ld, tcol) {
+  const relTarget = (relsXml, id) => /Target="([^"]+)"/.exec(relsXml.match(new RegExp(`<Relationship [^>]*Id="${id}"[^>]*>`))[0])[1];
+  const caches = {};
+  for (const m of wbx.matchAll(/<pivotCache cacheId="(\d+)" r:id="([^"]+)"/g)) caches[m[1]] = 'xl/' + relTarget(rels, m[2]).replace(/^\/?xl\//, '');
+  let cid = null; for (const [k, p] of Object.entries(caches)) if (/worksheetSource ref="[^"]+" sheet="Dye Q"/.test(await rd(p))) cid = k;
+  if (cid === null) return { note: 'no Dye Q pivot cache' };
+  const P = caches[cid]; let D = await rd(P);
+  D = D.replace(/(worksheetSource ref="[A-Z]+\d+:)([A-Z]+)(\d+)" sheet="Dye Q"/, (m, a, c, r) => `${a}${ci(tcol) > ci(c) ? tcol : c}${r}" sheet="Dye Q"`);
+  const cfs = D.match(/<cacheField\b[^>]*?(?:\/>|>[\s\S]*?<\/cacheField>)/g) || [];
+  const fields = cfs.map(x => unx(/name="([^"]*)"/.exec(x)[1]));
+  if (fields.includes(LD_NAME)) { wr(P, D); return { note: 'field already in pivots (values refreshed on open)' }; }
+  const nf = fields.length;
+  D = D.replace(`<cacheFields count="${nf}">`, `<cacheFields count="${nf + 1}">`);
+  D = D.replace('</cacheFields>', () => `<cacheField name="${LD_NAME}" numFmtId="0"><sharedItems containsBlank="1" count="3"><s v="Repeat"/><s v="New"/><m/></sharedItems></cacheField></cacheFields>`);
+  wr(P, D);
+  const SH = { Repeat: 0, New: 1, '': 2 };
+  const bidx = fields.indexOf('Batch No');
+  const si = (/<sharedItems\b[^>]*?(?:\/>|>([\s\S]*?)<\/sharedItems>)/.exec(cfs[bidx]) || [])[1] || '';
+  const bitems = [...si.matchAll(/<(s|n|d|b|e|m)\b([^>]*?)\/?>/g)].map(m => { const v = /v="([^"]*)"/.exec(m[2]); return v ? unx(v[1]) : null; });
+  const prel = await rd(P.replace(/([^/]+)$/, '_rels/$1.rels'));
+  const recp = P.replace(/[^/]+$/, '') + /Target="([^"]+)"/.exec(prel)[1];
+  let R = await rd(recp);
+  R = R.replace(/(<r>[\s\S]*?)<\/r>/g, (m, body) => {
+    const vals = body.match(/<(?:x|s|n|d|m|b|e)\b[^>]*\/>/g) || [];
+    const b = vals[bidx] || ''; const mv = /v="([^"]*)"/.exec(b);
+    const bv = b.startsWith('<x') ? bitems[mv ? +mv[1] : 0] : (mv ? unx(mv[1]) : null);
+    const v = SH[batch2ld.get(bv) || ''];
+    return body + (v ? `<x v="${v}"/>` : '<x/>') + '</r>';
+  });
+  wr(recp, R);
+  // pivot tables
+  const dqpPath = pathOf['DQ P'];
+  const dqpRelsPath = dqpPath ? dqpPath.replace('worksheets/', 'worksheets/_rels/') + '.rels' : null;
+  const dqpPts = dqpRelsPath && zip.file(dqpRelsPath) ? [...(await rd(dqpRelsPath)).matchAll(/pivotTables\/(pivotTable\d+\.xml)/g)].map(m => m[1]) : [];
+  let dqp = dqpPath ? await rd(dqpPath) : '';
+  let rendered = 0;
+  for (const f of Object.keys(zip.files).filter(p => /^xl\/pivotTables\/pivotTable\d+\.xml$/.test(p))) {
+    let s = await rd(f);
+    if (!s.includes(`cacheId="${cid}"`)) continue;
+    const n = +/<pivotFields count="(\d+)"/.exec(s)[1];
+    s = s.replace(`<pivotFields count="${n}">`, `<pivotFields count="${n + 1}">`);
+    let i = s.indexOf('</pivotFields>');
+    const base = f.split('/').pop();
+    if (!dqpPts.includes(base)) { s = s.slice(0, i) + '<pivotField compact="0" outline="0" showAll="0"/>' + s.slice(i); wr(f, s); continue; }
+    s = s.slice(0, i) + '<pivotField axis="axisRow" compact="0" outline="0" showAll="0" defaultSubtotal="0"><items count="3"><item x="1"/><item x="0"/><item n=" " x="2"/></items></pivotField>' + s.slice(i);
+    const loc = /<location ref="([A-Z]+)(\d+):([A-Z]+)(\d+)" firstHeaderRow="(\d+)" firstDataRow="(\d+)" firstDataCol="(\d+)"/.exec(s);
+    const [, c0, r0, c1, r1, fhr, fdr, fdc] = loc;
+    const rf = [...(/<rowFields count="\d+">([\s\S]*?)<\/rowFields>/.exec(s)[1]).matchAll(/<field x="(-?\d+)"\/>/g)].map(m => m[1]);
+    const nrf = rf.length;
+    const newc1 = ci(c1) >= ci(c0) + nrf ? c1 : cl(ci(c0) + nrf);
+    s = s.replace(loc[0], `<location ref="${c0}${r0}:${newc1}${r1}" firstHeaderRow="${fhr}" firstDataRow="${fdr}" firstDataCol="${+fdc + 1}"`);
+    s = s.replace(`<rowFields count="${nrf}">`, `<rowFields count="${nrf + 1}">`);
+    i = s.indexOf('</rowFields>'); s = s.slice(0, i) + `<field x="${n}"/>` + s.slice(i);
+    const bcol = cl(ci(c0) + rf.indexOf(String(bidx)));
+    const outc = cl(ci(c0) + nrf);
+    const d0 = +r0 + +fdr, hdr = d0 - 1;
+    const cellv = r => { const m = new RegExp(`<c r="${bcol}${r}"([^>]*)>(?:<v>([^<]*)</v>|<is><t[^>]*>([^<]*)</t></is>)`).exec(dqp); if (!m) return null;
+      if (/t="s"/.test(m[1])) return SST[+m[2]]; return unx(m[2] !== undefined ? m[2] : m[3]); };
+    const POS = { New: 0, Repeat: 1, '': 2 }; const vals = {};
+    const ri0 = s.indexOf('<rowItems'), ri1 = s.indexOf('</rowItems>');
+    let cnt = 0;
+    const blk = s.slice(ri0, ri1).replace(/(<i\b([^>]*)>[\s\S]*?)<\/i>/g, (m, a, attrs) => {
+      if (attrs.includes('t="grand"')) return m;
+      const r = d0 + cnt++; const v = batch2ld.get(cellv(r)) || ''; vals[r] = v; const k = POS[v];
+      return a + (k ? `<x v="${k}"/>` : '<x/>') + '</i>';
+    });
+    s = s.slice(0, ri0) + blk + s.slice(ri1);
+    wr(f, s);
+    // rendered values in the pivot's new column on DQ P
+    const hsm = new RegExp(`<c r="${cl(ci(outc) - 1)}${hdr}" s="(\\d+)"`).exec(dqp); const hsa = hsm ? ` s="${hsm[1]}"` : '';
+    dqp = dqp.replace(new RegExp(`<c r="${outc}\\d+"[^>]*?(?:/>|>[\\s\\S]*?</c>)`, 'g'), '');
+    dqp = dqp.replace(/(<row [^>]*[^/]>)([\s\S]*?)<\/row>/g, (m, tag, body) => {
+      const r = +/ r="(\d+)"/.exec(tag)[1];
+      const v = r === hdr ? LD_NAME : (vals[r] || ''); if (!v) return m;
+      tag = tag.replace(/ spans="(\d+):(\d+)"/, (q, a, b) => ` spans="${a}:${Math.max(+b, ci(outc))}"`);
+      const cell = `<c r="${outc}${r}"${r === hdr ? hsa : ''} t="inlineStr"><is><t>${esc(v)}</t></is></c>`;
+      let pos = null; for (const mm of body.matchAll(new RegExp(`<c r="([A-Z]+)${r}"`, 'g'))) if (ci(mm[1]) > ci(outc)) { pos = mm.index; break; }
+      body = pos !== null ? body.slice(0, pos) + cell + body.slice(pos) : body + cell; rendered++;
+      return tag + body + '</row>';
+    });
+    dqp = dqp.replace(/<dimension ref="([^"]+)"\/>/, (m, ref) => { const [a, b] = ref.split(':'); const bc = /[A-Z]+/.exec(b)[0];
+      return `<dimension ref="${a}:${ci(outc) > ci(bc) ? outc : bc}${/\d+$/.exec(b)[0]}"/>`; });
+    wr(dqpPath, dqp);
+  }
+  // sanity: pivotField count == cacheField count for every pivot on this cache
+  for (const f of Object.keys(zip.files).filter(p => /^xl\/pivotTables\/pivotTable\d+\.xml$/.test(p))) {
+    const s = await rd(f); const c = /cacheId="(\d+)"/.exec(s)[1]; if (c !== cid) continue;
+    const nc = ((await rd(caches[c])).match(/<cacheField /g) || []).length;
+    const np = (s.match(/<pivotField\b/g) || []).length, cnt = +/<pivotFields count="(\d+)"/.exec(s)[1];
+    if (!(nc === np && np === cnt)) throw new Error(`Pivot ${f} field count mismatch after LD update`);
+  }
+  return { note: 'added', rendered };
+}
+
+/* ------------------------------------------------------------ main build */
+const EXPECT_280_TEMPLATES = 60;   // AU..DB
+async function build(files, opts = {}) {
+  const log = opts.onProgress || (() => {});
+  const today = opts.today !== undefined ? opts.today : (() => { const d = new Date(); return Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(1899, 11, 30)) / 864e5); })();
+  const report = { steps: [], warnings: [] };
+  const note = (pct, msg) => { report.steps.push(msg); log(pct, msg); };
+
+  note(2, 'Opening DOC master');
+  const zip = await JSZip.loadAsync(files.master);
+  const rd = p => zip.file(p).async('string');
+  const wr = (p, s) => zip.file(p, s);
+  let wbx = await rd('xl/workbook.xml');
+  let rels = await rd('xl/_rels/workbook.xml.rels');
+  let ct = await rd('[Content_Types].xml');
+  const relmap = {}; for (const m of rels.matchAll(/<Relationship\b[^>]*>/g)) { const id = /Id="([^"]+)"/.exec(m[0])[1], t = /Target="([^"]+)"/.exec(m[0])[1]; relmap[id] = t.replace(/^\/?xl\//, ''); }
+  const sheets = [...wbx.matchAll(/<sheet\b[^>]*?name="([^"]+)"[^>]*?r:id="([^"]+)"[^>]*\/>/g)].map(m => ({ name: unx(m[1]), rid: m[2] }));
+  const pathOf = {}, indexOf = {}; sheets.forEach((s, i) => { pathOf[s.name] = 'xl/' + relmap[s.rid]; indexOf[s.name] = i; });
+  for (const need of ['217', '280', 'Dye Q', 'Knit Q', 'HS', 'Y-LOT']) if (!pathOf[need]) throw new Error(`Sheet "${need}" not found in the DOC file`);
+  const sstXml = zip.file('xl/sharedStrings.xml') ? await rd('xl/sharedStrings.xml') : '';
+  const SST = [...sstXml.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m => unx([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x => x[1]).join('')));
+
+  note(6, 'Reading TAPS files');
+  const S = {};
+  for (const [k, buf] of Object.entries(files.sources)) { S[k] = readSource(buf); await tick(); }
+
+  // ---- source cleaning (same rules as the manual process)
+  let d217 = srcRows(S.s217, 5, { tail: 2, ncols: 28, sparse: false }).filter(r => nonEmpty(r) > 0);
+  const key = v => v === null || v === undefined ? '' : (typeof v === 'number' ? numStr(v) : String(v)).toLowerCase();
+  const sums = new Map();
+  for (const r of d217) { const kk = key(r[4]) + '\u0001' + key(r[7]) + '\u0001' + key(r[6]); sums.set(kk, (sums.get(kk) || 0) + (typeof r[12] === 'number' ? r[12] : 0)); }
+  for (const r of d217) { const kk = key(r[4]) + '\u0001' + key(r[7]) + '\u0001' + key(r[6]); r.push(Math.round((sums.get(kk) - (typeof r[13] === 'number' ? r[13] : 0)) * 1e6) / 1e6); }
+  const seen = new Set(); const raw217 = d217.length;
+  d217 = d217.filter(r => { const kk = [4, 5, 6, 7].map(i => key(r[i])).join('\u0001'); if (seen.has(kk)) return false; seen.add(kk); return true; });
+  note(10, `217: ${raw217} rows → ${d217.length} after Remove Duplicates (Order No+Item, PO, Color, Fabrication)`);
+  const d280 = srcRows(S.s280, 5, { tail: 1, ncols: 46 });
+  const ddq = srcRows(S.dyeq, 4, { tail: 2, ncols: 18 });
+  const dkq = srcRows(S.knitq, 5, { ncols: 29 });
+  let mel = 0, rib = 0;
+  for (const r of dkq) {
+    const color = T(r[17]).toLowerCase(), fab = T(r[22]).toLowerCase();
+    const m = ['marl', 'b1', 'melange', 'b0', 'bc'].some(k => color.includes(k)) ? 'Melange' : null;
+    const b = fab.includes('rib') ? 'Rib' : null; if (m) mel++; if (b) rib++; r.push(m, b);
+  }
+  const dhs = srcRows(S.heatset, 5, { ncols: 14 });
+  let tail = 0; for (let r = S.lot.length - 1; r > 0; r--) { tail++; if (String(S.lot[r][0] ?? '').startsWith('Total of Machine')) break; }
+  const dlot = srcRows(S.lot, 5, { tail, ncols: 16, sparse: false });
+  note(14, `280: ${d280.length} · Dye Q: ${ddq.length} · Knit Q: ${dkq.length} (Melange ${mel}, Rib ${rib}) · HS: ${dhs.length} · Lot: ${dlot.length}`);
+
+  // ---- old 280 values (= the "280 (2)" copy) and row-1 templates
+  note(18, 'Reading current 280 sheet (280 (2) copy for comments / urgent / remarks)');
+  const sh280 = new Sheet(await rd(pathOf['280'])); await tick();
+  const oldCols = {}; const want = ['H', 'R', 'BB', 'BQ', 'BT', 'CB', 'CN', 'CR', 'CS', 'CT', 'CV', 'DB'];
+  want.forEach(c => oldCols[c] = []);
+  const oldRows = [...sh280.rows.keys()].sort((a, b) => a - b);
+  for (const r of oldRows) for (const c of want) oldCols[c].push(cellValue(sh280.get(r, ci(c)), SST));
+  const old = { H: oldCols.H, cols: oldCols };
+  const tmpl = []; for (let c = ci('AU'); c <= ci('DB'); c++) { const v = cellValue(sh280.get(1, c), SST); if (typeof v === 'string' && /^qq/i.test(v)) tmpl.push(c); }
+  if (tmpl.length !== EXPECT_280_TEMPLATES) report.warnings.push(`280 row 1 has ${tmpl.length} qq templates in AU:DB (expected 60) — check the calc columns.`);
+
+  note(24, 'Calculating 280 AU:DB (activated row-1 formulas → values)');
+  const c280 = calc280(d280, d217, dkq, dhs, dlot, ddq, old, today); await tick();
+  note(40, 'Calculating Dye Q V:AK');
+  const cdq = calcDyeQ(ddq, d280, c280, dkq, today);
+
+  // ---- write sheets
+  const filterRefs = {};
+  note(46, 'Writing 217');
+  let sh = new Sheet(await rd(pathOf['217']));
+  let oldLast = lastDataRow(sh, 1, 29, 3), nl = paste(sh, d217, 3, 1, 29, oldLast);
+  const f217 = []; for (let c = ci('AD'); c <= ci('BA'); c++) if (c !== ci('AM')) f217.push(c);
+  refitFormulas(sh, f217, 3, oldLast, nl);
+  filterRefs['217'] = resetFilter(sh, nl); report.cf217 = slimDuplicateCF(sh); setDimension(sh); wr(pathOf['217'], sh.serialize()); sh = null; await tick();
+
+  note(54, 'Writing 280 (A:AT data, AU:DB values, row height 15)');
+  oldLast = lastDataRow(sh280, 1, 46, 3); nl = paste(sh280, d280, 3, 1, 46, oldLast);
+  for (let r = 3; r <= nl; r++) { const v = sh280.rows.get(r); v[0] = v[0].replace(/\s(ht|customHeight)="[^"]*"/g, '') + ' ht="15" customHeight="1"'; }
+  writeValues(sh280, ci('AU'), ci('DB'), 3, c280.vals, oldLast);
+  filterRefs['280'] = resetFilter(sh280, nl); slimDuplicateCF(sh280); setDimension(sh280); wr(pathOf['280'], sh280.serialize()); await tick();
+
+  note(66, 'Writing Dye Q');
+  sh = new Sheet(await rd(pathOf['Dye Q']));
+  oldLast = lastDataRow(sh, 4, 37, 3); nl = paste(sh, ddq, 3, 4, 18, oldLast, ci('AK'));
+  refitFormulas(sh, [1, 2, 3], 3, oldLast, nl);
+  writeValues(sh, ci('V'), ci('AK'), 3, cdq, oldLast);
+  // LD New / Repeat column (first empty column after the header row, normally AL)
+  const ld = ldCompute(d280, ddq, cdq);
+  let ldCol = null; const hdrCells = (sh.rows.get(2) || ['', new Map()])[1];
+  for (const [c, x] of hdrCells) { const v = cellValue(x, SST); if (typeof v === 'string' && v.split(/\s+/).join(' ').trim().toLowerCase() === LD_NAME.toLowerCase()) ldCol = c; }
+  if (ldCol === null) ldCol = Math.max(...hdrCells.keys()) + 1;
+  for (const [r, [, cells]] of sh.rows) if (r >= 2 && cells.has(ldCol)) cells.delete(ldCol);
+  { const [, hc] = sh.row(2); hc.set(ldCol, cellXml(cl(ldCol) + 2, styleOf(hc.get(ldCol - 1)), LD_NAME)); }
+  ld.res.forEach((v, i) => { if (!v) return; const r = 3 + i; const [, cells] = sh.row(r); cells.set(ldCol, cellXml(cl(ldCol) + r, styleOf(cells.get(ldCol - 1)), v)); });
+  const ldCount = { New: 0, Repeat: 0, blank: 0 }; ld.res.forEach(v => { if (v === 'New') ldCount.New++; else if (v === 'Repeat') ldCount.Repeat++; else ldCount.blank++; });
+  filterRefs['Dye Q'] = resetFilter(sh, nl);
+  sh.tail = sh.tail.replace(/<autoFilter ref="([A-Z]+\d+):([A-Z]+)(\d+)"/, (m, a, c, r) => `<autoFilter ref="${a}:${ci(c) < ldCol ? cl(ldCol) : c}${r}"`);
+  filterRefs['Dye Q'] = (/<autoFilter ref="([^"]+)"/.exec(sh.tail) || [])[1] || filterRefs['Dye Q'];
+  slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Dye Q'], sh.serialize()); await tick();
+  note(70, `LD New / Repeat on Dye Q ${cl(ldCol)}: New ${ldCount.New} · Repeat ${ldCount.Repeat} · blank ${ldCount.blank}`);
+  report.ld = Object.assign({ col: cl(ldCol) }, ldCount);
+
+  note(72, 'Writing Knit Q (Melange / Rib)');
+  sh = new Sheet(await rd(pathOf['Knit Q']));
+  oldLast = lastDataRow(sh, 1, 31, 3); nl = paste(sh, dkq, 3, 1, 31, oldLast);
+  refitFormulas(sh, [ci('AF'), ci('AG')], 3, oldLast, nl);
+  filterRefs['Knit Q'] = resetFilter(sh, nl); slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Knit Q'], sh.serialize()); await tick();
+
+  note(76, 'Writing HS');
+  sh = new Sheet(await rd(pathOf['HS']));
+  oldLast = lastDataRow(sh, 1, 14, 2); nl = paste(sh, dhs, 2, 1, 14, oldLast);
+  refitFormulas(sh, [ci('O')], 2, oldLast, nl);
+  filterRefs['HS'] = resetFilter(sh, nl); setDimension(sh); wr(pathOf['HS'], sh.serialize()); await tick();
+
+  note(80, 'Writing Y-LOT');
+  sh = new Sheet(await rd(pathOf['Y-LOT']));
+  oldLast = lastDataRow(sh, 1, 16, 3); nl = paste(sh, dlot, 3, 1, 16, oldLast);
+  filterRefs['Y-LOT'] = resetFilter(sh, nl); setDimension(sh); wr(pathOf['Y-LOT'], sh.serialize()); sh = null; await tick();
+
+  // ---- speed: other sheets' duplicate-value rules (e.g. sheet "10" had 427 of them)
+  note(84, 'Speed clean-up: conditional formats, dead links, calc chain');
+  let cfRemoved = report.cf217 || 0;
+  for (const s of sheets) {
+    if (['217', '280', 'Dye Q', 'Knit Q', 'HS', 'Y-LOT'].includes(s.name)) continue;
+    const p = pathOf[s.name]; const x = await rd(p);
+    if ((x.match(/duplicateValues/g) || []).length < 2) continue;
+    const t = new Sheet(x); const n = slimDuplicateCF(t); if (n) { cfRemoved += n; wr(p, t.serialize()); }
+  }
+  report.cfRemoved = cfRemoved;
+  // filter database names
+  for (const [name, ref] of Object.entries(filterRefs)) {
+    if (!ref) continue;
+    const [a, b] = ref.split(':');
+    const abs = `$${/[A-Z]+/.exec(a)[0]}$${/\d+/.exec(a)[0]}:$${/[A-Z]+/.exec(b)[0]}$${/\d+/.exec(b)[0]}`;
+    const q = /[^A-Za-z0-9_]/.test(name) || /^\d/.test(name) ? `'${name}'` : name;
+    wbx = wbx.replace(new RegExp(`(<definedName name="_xlnm._FilterDatabase" localSheetId="${indexOf[name]}" hidden="1">)[^<]*(</definedName>)`), (m, a1, a2) => a1 + esc(q) + '!' + abs + a2);
+  }
+  // dead names (#REF!) and the old external link to "World Cup 2006.xls" (unused; triggers update-links prompt)
+  const before = (wbx.match(/<definedName\b/g) || []).length;
+  wbx = wbx.replace(/<definedName\b[^>]*>#REF!<\/definedName>/g, '');
+  const ext = [...wbx.matchAll(/<externalReference r:id="([^"]+)"\/>/g)].map(m => m[1]);
+  if (ext.length) {
+    wbx = wbx.replace(/<definedName\b[^>]*>[^<]*\[\d+\][^<]*<\/definedName>/g, '');
+    let stillUsed = false;
+    for (const s of sheets) { const x = await rd(pathOf[s.name]); if (/\[\d+\]/.test(x.replace(/<v>[\s\S]*?<\/v>/g, ''))) { stillUsed = true; break; } }
+    if (!stillUsed) {
+      wbx = wbx.replace(/<externalReferences>[\s\S]*?<\/externalReferences>/, '');
+      for (const rid of ext) {
+        const target = relmap[rid];
+        rels = rels.replace(new RegExp(`<Relationship [^>]*Id="${rid}"[^>]*/>`), '');
+        zip.remove('xl/' + target); zip.remove('xl/' + target.replace(/([^/]+)$/, '_rels/$1.rels'));
+        ct = ct.replace(new RegExp(`<Override PartName="/xl/${target.replace(/\./g, '\\.')}"[^>]*/>`), '');
+      }
+      report.extLinks = ext.length;
+    }
+  }
+  wbx = wbx.replace(/<definedNames>\s*<\/definedNames>/, '');
+  report.namesRemoved = before - (wbx.match(/<definedName\b/g) || []).length;
+  wbx = wbx.replace(/<calcPr\b([^>]*?)\/>/, (m, a) => `<calcPr${a.replace(/\sfullCalcOnLoad="[^"]*"/, '')} fullCalcOnLoad="1"/>`);
+  rels = rels.replace(/<Relationship [^>]*calcChain[^>]*\/>/, '');
+  ct = ct.replace(/<Override PartName="\/xl\/calcChain.xml"[^>]*\/>/, '');
+  zip.remove('xl/calcChain.xml');
+  wr('xl/workbook.xml', wbx); wr('xl/_rels/workbook.xml.rels', rels); wr('[Content_Types].xml', ct);
+
+  // ---- LD field in the Dye Q pivots (DQ P + Dash Board)
+  report.ldPivot = await ldPivots(zip, rd, wr, wbx, rels, pathOf, SST, ld.batch2ld, cl(ldCol));
+  // ---- pivots: keep all, refresh on open
+  let nPc = 0, nPt = 0;
+  for (const p of Object.keys(zip.files)) {
+    if (/^xl\/pivotTables\/pivotTable\d+\.xml$/.test(p)) nPt++;
+    if (!/^xl\/pivotCache\/pivotCacheDefinition\d+\.xml$/.test(p)) continue;
+    nPc++;
+    const x = await rd(p); const tag = /<pivotCacheDefinition\b[^>]*>/.exec(x)[0];
+    if (tag.includes('refreshOnLoad="1"')) continue;
+    const nt = tag.replace(/\srefreshOnLoad="[^"]*"/, '').replace(/(\/?)>$/, ' refreshOnLoad="1"$1>');
+    wr(p, x.replace(tag, () => nt));
+  }
+  report.pivotCaches = nPc; report.pivotTables = nPt;
+  note(90, `Pivots kept: ${nPt} tables / ${nPc} caches, all refresh on open`);
+
+  note(92, 'Compressing workbook');
+  const out = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+    m => log(92 + m.percent * 0.07, 'Compressing workbook'));
+  note(100, 'Done');
+  report.rows = { '217': d217.length, '280': d280.length, 'Dye Q': ddq.length, 'Knit Q': dkq.length, HS: dhs.length, 'Y-LOT': dlot.length, melange: mel, rib };
+  return { bytes: out, report, debug: opts.debug ? { c280, cdq } : undefined };
+}
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+/* --------------------------------------------- file-name auto detection */
+function detect(name) {
+  const n = name.toLowerCase();
+  if (n.endsWith('.xlsx') && /doc|280\s*\+\s*217|217\s*\+\s*280/.test(n)) return 'master';
+  if (!/\.xls$/.test(n) && !n.endsWith('.xlsx')) return null;
+  if (/dye[\s_-]*q/.test(n)) return 'dyeq';
+  if (/knit[\s_-]*q/.test(n)) return 'knitq';
+  if (/heat\s*-?\s*set/.test(n)) return 'heatset';
+  if (/(^|[^a-z])lot/.test(n)) return 'lot';
+  if (/(^|[^0-9])217([^0-9]|$)/.test(n)) return 's217';
+  if (/(^|[^0-9])280([^0-9]|$)/.test(n)) return 's280';
+  if (n.endsWith('.xlsx')) return 'master';
+  return null;
+}
+
+root.DocBuilder = { build, detect, _test: { formulaGen, calc280, SEARCH, CONCAT, T, ldKey } };
+})(typeof self !== 'undefined' ? self : globalThis);
+</script>
+<script>
+(function(){
+'use strict';
+const LIBS=['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'];
+const SLOTS=[
+  ['master','DOC -280+217','Master workbook (.xlsx)'],
+  ['s217','217','TAPS · OTT Date Wise Report'],
+  ['s280','280','TAPS · OTT Hit Rate Details'],
+  ['dyeq','Inside Dye Q','TAPS · Inside Dye Queue'],
+  ['knitq','Knit Q','TAPS · Knitting Queue'],
+  ['heatset','Heatset','TAPS · Wait For Heat Setting'],
+  ['lot','Lot','TAPS · Daily M/C Wise Knitting'],
+];
+const $=id=>document.getElementById(id);
+const files={};let outBlob=null,busy=false;
+const coreText=$('core-src').textContent;
+(0,eval)(coreText);                    // DocBuilder on the page (used for name detection / fallback)
+
+const fmt=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+function renderSlots(){
+  const ul=$('slots');ul.innerHTML='';
+  for(const [k,label,desc] of SLOTS){
+    const f=files[k];const li=document.createElement('li');li.className='slot'+(f?' ok':'');
+    li.innerHTML='<span class="dot" aria-hidden="true">'+(f?'✓':'')+'</span><span class="nm"><b></b><span></span></span><span class="sz"></span>';
+    li.querySelector('b').textContent=label;
+    li.querySelector('.nm span').textContent=f?f.name:desc;
+    li.querySelector('.sz').textContent=f?fmt(f.size):'missing';
+    ul.appendChild(li);
+  }
+  const n=SLOTS.filter(s=>files[s[0]]).length;
+  $('go').disabled=busy||n<SLOTS.length;
+  $('need').textContent=n<SLOTS.length?`${n} of 7 files added. Missing: ${SLOTS.filter(s=>!files[s[0]]).map(s=>s[1]).join(', ')}.`:'All files ready.';
+}
+function addFiles(list){
+  const unknown=[];
+  for(const f of list){const k=DocBuilder.detect(f.name);if(k)files[k]=f;else unknown.push(f.name);}
+  renderSlots();
+  if(unknown.length)setWarn('Not recognised (rename to include 217, 280, Dye Q, Knit Q, Heatset, Lot or DOC): '+unknown.join(', '));
+}
+function setWarn(t){const w=$('warn');w.textContent=t||'';w.classList.toggle('show',!!t);}
+const drop=$('drop'),pick=$('pick');
+drop.addEventListener('click',()=>pick.click());
+drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick.click();}});
+pick.addEventListener('change',()=>{addFiles(pick.files);pick.value='';});
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
+$('clear').addEventListener('click',()=>{for(const k in files)delete files[k];setWarn('');renderSlots();});
+
+const d=new Date();$('today').value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+function todaySerial(){const v=$('today').value.split('-').map(Number);return Math.round((Date.UTC(v[0],v[1]-1,v[2])-Date.UTC(1899,11,30))/864e5);}
+
+let lastMsg='';
+function progress(p,msg){
+  $('bar').style.width=Math.max(2,Math.min(100,p)).toFixed(1)+'%';
+  $('status').textContent=msg+(p<100?' …':'');
+  if(msg!==lastMsg){
+    const log=$('log');const prev=log.lastElementChild;if(prev)prev.classList.remove('run');
+    if(p<100){const li=document.createElement('li');li.className='run';li.textContent=msg;log.appendChild(li);li.scrollIntoView({block:'nearest'});}
+    lastMsg=msg;
+  }
+}
+function makeWorker(){
+  const glue=`importScripts(${LIBS.map(u=>JSON.stringify(u)).join(',')});\n${coreText}\n
+self.onmessage=async e=>{try{const r=await DocBuilder.build(e.data.files,{today:e.data.today,onProgress:(p,m)=>self.postMessage({t:'p',p,m})});
+self.postMessage({t:'done',bytes:r.bytes,report:r.report},[r.bytes.buffer]);}catch(err){self.postMessage({t:'err',m:String(err&&err.message||err)});}};`;
+  return new Worker(URL.createObjectURL(new Blob([glue],{type:'text/javascript'})));
+}
+async function run(){
+  busy=true;renderSlots();setWarn('');$('result').classList.remove('show');$('log').innerHTML='';lastMsg='';
+  const t0=performance.now();progress(1,'Loading files');
+  const bufs={sources:{}};
+  for(const [k] of SLOTS){const ab=new Uint8Array(await files[k].arrayBuffer());if(k==='master')bufs.master=ab;else bufs.sources[k]=ab;}
+  const transfer=[bufs.master.buffer,...Object.values(bufs.sources).map(b=>b.buffer)];
+  const finish=(bytes,report)=>{busy=false;renderSlots();showResult(bytes,report,(performance.now()-t0)/1000);};
+  const fail=m=>{busy=false;renderSlots();progress(0,'Stopped');$('status').innerHTML='';const s=document.createElement('span');s.className='err';s.textContent='Could not build: '+m;$('status').appendChild(s);};
+  let w;try{w=makeWorker();}catch(e){w=null;}
+  if(w){
+    w.onmessage=e=>{const d=e.data;if(d.t==='p')progress(d.p,d.m);else if(d.t==='done'){w.terminate();finish(d.bytes,d.report);}else{w.terminate();fail(d.m);}};
+    w.onerror=e=>{e.preventDefault();w.terminate();fallback();};
+    w.postMessage({files:bufs,today:todaySerial()},transfer);
+  }else fallback();
+  async function fallback(){                         // main-thread run (e.g. worker blocked)
+    try{
+      for(const [k] of SLOTS){const ab=new Uint8Array(await files[k].arrayBuffer());if(k==='master')bufs.master=ab;else bufs.sources[k]=ab;}
+      const r=await DocBuilder.build(bufs,{today:todaySerial(),onProgress:progress});finish(r.bytes,r.report);
+    }catch(err){fail(String(err&&err.message||err));}
+  }
+}
+function showResult(bytes,rep,secs){
+  progress(100,'Done');
+  outBlob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  $('rtime').textContent=`Built in ${secs.toFixed(1)} s · ${fmt(outBlob.size)}`;
+  const r=rep.rows,st=[[r['217'].toLocaleString(),'217 rows (after remove duplicates)'],[r['280'].toLocaleString(),'280 rows'],[r['Dye Q'].toLocaleString(),'Dye Q rows'],
+    [r['Knit Q'].toLocaleString(),'Knit Q rows'],[r.melange+' / '+r.rib,'Melange / Rib'],[r.HS,'HS rows'],[r['Y-LOT'].toLocaleString(),'Y-LOT rows'],
+    [rep.pivotTables+' / '+rep.pivotCaches,'Pivots / sources (refresh on open)'],[rep.cfRemoved||0,'Slow highlight rules removed']];
+  if(rep.ld)st.splice(5,0,[rep.ld.New+' / '+rep.ld.Repeat,'LD New / Repeat (Dye Q '+rep.ld.col+')']);
+  $('stats').innerHTML='';for(const [b,s] of st){const d=document.createElement('div');d.className='stat';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=b;d.querySelector('span').textContent=s;$('stats').appendChild(d);}
+  if(rep.warnings&&rep.warnings.length)setWarn(rep.warnings.join(' '));
+  $('result').classList.add('show');$('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+$('go').addEventListener('click',run);
+$('dl').addEventListener('click',()=>{if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download='DOC -280+217.xlsx';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);});
+renderSlots();
+})();
+</script>
+</body>
+</html>
