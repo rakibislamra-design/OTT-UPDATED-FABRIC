@@ -356,7 +356,6 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
       <div class="natabs" role="tablist">
         <button type="button" role="tab" id="tabWait" aria-selected="true">Waiting for dyeing</button>
         <button type="button" role="tab" id="tabStart" aria-selected="false">Dyeing started</button>
-        <select id="naWin" aria-label="Started within"><option value="30">first dyed · last 30 days</option><option value="60" selected>first dyed · last 60 days</option><option value="90">first dyed · last 90 days</option></select>
       </div>
     </div>
     <p class="dsub" id="naSub"></p>
@@ -1131,9 +1130,10 @@ function newArticles(d280, grp280, c280, today) {
       waiting.push({ a: o.a, n: o.rows.length, plan: num(o.rows.reduce((s, i) => s + (d280[i][COL('W')] || 0), 0)), batches: rows.slice(0, 5).map(bat) });
     } else {
       const first = Math.min(...dyed.map(i => typeof d280[i][COL('R')] === 'number' ? d280[i][COL('R')] : Infinity));
-      if (!(first >= today - 90)) continue;
+      const nRfd = o.rows.filter(i => typeof d280[i][COL('AB')] === 'number' && d280[i][COL('AB')] > 0).length;
+      if (nRfd >= Math.min(5, o.rows.length)) continue;                            // 5 batches RFD done (or all of them): drop from the watch list
       const rows = dyed.slice().sort((x, y) => (d280[x][COL('R')] ?? Infinity) - (d280[y][COL('R')] ?? Infinity));
-      started.push({ a: o.a, n: o.rows.length, nDyed: dyed.length, first: iso(first), batches: rows.slice(0, 5).map(bat) });
+      started.push({ a: o.a, n: o.rows.length, nDyed: dyed.length, nRfd, first: iso(first), batches: rows.slice(0, 5).map(bat) });
     }
   }
   started.sort((x, y) => (y.first || '').localeCompare(x.first || ''));
@@ -1661,10 +1661,8 @@ const pct=v=>v===null||v===undefined?'–':v.toFixed(1)+'%';
 function drawNa(){
   const list=$('naList');list.innerHTML='';
   $('tabWait').setAttribute('aria-selected',String(naTab==='wait'));$('tabStart').setAttribute('aria-selected',String(naTab==='start'));
-  $('naWin').hidden=naTab!=='start';
   if(!newArt){$('naTag').textContent='';$('naSub').textContent='';list.innerHTML='<div class="empty">New-article tracking appears after the next update is run with this page.</div>';return;}
-  const win=+$('naWin').value,v=newArt.asOf.split('-').map(Number),cut=isoD(addDays(new Date(v[0],v[1]-1,v[2]),-win));
-  const started=newArt.started.filter(a=>a.first>=cut);
+  const started=newArt.started;
   $('tabWait').textContent=`Waiting for dyeing (${newArt.waiting.length})`;$('tabStart').textContent=`Dyeing started (${started.length})`;
   $('naTag').textContent='As of '+fmtD(newArt.asOf);
   if(naTab==='wait'){
@@ -1679,11 +1677,11 @@ function drawNa(){
       list.insertAdjacentHTML('beforeend',h+'</tbody></table></div></div>');
     }
   }else{
-    $('naSub').textContent=`New Fabric/Yarn first dyed in the last ${win} days · first 5 dyed batches · process loss = (plan − RFD) ÷ plan · red ▲ when above the PO process loss`;
+    $('naSub').textContent='Fabric/Yarn whose dyeing has started · first 5 dyed batches · stays until 5 batches are RFD · process loss = (plan − RFD) ÷ plan · red ▲ when above the PO process loss';
     if(!started.length)list.innerHTML='<div class="empty">No new article started dyeing in this period.</div>';
     for(const a of started){
       const buyers=[...new Set(a.batches.map(b=>b.buyer))].join(', ');
-      let h=`<div class="art"><div class="ah"><b>${esc(a.a)}</b><span>${esc(buyers)}</span><span>first dyed ${fmtD(a.first)} · ${a.nDyed} of ${a.n} batches dyed</span><span class="st">Dyeing started</span></div><div class="tw"><table><thead><tr>
+      let h=`<div class="art"><div class="ah"><b>${esc(a.a)}</b><span>${esc(buyers)}</span><span>first dyed ${fmtD(a.first)} · ${a.nDyed} of ${a.n} batches dyed · RFD ${a.nRfd??'–'} of ${Math.min(5,a.n)}</span><span class="st">Dyeing started</span></div><div class="tw"><table><thead><tr>
         <th class="l">Batch</th><th class="l">Buyer</th><th class="l">Color</th><th class="l">In / Out</th><th>Dyeing date</th><th>Plan kg</th><th>Dyed kg</th><th>Finish date</th><th>RFD date</th><th>RFD kg</th><th>Process loss</th><th>PO process loss</th></tr></thead><tbody>`;
       for(const b of a.batches){const hi=b.pl!==null&&b.popl!==null&&b.pl>b.popl;
         h+=`<tr><td class="l bn" title="${esc(b.b)}">${esc(b.b)}</td><td class="l">${esc(b.buyer||'')}</td><td class="l">${esc(b.color||'')}</td><td class="l">${b.side}</td><td>${fmtD(b.dd)}</td><td>${kgf(b.plan)}</td><td>${kgf(b.dyed)}</td><td>${fmtD(b.fd)}</td><td>${fmtD(b.rd)}</td><td>${kgf(b.rfd)}</td><td class="pl${hi?' hi':''}">${pct(b.pl)}${hi?' ▲':''}</td><td>${pct(b.popl)}</td></tr>`;}
@@ -1693,7 +1691,6 @@ function drawNa(){
 }
 $('tabWait').addEventListener('click',()=>{naTab='wait';drawNa();});
 $('tabStart').addEventListener('click',()=>{naTab='start';drawNa();});
-$('naWin').addEventListener('change',drawNa);
 function useNewArt(n){newArt=n||null;drawNa();}
 drawNa();
 render();loadLatest();
