@@ -4,146 +4,120 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#664356">
-<title>DOC 280+217 Builder</title>
+<title>DOC Master Update</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23664356'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='36' font-weight='700' text-anchor='middle' fill='%23fff'%3EQ%3C/text%3E%3C/svg%3E">
 <style>
 :root{
   --q:#664356;--q80:#7C5D6D;--q60:#957B87;--q40:#B29EA6;--q20:#D2C7CB;--q10:#E6DFE1;--q5:#EFECED;
-  --tan:#B7A19B;--tan20:#ECE6E3;--blue:#366083;--blue20:#CCD0DB;--gray:#929597;--red:#AF4F5A;--red20:#E7D1CE;
-  --bg:#F7F4F5;--card:#FFFFFF;--fg:#2B2027;--muted:#6E6068;--line:#E6DFE1;--ok:#3C7A57;--okbg:#E3EFE7;
-  --radius:10px;--shadow:0 1px 2px rgba(43,32,39,.06),0 4px 16px rgba(43,32,39,.06);
+  --bg:#FBF8F9;--card:#FFFFFF;--fg:#2E2329;--muted:#6F6168;--line:#E6DFE1;--dash:#D7C3CA;
+  --ok:#3C7A57;--okbg:#E7F1EA;--red:#AF4F5A;--red20:#F3E3E1;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#1C1619;--card:#261E22;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--q5:#2B2227;--q10:#33282E;--q20:#4A3A43;
-  --tan20:#3A302D;--blue20:#2A3442;--red20:#3D2629;--okbg:#1F3328;--ok:#86C7A0;--shadow:none}}
-:root[data-theme="dark"]{--bg:#1C1619;--card:#261E22;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--q5:#2B2227;--q10:#33282E;--q20:#4A3A43;
-  --tan20:#3A302D;--blue20:#2A3442;--red20:#3D2629;--okbg:#1F3328;--ok:#86C7A0;--shadow:none}
+  --bg:#1C1619;--card:#251D21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--dash:#5A4650;--q5:#2B2227;--q10:#33282E;
+  --okbg:#1F3328;--ok:#86C7A0;--red20:#3D2629}}
+:root[data-theme="dark"]{--bg:#1C1619;--card:#251D21;--fg:#F1ECEE;--muted:#B5A6AD;--line:#3B3036;--dash:#5A4650;--q5:#2B2227;--q10:#33282E;--okbg:#1F3328;--ok:#86C7A0;--red20:#3D2629}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 "Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif}
 button,input{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-header{background:var(--q);color:#fff;padding:14px 16px calc(14px + 0px)}
-.hwrap{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.logo{width:36px;height:36px;border-radius:8px;background:#fff;color:var(--q);display:grid;place-items:center;font:700 22px Georgia,serif;flex:none}
-.htitle{min-width:0}
-.htitle b{display:block;font-size:18px;line-height:1.2}
-.htitle span{font-size:12.5px;opacity:.85;letter-spacing:.04em}
-.hright{font-size:12.5px;opacity:.85;flex-basis:100%}
-.home{margin-left:auto;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:7px 12px;border:1px solid rgba(255,255,255,.45);border-radius:8px}
-.home:hover{background:rgba(255,255,255,.12)}
-@media (min-width:821px){.hright{flex-basis:auto;order:3}}
-main{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
-.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
-@media (max-width:820px){.grid{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-h2{font:700 13px/1.2 "Segoe UI",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--q60);margin:0 0 12px}
-:root[data-theme="dark"] h2{color:var(--q40)}
-.drop{border:2px dashed var(--q40);border-radius:var(--radius);padding:22px 16px;text-align:center;background:var(--q5);cursor:pointer;transition:background .15s,border-color .15s}
-.drop.over{background:var(--q10);border-color:var(--q)}
-.drop strong{display:block;font-size:16px;color:var(--q)}
-:root[data-theme="dark"] .drop strong{color:var(--q40)}
-.drop small{color:var(--muted)}
-.slots{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:6px}
-.slot{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
-.slot .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--q20);display:grid;place-items:center;font-size:11px;color:#fff}
-.slot.ok .dot{background:var(--ok);border-color:var(--ok)}
-.slot .nm{min-width:0}
-.slot .nm b{display:block;font-size:14px}
-.slot .nm span{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.slot .sz{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
-label.inline{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
-input[type=date]{border:1px solid var(--q20);border-radius:6px;padding:7px 9px;background:var(--card)}
-.btn{appearance:none;border:1px solid var(--q20);background:var(--card);border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;min-height:44px}
-.btn:hover{border-color:var(--q60)}
-.btn.primary{background:var(--q);border-color:var(--q);color:#fff}
-.btn.primary:hover{background:var(--q80)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.block{width:100%}
-.progress{height:10px;border-radius:99px;background:var(--q10);overflow:hidden;margin:4px 0 10px}
-.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--q),var(--q60));transition:width .25s}
-.status{font-weight:600;min-height:1.5em}
-.log{list-style:none;margin:10px 0 0;padding:0;font-size:13.5px;max-height:320px;overflow:auto}
-.log li{padding:5px 0 5px 22px;position:relative;border-top:1px solid var(--line)}
+:focus-visible{outline:2px solid #366083;outline-offset:2px}
+.wrap{max-width:1380px;margin:0 auto;padding:18px 16px 56px}
+@media (min-width:900px){.wrap{padding:22px 40px 64px 200px}}
+.home{display:inline-block;margin-bottom:10px;color:var(--q60);text-decoration:none;font-size:13.5px;font-weight:600}
+.home:hover{color:var(--q)}
+h1{font:700 26px/1.25 "Source Serif 4",Georgia,"Times New Roman",serif;color:var(--q);margin:0 0 6px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) h1{color:var(--q40)}}
+:root[data-theme="dark"] h1{color:var(--q40)}
+.lede{margin:0 0 24px;color:var(--muted);max-width:1340px}
+code{font-family:Consolas,"JetBrains Mono",monospace;font-size:.95em}
+.boxes{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media (max-width:760px){.boxes{grid-template-columns:1fr}}
+.box{border:2px dashed var(--dash);border-radius:4px;background:var(--card);padding:26px 24px;min-height:166px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.box:hover,.box.over{border-color:var(--q60);background:var(--q5)}
+.box.done{border-style:solid;border-color:var(--q20)}
+.lbl{font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--q80);margin-bottom:14px}
+.big{font-size:16px;color:var(--fg);margin:0 0 6px;overflow-wrap:anywhere}
+.small{font-size:13.5px;color:var(--muted);margin:0}
+.ok{color:var(--ok);font-weight:600}
+.taps{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;list-style:none;margin:0;padding:0}
+.taps li{color:var(--muted);font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.taps li .c{display:inline-block;width:12px;margin-right:4px;color:var(--q40)}
+.taps li.got{color:var(--fg)}
+.taps li.got .c{color:var(--ok)}
+.taps li small{color:var(--muted)}
+.fix{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:22px 0 18px;align-items:start}
+.fix input{width:16px;height:16px;margin:4px 0 0;accent-color:#2563eb}
+.fix label{font-size:15px;cursor:pointer}
+.fix label span{color:var(--muted)}
+.fix p{grid-column:2;margin:0;font-size:13.5px;color:var(--muted)}
+.act{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn{appearance:none;border:0;border-radius:4px;background:var(--q);color:#fff;font-weight:600;padding:10px 16px;min-height:42px;cursor:pointer}
+.btn:hover{background:var(--q80)}
+.btn:disabled{background:var(--q40);cursor:not-allowed}
+.need{font-size:14px;color:var(--muted)}
+.run{display:none;margin-top:22px;max-width:860px}
+.run.show{display:block}
+.bar{height:8px;border-radius:99px;background:var(--q10);overflow:hidden;margin:8px 0 10px}
+.bar i{display:block;height:100%;width:0;background:var(--q);transition:width .25s}
+.status{font-weight:600}
+.log{list-style:none;margin:6px 0 0;padding:0;font-size:13.5px;color:var(--muted)}
+.log li{padding:3px 0 3px 20px;position:relative}
 .log li:before{content:"✓";position:absolute;left:2px;color:var(--ok);font-weight:700}
-.log li.run:before{content:"•";color:var(--q)}
-.result{display:none;margin-top:14px;border-radius:var(--radius);background:var(--okbg);padding:14px}
-.result.show{display:block}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:12px 0}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-.stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums;color:var(--q)}
-:root[data-theme="dark"] .stat b{color:var(--q40)}
-.stat span{font-size:12px;color:var(--muted)}
-.warn{display:none;margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--red20);color:var(--fg);font-size:14px}
-.warn.show{display:block}
+.log li.now:before{content:"•";color:var(--q)}
 .err{color:var(--red);font-weight:600}
-details{margin-top:16px}
-summary{cursor:pointer;font-weight:600;color:var(--q)}
-:root[data-theme="dark"] summary{color:var(--q40)}
-ol.steps{margin:10px 0 0;padding-left:20px;font-size:14px;color:var(--muted)}
-ol.steps li{margin:4px 0}
-.note{font-size:13px;color:var(--muted);margin-top:10px}
-footer{max-width:1080px;margin:0 auto;padding:0 16px 32px;color:var(--muted);font-size:12.5px}
+.warn{display:none;margin-top:14px;padding:10px 12px;border-radius:4px;background:var(--red20);font-size:14px}
+.warn.show{display:block}
+.result{display:none;margin-top:18px;padding:16px;border-radius:4px;background:var(--okbg)}
+.result.show{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+.stat b{display:block;font-size:17px;color:var(--q);font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
-<header><div class="hwrap">
-  <div class="logo" aria-hidden="true">Q</div>
-  <div class="htitle"><b>DOC 280+217 Builder</b><span>Hues · Excel Digitalisation</span></div>
-  <a class="home" href="index.html" title="Back to SQ Hues tools">🏠 Home</a>
-  <div class="hright" id="where">Runs in your browser · files never leave this device</div>
-</div></header>
+<div class="wrap">
+  <a class="home" href="index.html">🏠 Home</a>
+  <h1>280+217 — DOC master update</h1>
+  <p class="lede">Upload today’s <code>DOC -280+217.xlsx</code> and the six fresh TAPS exports. You get the DOC file back with 217, 280, Dye Q, Knit Q, HS and Y-LOT refreshed — your other sheets, pivots, colours and own columns untouched. Everything runs in this browser; the files are not uploaded anywhere.</p>
 
-<main>
-  <div class="grid">
-    <section class="card" aria-labelledby="h-files">
-      <h2 id="h-files">1 · Files</h2>
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop the files">
-        <strong>Drop all 7 files here</strong>
-        <small>DOC -280+217.xlsx + the 6 TAPS downloads (217, 280, Inside Dye Q, Knit Q, Heatset, Lot) — or tap to choose</small>
-        <input type="file" id="pick" multiple accept=".xls,.xlsx" hidden>
-      </div>
-      <ul class="slots" id="slots"></ul>
-      <div class="row">
-        <label class="inline">Today's date for ageing / OTT <input type="date" id="today"></label>
-        <button class="btn" id="clear" type="button">Clear files</button>
-      </div>
-      <details>
-        <summary>What the builder does</summary>
-        <ol class="steps">
-          <li>217: Remove title rows, add the DUPLICATE column (<code>SUMIFS(M,E,H,G)−N</code>, values), Remove Duplicates on Order No+Item, PO, Color, Fabrication, paste A:AC; formulas AD:BA refitted.</li>
-          <li>280: new data in A:AT, row height 15. Row-1 <code>qq</code> templates AU:DB activated against the previous 280 (the "280 (2)" copy for comments / urgent / remarks), then pasted as values. 280 (2) is not kept.</li>
-          <li>Dye Q: D:AK cleared, Dye Q A:R → D:U, V:AK calculated as values, A:C formulas kept.</li>
-          <li>Knit Q: A:AE replaced by Knit Q A:AC; AD = Melange (orange R: Marl/B1/Melange/B0/BC), AE = Rib (orange W: RIB).</li>
-          <li>HS: A:N replaced by Heatset A:N. Y-LOT: A:P replaced by Lot A:P.</li>
-          <li>LD New / Repeat: Dye Q column AL marks each lab dip New or Repeat (same LD on an earlier order = Repeat; FY/PO/SQHUE/swatch references = Repeat); added as the last row field of the DQ P pivot (column T) and to the Dash Board pivot.</li>
-          <li>All pivots kept and set to refresh when the file opens. Old filters cleared, rows unhidden.</li>
-          <li>Speed: duplicate-value highlight rules merged, dead external link and broken names removed, calc chain rebuilt by Excel.</li>
-        </ol>
-      </details>
-    </section>
-
-    <section class="card" aria-labelledby="h-build">
-      <h2 id="h-build">2 · Build</h2>
-      <button class="btn primary block" id="go" type="button" disabled>Build DOC -280+217</button>
-      <div class="note" id="need">Add the 7 files to start.</div>
-      <div style="margin-top:16px">
-        <div class="status" id="status" aria-live="polite"></div>
-        <div class="progress" aria-hidden="true"><i id="bar"></i></div>
-        <ul class="log" id="log"></ul>
-      </div>
-      <div class="warn" id="warn"></div>
-      <div class="result" id="result">
-        <b>Ready.</b> <span id="rtime"></span>
-        <div class="stats" id="stats"></div>
-        <button class="btn primary block" id="dl" type="button">Download DOC -280+217.xlsx</button>
-        <div class="note">Open in Excel and let it finish refreshing pivots (first open only), then save.</div>
-      </div>
-    </section>
+  <div class="boxes">
+    <div class="box" id="boxDoc" tabindex="0" role="button" aria-label="Choose the DOC master file">
+      <div class="lbl">1 · DOC master</div>
+      <p class="big" id="docMain">Drop DOC -280+217.xlsx here, or click</p>
+      <p class="small" id="docSub">The latest copy — including today’s own edits.</p>
+      <input type="file" id="pickDoc" accept=".xlsx" hidden>
+    </div>
+    <div class="box" id="boxTaps" tabindex="0" role="button" aria-label="Choose the six TAPS exports">
+      <div class="lbl">2 · TAPS exports (all six at once)</div>
+      <ul class="taps" id="taps"></ul>
+      <input type="file" id="pickTaps" accept=".xls,.xlsx" multiple hidden>
+    </div>
   </div>
-</main>
-<footer>Q Collection · Quality Seeks Quality · #SustainabilityAtQ</footer>
+
+  <div class="fix">
+    <input type="checkbox" id="fix" checked>
+    <label for="fix">Fix the two template slips <span>(recommended)</span></label>
+    <p>280 CY “Wip Ageing Slot” read CW4772 (another batch’s ageing) instead of its own row; Dye Q AC “Order Created Date” read FOC Qty (column AN) instead of AO. Untick to reproduce the sheet exactly as before.</p>
+  </div>
+
+  <div class="act">
+    <button class="btn" id="go" type="button" disabled>Update DOC file</button>
+    <span class="need" id="need"></span>
+  </div>
+
+  <section class="run" id="run" aria-live="polite">
+    <div class="status" id="status"></div>
+    <div class="bar"><i id="barI"></i></div>
+    <ul class="log" id="log"></ul>
+    <div class="warn" id="warn"></div>
+    <div class="result" id="result">
+      <b>Ready.</b> <span id="rtime"></span>
+      <div class="stats" id="stats"></div>
+      <button class="btn" id="dl" type="button">Download DOC -280+217.xlsx</button>
+    </div>
+  </section>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -535,7 +509,7 @@ function slimDuplicateCF(sh) {
 
 /* ---------------------------------------------------------------- the calc */
 const COL = name => ci(name) - 1;
-function calc280(d280, d217, knit, hs, lot, dyeq, old, today) {
+function calc280(d280, d217, knit, hs, lot, dyeq, old, today, fix = true) {
   const n = d280.length, g = (r, c) => d280[r][COL(c)];
   const col = c => d280.map(r => r[COL(c)]);
   const out = {}; const set = (c, arr) => { out[c] = arr; };
@@ -669,7 +643,7 @@ function calc280(d280, d217, knit, hs, lot, dyeq, old, today) {
     return IFERROR(IF(gt(oldVal(H[i], 'CV'), 0), () => oldVal(H[i], 'CV'), () => R),
       IF(eq(g(i, 'J'), 'Re-process'), () => oldVal(A('CX')[i], 'R'), () => R)); }));
   set('CW', rng(i => sub(today, A('CV')[i])));
-  set('CY', rng(i => { const w = A('CW')[i];
+  set('CY', rng(i => { const j = fix ? i : i + 4769; const w = j < n ? A('CW')[j] : 0;   // unfixed template read CW4772
     return IF(gt(w, 90), () => 'Above 90 Days', () => IF(gt(w, 30), () => '30-90 Days', () => IF(gt(w, 20), () => '20-30 Days', () => IF(gt(w, 10), () => '10-20 Days', () => '0-10 Days')))); }));
   set('CZ', rng(i => sub(W[i], mul(W[i], A('CA')[i]))));
   set('DA', rng(i => mul(A('CZ')[i], A('CJ')[i])));
@@ -680,11 +654,11 @@ function calc280(d280, d217, knit, hs, lot, dyeq, old, today) {
   const vals = rng(i => cols.map(c => out[c][i]));
   return { vals, out };
 }
-function calcDyeQ(dyeq, d280, c280, knit, today) {
+function calcDyeQ(dyeq, d280, c280, knit, today, fix = true) {
   const hIdx = makeIndex(d280.map(r => r[COL('H')]));
   const v280 = (key, arr) => { const i = MATCH(key, hIdx); return isErr(i) ? i : (arr[i] === null || arr[i] === undefined ? 0 : arr[i]); };
   const c = col => d280.map(r => r[COL(col)]);
-  const AO = c('AO'), AP = c('AP'), P = c('P'), BB = c280.out.BB, BP = c280.out.BP;
+  const AO = c(fix ? 'AO' : 'AN'), AP = c('AP'), P = c('P'), BB = c280.out.BB, BP = c280.out.BP;
   const knitIdx = makeIndex(knit.map(r => r[COL('E')])), knitAB = knit.map(r => r[COL('AB')]);
   return dyeq.map(row => {
     const F = row[2], J = row[6], O = row[11], Pp = row[12], U = row[17];
@@ -912,9 +886,10 @@ async function build(files, opts = {}) {
   if (tmpl.length !== EXPECT_280_TEMPLATES) report.warnings.push(`280 row 1 has ${tmpl.length} qq templates in AU:DB (expected 60) — check the calc columns.`);
 
   note(24, 'Calculating 280 AU:DB (activated row-1 formulas → values)');
-  const c280 = calc280(d280, d217, dkq, dhs, dlot, ddq, old, today); await tick();
+  const fix = opts.fixSlips !== false;
+  const c280 = calc280(d280, d217, dkq, dhs, dlot, ddq, old, today, fix); await tick();
   note(40, 'Calculating Dye Q V:AK');
-  const cdq = calcDyeQ(ddq, d280, c280, dkq, today);
+  const cdq = calcDyeQ(ddq, d280, c280, dkq, today, fix);
 
   // ---- write sheets
   const filterRefs = {};
@@ -1061,106 +1036,93 @@ root.DocBuilder = { build, detect, _test: { formulaGen, calc280, SEARCH, CONCAT,
 (function(){
 'use strict';
 const LIBS=['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'];
-const SLOTS=[
-  ['master','DOC -280+217','Master workbook (.xlsx)'],
-  ['s217','217','TAPS · OTT Date Wise Report'],
-  ['s280','280','TAPS · OTT Hit Rate Details'],
-  ['dyeq','Inside Dye Q','TAPS · Inside Dye Queue'],
-  ['knitq','Knit Q','TAPS · Knitting Queue'],
-  ['heatset','Heatset','TAPS · Wait For Heat Setting'],
-  ['lot','Lot','TAPS · Daily M/C Wise Knitting'],
-];
+const TAPS=[['s217','217.xls'],['s280','280.xls'],['dyeq','Inside Dye Q.xls'],['knitq','Knit Q.xls'],['heatset','Heatset.xls'],['lot','Lot.xls']];
 const $=id=>document.getElementById(id);
 const files={};let outBlob=null,busy=false;
-const coreText=$('core-src').textContent;
-(0,eval)(coreText);                    // DocBuilder on the page (used for name detection / fallback)
-
+const coreText=$('core-src').textContent;(0,eval)(coreText);
 const fmt=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
-function renderSlots(){
-  const ul=$('slots');ul.innerHTML='';
-  for(const [k,label,desc] of SLOTS){
-    const f=files[k];const li=document.createElement('li');li.className='slot'+(f?' ok':'');
-    li.innerHTML='<span class="dot" aria-hidden="true">'+(f?'✓':'')+'</span><span class="nm"><b></b><span></span></span><span class="sz"></span>';
-    li.querySelector('b').textContent=label;
-    li.querySelector('.nm span').textContent=f?f.name:desc;
-    li.querySelector('.sz').textContent=f?fmt(f.size):'missing';
+
+function render(){
+  const m=files.master;
+  $('boxDoc').classList.toggle('done',!!m);
+  $('docMain').innerHTML='';
+  if(m){const s=document.createElement('span');s.className='ok';s.textContent='✓ '+m.name;$('docMain').appendChild(s);$('docSub').textContent=fmt(m.size)+' · click to change';}
+  else{$('docMain').textContent='Drop DOC -280+217.xlsx here, or click';$('docSub').textContent='The latest copy — including today’s own edits.';}
+  const ul=$('taps');ul.innerHTML='';
+  for(const [k,label] of TAPS){
+    const f=files[k];const li=document.createElement('li');if(f)li.className='got';
+    const c=document.createElement('span');c.className='c';c.textContent=f?'●':'○';li.appendChild(c);
+    li.appendChild(document.createTextNode(label));
+    if(f){const sm=document.createElement('small');sm.textContent='  '+fmt(f.size);li.appendChild(sm);li.title=f.name;}
     ul.appendChild(li);
   }
-  const n=SLOTS.filter(s=>files[s[0]]).length;
-  $('go').disabled=busy||n<SLOTS.length;
-  $('need').textContent=n<SLOTS.length?`${n} of 7 files added. Missing: ${SLOTS.filter(s=>!files[s[0]]).map(s=>s[1]).join(', ')}.`:'All files ready.';
+  $('boxTaps').classList.toggle('done',TAPS.every(t=>files[t[0]]));
+  const missT=TAPS.filter(t=>!files[t[0]]).length,missD=!m;
+  $('go').disabled=busy||missT>0||missD;
+  $('need').textContent=busy?'Working…':(missD&&missT?`DOC file and ${missT} TAPS file(s) still needed`:missD?'DOC file still needed':missT?`${missT} TAPS file(s) still needed`:'Ready to update');
 }
-function addFiles(list){
-  const unknown=[];
-  for(const f of list){const k=DocBuilder.detect(f.name);if(k)files[k]=f;else unknown.push(f.name);}
-  renderSlots();
-  if(unknown.length)setWarn('Not recognised (rename to include 217, 280, Dye Q, Knit Q, Heatset, Lot or DOC): '+unknown.join(', '));
+function setWarn(t){$('warn').textContent=t||'';$('warn').classList.toggle('show',!!t);}
+function addTaps(list){
+  const bad=[];
+  for(const f of list){const k=DocBuilder.detect(f.name);if(k&&k!=='master')files[k]=f;else if(k==='master')files.master=f;else bad.push(f.name);}
+  render();if(bad.length){$('run').classList.add('show');setWarn('Not recognised: '+bad.join(', ')+' — the name must contain 217, 280, Dye Q, Knit Q, Heatset or Lot.');}
 }
-function setWarn(t){const w=$('warn');w.textContent=t||'';w.classList.toggle('show',!!t);}
-const drop=$('drop'),pick=$('pick');
-drop.addEventListener('click',()=>pick.click());
-drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick.click();}});
-pick.addEventListener('change',()=>{addFiles(pick.files);pick.value='';});
-['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over');}));
-['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over');}));
-drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
-$('clear').addEventListener('click',()=>{for(const k in files)delete files[k];setWarn('');renderSlots();});
+function wire(box,input,onFiles){
+  box.addEventListener('click',()=>input.click());
+  box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click();}});
+  input.addEventListener('change',()=>{onFiles(input.files);input.value='';});
+  ['dragenter','dragover'].forEach(t=>box.addEventListener(t,e=>{e.preventDefault();box.classList.add('over');}));
+  ['dragleave','drop'].forEach(t=>box.addEventListener(t,e=>{e.preventDefault();box.classList.remove('over');}));
+  box.addEventListener('drop',e=>onFiles(e.dataTransfer.files));
+}
+wire($('boxDoc'),$('pickDoc'),list=>{const f=[...list].find(x=>/\.xlsx$/i.test(x.name));if(f){files.master=f;render();}else if(list.length)addTaps(list);});
+wire($('boxTaps'),$('pickTaps'),addTaps);
 
-const d=new Date();$('today').value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-function todaySerial(){const v=$('today').value.split('-').map(Number);return Math.round((Date.UTC(v[0],v[1]-1,v[2])-Date.UTC(1899,11,30))/864e5);}
-
+function todaySerial(){const d=new Date();return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/864e5);}
 let lastMsg='';
 function progress(p,msg){
-  $('bar').style.width=Math.max(2,Math.min(100,p)).toFixed(1)+'%';
-  $('status').textContent=msg+(p<100?' …':'');
-  if(msg!==lastMsg){
-    const log=$('log');const prev=log.lastElementChild;if(prev)prev.classList.remove('run');
-    if(p<100){const li=document.createElement('li');li.className='run';li.textContent=msg;log.appendChild(li);li.scrollIntoView({block:'nearest'});}
-    lastMsg=msg;
-  }
+  $('barI').style.width=Math.max(2,Math.min(100,p)).toFixed(1)+'%';
+  $('status').textContent=p<100?msg+' …':'Done';
+  if(msg!==lastMsg){const log=$('log');const prev=log.lastElementChild;if(prev)prev.classList.remove('now');
+    if(p<100){const li=document.createElement('li');li.className='now';li.textContent=msg;log.appendChild(li);}lastMsg=msg;}
 }
+async function readAll(){const b={sources:{}};b.master=new Uint8Array(await files.master.arrayBuffer());for(const [k] of TAPS)b.sources[k]=new Uint8Array(await files[k].arrayBuffer());return b;}
 function makeWorker(){
   const glue=`importScripts(${LIBS.map(u=>JSON.stringify(u)).join(',')});\n${coreText}\n
-self.onmessage=async e=>{try{const r=await DocBuilder.build(e.data.files,{today:e.data.today,onProgress:(p,m)=>self.postMessage({t:'p',p,m})});
+self.onmessage=async e=>{try{const r=await DocBuilder.build(e.data.files,{today:e.data.today,fixSlips:e.data.fix,onProgress:(p,m)=>self.postMessage({t:'p',p,m})});
 self.postMessage({t:'done',bytes:r.bytes,report:r.report},[r.bytes.buffer]);}catch(err){self.postMessage({t:'err',m:String(err&&err.message||err)});}};`;
   return new Worker(URL.createObjectURL(new Blob([glue],{type:'text/javascript'})));
 }
 async function run(){
-  busy=true;renderSlots();setWarn('');$('result').classList.remove('show');$('log').innerHTML='';lastMsg='';
+  busy=true;render();setWarn('');$('result').classList.remove('show');$('log').innerHTML='';lastMsg='';$('run').classList.add('show');
   const t0=performance.now();progress(1,'Loading files');
-  const bufs={sources:{}};
-  for(const [k] of SLOTS){const ab=new Uint8Array(await files[k].arrayBuffer());if(k==='master')bufs.master=ab;else bufs.sources[k]=ab;}
-  const transfer=[bufs.master.buffer,...Object.values(bufs.sources).map(b=>b.buffer)];
-  const finish=(bytes,report)=>{busy=false;renderSlots();showResult(bytes,report,(performance.now()-t0)/1000);};
-  const fail=m=>{busy=false;renderSlots();progress(0,'Stopped');$('status').innerHTML='';const s=document.createElement('span');s.className='err';s.textContent='Could not build: '+m;$('status').appendChild(s);};
-  let w;try{w=makeWorker();}catch(e){w=null;}
-  if(w){
-    w.onmessage=e=>{const d=e.data;if(d.t==='p')progress(d.p,d.m);else if(d.t==='done'){w.terminate();finish(d.bytes,d.report);}else{w.terminate();fail(d.m);}};
-    w.onerror=e=>{e.preventDefault();w.terminate();fallback();};
-    w.postMessage({files:bufs,today:todaySerial()},transfer);
-  }else fallback();
-  async function fallback(){                         // main-thread run (e.g. worker blocked)
-    try{
-      for(const [k] of SLOTS){const ab=new Uint8Array(await files[k].arrayBuffer());if(k==='master')bufs.master=ab;else bufs.sources[k]=ab;}
-      const r=await DocBuilder.build(bufs,{today:todaySerial(),onProgress:progress});finish(r.bytes,r.report);
-    }catch(err){fail(String(err&&err.message||err));}
-  }
+  const fix=$('fix').checked,today=todaySerial();
+  const done=(bytes,rep)=>{busy=false;render();show(bytes,rep,(performance.now()-t0)/1000);};
+  const fail=m=>{busy=false;render();$('barI').style.width='0';$('status').innerHTML='';const s=document.createElement('span');s.className='err';s.textContent='Could not update: '+m;$('status').appendChild(s);};
+  const fallback=async()=>{try{const r=await DocBuilder.build(await readAll(),{today,fixSlips:fix,onProgress:progress});done(r.bytes,r.report);}catch(e){fail(String(e&&e.message||e));}};
+  let w=null;try{w=makeWorker();}catch(e){}
+  if(!w)return fallback();
+  const bufs=await readAll();
+  w.onmessage=e=>{const d=e.data;if(d.t==='p')progress(d.p,d.m);else{w.terminate();d.t==='done'?done(d.bytes,d.report):fail(d.m);}};
+  w.onerror=e=>{e.preventDefault();w.terminate();fallback();};
+  w.postMessage({files:bufs,today,fix},[bufs.master.buffer,...Object.values(bufs.sources).map(b=>b.buffer)]);
 }
-function showResult(bytes,rep,secs){
+function show(bytes,rep,secs){
   progress(100,'Done');
   outBlob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  $('rtime').textContent=`Built in ${secs.toFixed(1)} s · ${fmt(outBlob.size)}`;
-  const r=rep.rows,st=[[r['217'].toLocaleString(),'217 rows (after remove duplicates)'],[r['280'].toLocaleString(),'280 rows'],[r['Dye Q'].toLocaleString(),'Dye Q rows'],
+  $('rtime').textContent=`Updated in ${secs.toFixed(1)} s · ${fmt(outBlob.size)}. Open it in Excel and let the pivots refresh (first open only), then save.`;
+  const r=rep.rows,st=[[r['217'].toLocaleString(),'217 rows (duplicates removed)'],[r['280'].toLocaleString(),'280 rows'],[r['Dye Q'].toLocaleString(),'Dye Q rows'],
     [r['Knit Q'].toLocaleString(),'Knit Q rows'],[r.melange+' / '+r.rib,'Melange / Rib'],[r.HS,'HS rows'],[r['Y-LOT'].toLocaleString(),'Y-LOT rows'],
-    [rep.pivotTables+' / '+rep.pivotCaches,'Pivots / sources (refresh on open)'],[rep.cfRemoved||0,'Slow highlight rules removed']];
+    [rep.pivotTables+' / '+rep.pivotCaches,'Pivots / sources, refresh on open']];
   if(rep.ld)st.splice(5,0,[rep.ld.New+' / '+rep.ld.Repeat,'LD New / Repeat (Dye Q '+rep.ld.col+')']);
+  if(rep.cfRemoved)st.push([rep.cfRemoved,'Slow highlight rules removed']);
   $('stats').innerHTML='';for(const [b,s] of st){const d=document.createElement('div');d.className='stat';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=b;d.querySelector('span').textContent=s;$('stats').appendChild(d);}
   if(rep.warnings&&rep.warnings.length)setWarn(rep.warnings.join(' '));
-  $('result').classList.add('show');$('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+  $('result').classList.add('show');
 }
 $('go').addEventListener('click',run);
 $('dl').addEventListener('click',()=>{if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download='DOC -280+217.xlsx';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);});
-renderSlots();
+render();
 })();
 </script>
 </body>
