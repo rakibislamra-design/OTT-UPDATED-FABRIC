@@ -157,6 +157,60 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
 .btable .z{color:var(--q40)}
 .tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12.5px;padding:6px 9px;border-radius:6px;opacity:0;transition:opacity .1s;z-index:10;white-space:nowrap}
 .tip.show{opacity:1}
+
+.kpi .kv2{display:flex;gap:16px;margin-top:6px;font-size:13px;color:var(--muted)}
+.kpi .kv2 b{color:var(--fg);font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.brow{cursor:pointer}
+.brow:hover .bn{color:var(--q);text-decoration:underline}
+.rng{position:relative;margin-left:auto;margin-top:12px}
+.rngbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--q40);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:700;font-size:14px;cursor:pointer;color:var(--fg)}
+.rngbtn svg{width:18px;height:18px;color:var(--q)}
+.rngbtn .car{color:var(--muted);font-size:11px}
+.cal{position:absolute;right:0;top:calc(100% + 8px);z-index:20;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(35,27,32,.16);padding:14px;width:340px;max-width:calc(100vw - 32px)}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.presets button{border:1px solid var(--line);background:var(--q5);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:var(--fg)}
+.presets button:hover{border-color:var(--q40)}
+.calnav{display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px}
+.calnav b{font:700 16px var(--disp)}
+.calnav button{width:34px;height:34px;border:1px solid var(--line);background:var(--card);border-radius:8px;cursor:pointer;font-size:18px;color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.grid .dow{font:600 11.5px var(--mono);color:var(--muted);padding:4px 0}
+.grid button{position:relative;border:1px solid transparent;background:none;border-radius:8px;height:38px;font-size:14px;cursor:pointer;color:var(--fg)}
+.grid button:hover{border-color:var(--q40)}
+.grid button.out{color:var(--q20)}
+.grid button.dot::after{content:"";position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--q60)}
+.grid button.today{border-color:var(--q60)}
+.grid button.inr{background:var(--q10)}
+.grid button.edge{background:var(--q);color:#fff}
+.grid button.edge::after{background:#fff}
+.grid button:disabled{color:var(--q20);cursor:not-allowed}
+.calhint{font-size:12.5px;color:var(--muted);margin:8px 0 10px}
+.calbtns{display:flex;gap:8px}
+.calbtns .btn{min-height:36px;padding:6px 14px;font-size:13.5px}
+.mtdk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:4px}
+@media (max-width:820px){.mtdk{grid-template-columns:1fr}}
+.mk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.mk .kt{font:600 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--q)}
+.mk .kv{font:700 24px/1.2 var(--disp);font-variant-numeric:tabular-nums;margin-top:2px}
+.mk .kv small{font:600 13px var(--sans);color:var(--muted);margin-left:3px}
+.mk .ks{font-size:12.5px;color:var(--muted)}
+.trends{display:grid;gap:16px;margin-top:16px}
+.tc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+.tc .th{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.tc .th b{font:700 15px var(--disp);color:var(--fg)}
+.tc svg{display:block;width:100%;height:auto;margin-top:6px}
+.tc svg text{fill:var(--muted);font:11px var(--sans)}
+.tc svg .vl{fill:var(--fg);font:600 10.5px var(--sans)}
+.pop{position:fixed;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(35,27,32,.2);padding:12px 14px;width:380px;max-width:calc(100vw - 24px);max-height:70vh;overflow:auto;font-size:13px}
+.pop h5{font:700 14px var(--disp);margin:0 0 2px;padding-right:24px}
+.pop .ps{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.pop .x{position:absolute;top:8px;right:10px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
+.pop .pb{margin-top:8px}
+.pop .pb>div:first-child{display:flex;justify-content:space-between;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:2px}
+.pop .pa{display:flex;justify-content:space-between;gap:12px;padding:2px 0 2px 10px;color:var(--muted)}
+.pop .pa span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pop .pa span:last-child,.pop .pb>div:first-child span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -170,7 +224,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
   <header class="head">
     <div class="logo" aria-hidden="true">Q</div>
     <div class="htext">
-      <div class="eyebrow">SQ Biricina · Fabric Planning</div>
+      <div class="eyebrow">SQHL · Fabric Planning</div>
       <h1>Master File</h1>
     </div>
     <button class="qsq" id="gear" type="button" title="Publish settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>QUALITY SEEKS QUALITY</button>
@@ -248,23 +302,38 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
   <div class="note" id="note"></div>
   </section>
 
-  <section class="dash" aria-labelledby="dashH">
+  <section class="dash">
     <div class="dhead">
-      <h2 class="sec" id="dashH">Daily output</h2>
+      <h2 class="sec">Daily output summary</h2>
+      <span class="tag" id="dayTag"></span>
       <span class="tag" id="dashSrc"></span>
-      <div class="filters">
-        <button class="chip" data-r="y" type="button">Yesterday</button>
-        <button class="chip" data-r="7" type="button">Last 7 days</button>
-        <button class="chip" data-r="m" type="button">This month</button>
-        <label>From <input type="date" id="dFrom"></label>
-        <label>To <input type="date" id="dTo"></label>
+    </div>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="dhead">
+      <h2 class="sec">MTD production trend</h2>
+      <div class="rng">
+        <button class="rngbtn" id="rngBtn" type="button" aria-haspopup="dialog" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+          <span id="rngLbl"></span><span class="car">▾</span></button>
+        <div class="cal" id="cal" role="dialog" aria-label="Choose date range" hidden>
+          <div class="presets">
+            <button type="button" data-p="mtd">This month to yesterday</button>
+            <button type="button" data-p="y">Yesterday</button>
+            <button type="button" data-p="7">Last 7 days</button>
+            <button type="button" data-p="lm">Last month</button>
+          </div>
+          <div class="calnav"><button type="button" id="calPrev" aria-label="Previous month">‹</button><b id="calTitle"></b><button type="button" id="calNext" aria-label="Next month">›</button></div>
+          <div class="grid" id="calGrid"></div>
+          <p class="calhint" id="calHint">Click a start date, then an end date</p>
+          <div class="calbtns"><button type="button" class="btn light" id="calCancel">Cancel</button><button type="button" class="btn" id="calApply">Apply</button></div>
+        </div>
       </div>
     </div>
-    <p class="dsub" id="dSub"></p>
-    <div class="kpis" id="kpis"></div>
-    <h2 class="sec">Buyer-wise output</h2>
-    <div class="btable" id="btable"></div>
+    <div class="mtdk" id="mtdk"></div>
+    <div class="trends" id="trends"></div>
   </section>
+  <div class="pop" id="pop" role="dialog" hidden></div>
   <div class="tip" id="tip" role="tooltip"></div>
 </div>
 
@@ -976,22 +1045,27 @@ async function ldPivots(zip, rd, wr, wbx, rels, pathOf, SST, batch2ld, tcol) {
 
 
 /* ------------------------------------------- daily output summary (dashboard) */
-function dailySummary(d280, dlot, today) {
-  const iso = serial => { const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 864e5); return d.toISOString().slice(0, 10); };
-  const minSerial = today - 400;
+function dailySummary(d280, grp280, dlot, today) {
+  const iso = serial => new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 864e5).toISOString().slice(0, 10);
+  const minSerial = today - 120;
   const out = { knit: {}, dye: {}, rfd: {} };
-  const add = (bucket, ser, buyer, kg) => {
+  const clean = v => (String(v ?? '').trim() || 'Unknown');
+  const add = (bucket, ser, buyer, art, kg, side) => {
     if (typeof ser !== 'number' || ser < minSerial || ser > today + 1 || typeof kg !== 'number' || !kg) return;
-    const day = iso(ser); const b = String(buyer || 'Unknown').trim() || 'Unknown';
-    const o = bucket[day] || (bucket[day] = { kg: 0, n: 0, by: {} });
+    const day = iso(ser), b = clean(buyer), a = clean(art);
+    const o = bucket[day] || (bucket[day] = { kg: 0, n: 0, by: {}, ba: {} });
     o.kg += kg; o.n++; o.by[b] = (o.by[b] || 0) + kg;
+    const ba = o.ba[b] || (o.ba[b] = {}); ba[a] = (ba[a] || 0) + kg;
+    if (side) o[side] = (o[side] || 0) + kg;
   };
-  for (const r of dlot) add(out.knit, r[0], r[2], r[12]);                 // Y-LOT: production date, buyer, knitted kg (col M)
-  for (const r of d280) {
-    add(out.dye, r[COL('R')], r[COL('E')], r[COL('W')]);                // 280: dyeing date, customer, plan qty kg
-    add(out.rfd, r[COL('U')], r[COL('E')], r[COL('AB')]);               // 280: RFD date, customer, RFD qty kg
-  }
-  for (const b of Object.values(out)) for (const d of Object.values(b)) { d.kg = Math.round(d.kg); for (const k in d.by) d.by[k] = Math.round(d.by[k]); }
+  for (const r of dlot) add(out.knit, r[0], r[2], r[6], r[12]);                       // Y-LOT: production date, buyer, fabrication, knitted kg (M)
+  d280.forEach((r, i) => {
+    const side = /outside/i.test(grp280[i] || '') ? 'out' : 'in';                       // TAPS group: 01.In-House / 02.Outside
+    add(out.dye, r[COL('R')], r[COL('E')], r[COL('N')], r[COL('W')]);                 // 280: dyeing date, plan qty kg
+    add(out.rfd, r[COL('U')], r[COL('E')], r[COL('N')], r[COL('AB')], side);          // 280: RFD date, RFD qty kg
+  });
+  const rnd = o => { for (const k in o) o[k] = typeof o[k] === 'object' ? rnd(o[k]) : Math.round(o[k]); return o; };
+  for (const b of Object.values(out)) for (const d of Object.values(b)) { const n = d.n; rnd(d); d.n = n; }
   return out;
 }
 /* ------------------------------------------------------------ main build */
@@ -1030,6 +1104,7 @@ async function build(files, opts = {}) {
   d217 = d217.filter(r => { const kk = [4, 5, 6, 7].map(i => key(r[i])).join('\u0001'); if (seen.has(kk)) return false; seen.add(kk); return true; });
   note(10, `217: ${raw217} rows → ${d217.length} after Remove Duplicates (Order No+Item, PO, Color, Fabrication)`);
   const d280 = srcRows(S.s280, 5, { tail: 1, ncols: 46 });
+  const grp280 = []; { let g = ''; for (let r = 4; r < S.s280.length - 1; r++) { const row = S.s280[r]; if (nonEmpty(row) <= 3) { if (row[0]) g = String(row[0]); continue; } grp280.push(g); } }
   const ddq = srcRows(S.dyeq, 4, { tail: 2, ncols: 18 });
   const dkq = srcRows(S.knitq, 5, { ncols: 29 });
   let mel = 0, rib = 0;
@@ -1178,7 +1253,7 @@ async function build(files, opts = {}) {
   const out = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE', compressionOptions: { level: 6 } },
     m => log(92 + m.percent * 0.07, 'Compressing workbook'));
   note(100, 'Done');
-  report.summary = dailySummary(d280, dlot, today);
+  report.summary = dailySummary(d280, grp280, dlot, today);
   report.rows = { '217': d217.length, '280': d280.length, 'Dye Q': ddq.length, 'Knit Q': dkq.length, HS: dhs.length, 'Y-LOT': dlot.length, melange: mel, rib };
   return { bytes: out, report, debug: opts.debug ? { c280, cdq } : undefined };
 }
@@ -1371,93 +1446,156 @@ $('ghSave').addEventListener('click',()=>{cfg={owner:$('ghOwner').value.trim(),r
 $('ghForget').addEventListener('click',()=>{cfg.token='';cfgSave();$('ghToken').value='';$('ghMsg').textContent='Key removed from this browser.';});
 $('autoPub').checked=cfg.auto!==false;
 
-/* ---------- daily output dashboard ---------- */
+/* ---------- dashboard: yesterday summary + MTD trend ---------- */
 let summary=null;
-const KP=[['knit','Knitting output','rolls','Y-LOT · production date · knitted kg'],['dye','Dyeing output','batches','280 · dyeing date · plan qty kg'],['rfd','RFD','batches','280 · RFD date · RFD qty kg']];
+const KP=[['knit','Knitting output','rolls'],['dye','Dyeing output','batches'],['rfd','RFD','batches']];
+const C_IN='#664356',C_OUT='#7F8EA9',C_ONE='#664356';
 const isoD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const parseD=s=>{const v=s.split('-').map(Number);return new Date(v[0],v[1]-1,v[2]);};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
-const nf=n=>Math.round(n).toLocaleString('en-US');
-const dlab=d=>`${pad(d.getDate())}-${MON[d.getMonth()]}`;
-function setRange(kind){
-  const today=new Date();today.setHours(0,0,0,0);const y=addDays(today,-1);let f=y,t2=y;
-  if(kind==='7'){f=addDays(y,-6);}else if(kind==='m'){f=new Date(y.getFullYear(),y.getMonth(),1);}
-  $('dFrom').value=isoD(f);$('dTo').value=isoD(t2);
-  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.r===kind));drawDash();
-}
-document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>setRange(c.dataset.r)));
-['dFrom','dTo'].forEach(id=>$(id).addEventListener('change',()=>{document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));drawDash();}));
+const nf=n=>Math.round(n||0).toLocaleString('en-US');
+const dl=d=>`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
+const yday=()=>addDays(today0(),-1);
+let range={from:new Date(yday().getFullYear(),yday().getMonth(),1),to:yday(),label:'This month to yesterday'};
+
 const tip=$('tip');
 function showTip(e,txt){tip.textContent=txt;tip.classList.add('show');const x=Math.min(e.clientX+12,innerWidth-tip.offsetWidth-8);tip.style.left=x+'px';tip.style.top=(e.clientY-34)+'px';}
 function hideTip(){tip.classList.remove('show');}
-function trendSvg(bucket,from,to,unit){
-  const end=to,start=addDays(end,-13),days=[];for(let d=new Date(start);d<=end;d=addDays(d,1))days.push(new Date(d));
-  const vals=days.map(d=>(bucket[isoD(d)]||{kg:0}).kg),max=Math.max(1,...vals);
-  const W=420,H=120,pl=34,pb=18,bw=(W-pl)/days.length,ns='http://www.w3.org/2000/svg';
-  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('role','img');
-  svg.setAttribute('aria-label','Last 14 days, kg per day');
-  const nice=max>10000?Math.ceil(max/10000)*10000:Math.ceil(max/1000)*1000;
-  for(const g of [0,.5,1]){const y=(H-pb)-(H-pb-6)*g;const l=document.createElementNS(ns,'line');l.setAttribute('x1',pl);l.setAttribute('x2',W);l.setAttribute('y1',y);l.setAttribute('y2',y);l.setAttribute('stroke','currentColor');l.setAttribute('stroke-opacity','.12');svg.appendChild(l);
-    const tx=document.createElementNS(ns,'text');tx.setAttribute('x',pl-6);tx.setAttribute('y',y+4);tx.setAttribute('text-anchor','end');tx.textContent=g?((nice*g)>=1000?(nice*g/1000)+'t':nice*g):'0';svg.appendChild(tx);}
-  const gb=document.createElementNS(ns,'g');gb.setAttribute('class','bars');svg.appendChild(gb);
-  days.forEach((d,i)=>{const v=vals[i],h=(H-pb-6)*v/nice,x=pl+i*bw+bw*.18,w=bw*.64,y=(H-pb)-h,inR=d>=from&&d<=to;
-    const r=document.createElementNS(ns,'path');const rr=Math.min(4,w/2,h);
-    r.setAttribute('d',h>0?`M${x},${H-pb}V${y+rr}Q${x},${y} ${x+rr},${y}H${x+w-rr}Q${x+w},${y} ${x+w},${y+rr}V${H-pb}Z`:'');
-    r.setAttribute('fill',inR?'#664356':'#D2C7CB');gb.appendChild(r);
-    const hit=document.createElementNS(ns,'rect');hit.setAttribute('x',pl+i*bw);hit.setAttribute('y',0);hit.setAttribute('width',bw);hit.setAttribute('height',H-pb);hit.setAttribute('fill','transparent');
-    hit.addEventListener('mousemove',e=>showTip(e,`${dlab(d)} · ${nf(v)} kg`));hit.addEventListener('mouseleave',hideTip);gb.appendChild(hit);
-    if(i%2===days.length%2||i===days.length-1){const tx=document.createElementNS(ns,'text');tx.setAttribute('x',pl+i*bw+bw/2);tx.setAttribute('y',H-4);tx.setAttribute('text-anchor','middle');tx.textContent=pad(d.getDate());svg.appendChild(tx);}
-  });
-  return svg;
+const pop=$('pop');
+function openPop(e,title,sub,ba,total){
+  hideTip();
+  const list=Object.entries(ba||{}).map(([b,arts])=>[b,Object.values(arts).reduce((s,v)=>s+v,0),arts]).sort((x,y)=>y[1]-x[1]);
+  let h=`<button class="x" type="button" aria-label="Close">×</button><h5>${esc(title)}</h5><div class="ps">${esc(sub)}</div>`;
+  if(!list.length)h+='<div class="empty">Nothing recorded.</div>';
+  for(const [b,v,arts] of list){
+    h+=`<div class="pb"><div><span>${esc(b)}</span><span>${nf(v)} kg${total?' · '+(100*v/total).toFixed(0)+'%':''}</span></div>`;
+    for(const [a,av] of Object.entries(arts).sort((x,y)=>y[1]-x[1]))h+=`<div class="pa"><span title="${esc(a)}">${esc(a)}</span><span>${nf(av)} kg</span></div>`;
+    h+='</div>';
+  }
+  pop.innerHTML=h;pop.hidden=false;
+  const w=pop.offsetWidth,hh=pop.offsetHeight;
+  pop.style.left=Math.max(12,Math.min(e.clientX+10,innerWidth-w-12))+'px';
+  pop.style.top=Math.max(12,Math.min(e.clientY+10,innerHeight-hh-12))+'px';
+  pop.querySelector('.x').addEventListener('click',()=>pop.hidden=true);
+  e.stopPropagation();
 }
-function drawDash(){
+document.addEventListener('click',e=>{if(!pop.hidden&&!pop.contains(e.target))pop.hidden=true;if(!$('cal').hidden&&!$('cal').contains(e.target)&&!$('rngBtn').contains(e.target))closeCal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){pop.hidden=true;closeCal();}});
+
+/* -- yesterday cards -- */
+function drawDaily(){
   const box=$('kpis');box.innerHTML='';
-  if(!summary){box.innerHTML='<div class="empty">No data yet — run an update or wait for the first published file.</div>';$('dSub').textContent='';$('btable').innerHTML='';return;}
-  let from=parseD($('dFrom').value),to=parseD($('dTo').value);if(from>to)[from,to]=[to,from];
-  const nDays=Math.round((to-from)/864e5)+1;
-  $('dSub').textContent=from.getTime()===to.getTime()?`${dlab(from)}-${from.getFullYear()} · hover a bar for the day's kg`:`${dlab(from)} to ${dlab(to)}-${to.getFullYear()} · ${nDays} days · hover a bar for the day's kg`;
-  const per={};
-  for(const [k,title,unitN,src] of KP){
-    const bucket=summary[k]||{};let kg=0,n=0;const by={};per[k]={kg:0,by};
-    for(let d=new Date(from);d<=to;d=addDays(d,1)){const o=bucket[isoD(d)];if(!o)continue;kg+=o.kg;n+=o.n;for(const b in o.by)by[b]=(by[b]||0)+o.by[b];}
+  if(!summary){box.innerHTML='<div class="empty">No summary yet — it appears after the next update is run with this page.</div>';$('dayTag').textContent='';return;}
+  const d=yday(),key=isoD(d);$('dayTag').textContent='Yesterday · '+dl(d);
+  for(const [k,title,unitN] of KP){
+    const o=(summary[k]||{})[key]||{kg:0,n:0,by:{},ba:{}};
     const el=document.createElement('div');el.className='kpi';
-    el.innerHTML=`<div class="kt"></div><div class="kv"></div><div class="ks"></div><div class="src"></div><h4>Last 14 days</h4><div class="tr"></div><h4>By buyer</h4><div class="bl"></div>`;
-    per[k].kg=kg;
-    el.querySelector('.kt').textContent=title;
-    el.querySelector('.kv').innerHTML=nf(kg)+'<small>kg</small>';
-    el.querySelector('.ks').textContent=`${nf(n)} ${unitN}`+(nDays>1?` · ${nf(kg/nDays)} kg/day avg`:'');
-    el.querySelector('.src').textContent=src;
-    el.querySelector('.tr').appendChild(trendSvg(bucket,from,to));
-    const bl=el.querySelector('.bl');const arr=Object.entries(by).sort((a,b)=>b[1]-a[1]);
-    if(!arr.length){bl.innerHTML='<div class="empty">Nothing recorded for this date.</div>';}
-    else{let top=arr.slice(0,7);if(arr.length>7)top.push(['Others',arr.slice(7).reduce((s,x)=>s+x[1],0)]);const mx=Math.max(...top.map(x=>x[1]));
-      for(const [b,v] of top){const r=document.createElement('div');r.className='brow';r.innerHTML='<span class="bn"></span><span class="bt"><i></i></span><span class="bv"></span>';
-        r.querySelector('.bn').textContent=b;r.querySelector('.bn').title=b;r.querySelector('i').style.width=(100*v/mx).toFixed(1)+'%';r.querySelector('.bv').textContent=nf(v)+' kg';
-        r.addEventListener('mousemove',e=>showTip(e,`${b} · ${nf(v)} kg · ${(100*v/kg).toFixed(1)}%`));r.addEventListener('mouseleave',hideTip);bl.appendChild(r);}}
+    el.innerHTML=`<div class="kt">${title}</div><div class="kv">${nf(o.kg)}<small>kg</small></div><div class="ks">${nf(o.n)} ${unitN}</div>`+
+      (k==='rfd'?`<div class="kv2"><span><i class="sw" style="background:${C_IN}"></i>Inhouse <b>${nf(o.in)}</b> kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside <b>${nf(o.out)}</b> kg</span></div>`:'')+
+      `<h4>By buyer · click for article-wise</h4><div class="bl"></div>`;
+    const bl=el.querySelector('.bl');const arr=Object.entries(o.by).sort((a,b)=>b[1]-a[1]);
+    if(!arr.length)bl.innerHTML='<div class="empty">Nothing recorded yesterday.</div>';
+    const mx=arr.length?arr[0][1]:1;
+    for(const [b,v] of arr.slice(0,10)){
+      const r=document.createElement('div');r.className='brow';r.tabIndex=0;r.innerHTML='<span class="bn"></span><span class="bt"><i></i></span><span class="bv"></span>';
+      r.querySelector('.bn').textContent=b;r.querySelector('i').style.width=(100*v/mx).toFixed(1)+'%';r.querySelector('.bv').textContent=nf(v)+' kg';
+      r.addEventListener('mousemove',e=>showTip(e,`${b} · ${nf(v)} kg · ${(100*v/o.kg).toFixed(1)}% — click for articles`));r.addEventListener('mouseleave',hideTip);
+      const open=e=>openPop(e,`${b} · ${title}`,`Yesterday ${dl(d)} · ${nf(v)} kg · article-wise`,{[b]:o.ba[b]||{}},0);
+      r.addEventListener('click',open);r.addEventListener('keydown',e=>{if(e.key==='Enter'){const rc=r.getBoundingClientRect();open({clientX:rc.left,clientY:rc.bottom,stopPropagation(){}});}});
+      bl.appendChild(r);
+    }
+    if(arr.length>10){const m=document.createElement('div');m.className='empty';m.textContent=`+ ${arr.length-10} more buyers (${nf(arr.slice(10).reduce((s,x)=>s+x[1],0))} kg)`;bl.appendChild(m);}
     box.appendChild(el);
   }
-  drawBuyerTable(per);
 }
 
-let bSort=['rfd',-1];
-function drawBuyerTable(per){
-  const names=new Set();for(const k of ['knit','dye','rfd'])for(const b in per[k].by)names.add(b);
-  const rows=[...names].map(b=>({b,knit:per.knit.by[b]||0,dye:per.dye.by[b]||0,rfd:per.rfd.by[b]||0})).filter(r=>Math.round(r.knit)||Math.round(r.dye)||Math.round(r.rfd));
-  const [sk,dir]=bSort;rows.sort((x,y)=>sk==='b'?dir*x.b.localeCompare(y.b):dir*(x[sk]-y[sk]));
-  const box=$('btable');
-  if(!rows.length){box.innerHTML='<div class="empty" style="padding:12px 16px">Nothing recorded for this date.</div>';return;}
-  const cell=v=>v?nf(v):'<span class="z">–</span>';
-  const arrow=k=>bSort[0]===k?(bSort[1]<0?' ▾':' ▴'):'';
-  let h=`<table><thead><tr><th data-k="b">Buyer${arrow('b')}</th><th data-k="knit">Knitting kg${arrow('knit')}</th><th data-k="dye">Dyeing kg${arrow('dye')}</th><th data-k="rfd">RFD kg${arrow('rfd')}</th></tr></thead><tbody>`;
-  const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  for(const r of rows)h+=`<tr><td>${esc(r.b)}</td><td>${cell(r.knit)}</td><td>${cell(r.dye)}</td><td>${cell(r.rfd)}</td></tr>`;
-  h+=`</tbody><tfoot><tr><td>Total</td><td>${nf(per.knit.kg)}</td><td>${nf(per.dye.kg)}</td><td>${nf(per.rfd.kg)}</td></tr></tfoot></table>`;
-  box.innerHTML=h;
-  box.querySelectorAll('th').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;bSort=[k,bSort[0]===k?-bSort[1]:(k==='b'?1:-1)];drawBuyerTable(per);}));
+/* -- MTD trend -- */
+function daysIn(){const out=[];for(let d=new Date(range.from);d<=range.to;d=addDays(d,1))out.push(new Date(d));return out;}
+function niceMax(m){if(m<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(m)));for(const f of [1,2,2.5,5,10])if(f*p>=m)return f*p;return 10*p;}
+function trendChart(k,title,days){
+  const ns='http://www.w3.org/2000/svg',bucket=summary[k]||{};
+  const rows=days.map(d=>{const o=bucket[isoD(d)]||{kg:0,n:0,ba:{}};return {d,o};});
+  const tot=rows.reduce((s,r)=>s+r.o.kg,0),totIn=rows.reduce((s,r)=>s+(r.o.in||0),0),totOut=rows.reduce((s,r)=>s+(r.o.out||0),0);
+  const W=1200,H=230,pl=44,pb=22,pt=16,n=rows.length,bw=(W-pl)/Math.max(n,1),max=niceMax(Math.max(...rows.map(r=>r.o.kg),1));
+  const el=document.createElement('div');el.className='tc';
+  el.innerHTML=`<div class="th"><b>${title}</b><span>${nf(tot)} kg in ${n} day${n>1?'s':''} · avg ${nf(tot/n)} kg/day</span>`+
+    (k==='rfd'?`<span><i class="sw" style="background:${C_IN}"></i>Inhouse ${nf(totIn)} kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside ${nf(totOut)} kg</span>`:'')+`<span>· click a bar for buyer & article</span></div>`;
+  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('role','img');svg.setAttribute('aria-label',`${title} per day, kg`);
+  const mk=(tag,at)=>{const e=document.createElementNS(ns,tag);for(const a in at)e.setAttribute(a,at[a]);return e;};
+  for(const g of [0,.25,.5,.75,1]){const y=H-pb-(H-pb-pt)*g;svg.appendChild(mk('line',{x1:pl,x2:W,y1:y,y2:y,stroke:'currentColor','stroke-opacity':g?.08:.25}));
+    const tx=mk('text',{x:pl-8,y:y+4,'text-anchor':'end'});const v=max*g;tx.textContent=v>=1000?(v/1000).toFixed(v%1000?1:0)+'t':v;svg.appendChild(tx);}
+  const bar=(x,y,w,h,fill,roundTop)=>{if(h<=0)return null;const r=roundTop?Math.min(4,w/2,h):0;
+    return mk('path',{d:`M${x},${y+h}V${y+r}`+(r?`Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}`:`H${x+w}`)+`V${y+h}Z`,fill});};
+  const step=n>20?Math.ceil(n/16):1;
+  rows.forEach(({d,o},i)=>{
+    const x=pl+i*bw+bw*.16,w=bw*.68,base=H-pb,sc=v=>(H-pb-pt)*v/max;
+    if(k==='rfd'){const hi=sc(o.in||0),ho=sc(o.out||0);
+      const a=bar(x,base-hi,w,hi,C_IN,!ho);if(a)svg.appendChild(a);
+      const b=bar(x,base-hi-ho-(hi&&ho?2:0),w,ho,C_OUT,true);if(b)svg.appendChild(b);}
+    else{const p=bar(x,base-sc(o.kg),w,sc(o.kg),C_ONE,true);if(p)svg.appendChild(p);}
+    if(n<=16&&o.kg){const t=mk('text',{x:x+w/2,y:base-sc(o.kg)-5,'text-anchor':'middle',class:'vl'});t.textContent=o.kg>=1000?(o.kg/1000).toFixed(1)+'t':o.kg;svg.appendChild(t);}
+    if(i%step===0||i===n-1){const t=mk('text',{x:x+w/2,y:H-6,'text-anchor':'middle'});t.textContent=n>10?pad(d.getDate()):dl(d).slice(0,6);svg.appendChild(t);}
+    const hit=mk('rect',{x:pl+i*bw,y:0,width:bw,height:H-pb,fill:'transparent',style:'cursor:pointer'});
+    hit.addEventListener('mousemove',e=>showTip(e,`${dl(d)} · ${nf(o.kg)} kg`+(k==='rfd'?` (Inhouse ${nf(o.in)} · Outside ${nf(o.out)})`:'')));
+    hit.addEventListener('mouseleave',hideTip);
+    hit.addEventListener('click',e=>openPop(e,`${title} · ${dl(d)}`,`${nf(o.kg)} kg`+(k==='rfd'?` · Inhouse ${nf(o.in)} · Outside ${nf(o.out)}`:'')+' · buyer & article-wise',o.ba,o.kg));
+    svg.appendChild(hit);
+  });
+  el.appendChild(svg);return el;
 }
-function useSummary(s,label){summary=s;$('dashSrc').textContent=label||'';drawDash();}
+function drawMtd(){
+  $('rngLbl').textContent=`${range.label} · ${range.from.getTime()===range.to.getTime()?dl(range.to):dl(range.from).slice(0,6)+' – '+dl(range.to)}`;
+  const mk=$('mtdk'),tr=$('trends');mk.innerHTML='';tr.innerHTML='';
+  if(!summary){return;}
+  const days=daysIn();
+  for(const [k,title,unitN] of KP){
+    let kg=0,n=0,i=0,o2=0;for(const d of days){const o=(summary[k]||{})[isoD(d)];if(o){kg+=o.kg;n+=o.n;i+=o.in||0;o2+=o.out||0;}}
+    const el=document.createElement('div');el.className='mk';
+    el.innerHTML=`<div class="kt">${title} · MTD</div><div class="kv">${nf(kg)}<small>kg</small></div><div class="ks">${nf(n)} ${unitN}`+(k==='rfd'?` · Inhouse ${nf(i)} · Outside ${nf(o2)}`:` · avg ${nf(kg/days.length)} kg/day`)+'</div>';
+    mk.appendChild(el);
+  }
+  for(const [k,title] of KP)tr.appendChild(trendChart(k,title,days));
+}
+
+/* -- calendar -- */
+let calMonth=new Date(range.to.getFullYear(),range.to.getMonth(),1),pick=null;
+function hasData(key){return summary&&['knit','dye','rfd'].some(k=>summary[k]&&summary[k][key]);}
+function drawCal(){
+  $('calTitle').textContent=calMonth.toLocaleString('en-US',{month:'long',year:'numeric'});
+  const g=$('calGrid');g.innerHTML='';for(const w of ['Su','Mo','Tu','We','Th','Fr','Sa']){const s=document.createElement('div');s.className='dow';s.textContent=w;g.appendChild(s);}
+  const start=addDays(calMonth,-calMonth.getDay()),t=today0();
+  const sel=pick||{from:range.from,to:range.to};
+  for(let i=0;i<42;i++){const d=addDays(start,i);if(i>=35&&d.getMonth()!==calMonth.getMonth())break;
+    const b=document.createElement('button');b.type='button';b.textContent=d.getDate();
+    if(d.getMonth()!==calMonth.getMonth())b.classList.add('out');
+    if(hasData(isoD(d)))b.classList.add('dot');
+    if(d.getTime()===t.getTime())b.classList.add('today');
+    const to=sel.to||sel.from;
+    if(sel.from&&d>=sel.from&&d<=to)b.classList.add('inr');
+    if(sel.from&&(d.getTime()===sel.from.getTime()||d.getTime()===to.getTime()))b.classList.add('edge');
+    if(d>t)b.disabled=true;
+    b.addEventListener('click',()=>{if(!pick||pick.to){pick={from:d,to:null};$('calHint').textContent='Now click the end date';}
+      else{pick=d<pick.from?{from:d,to:pick.from}:{from:pick.from,to:d};$('calHint').textContent=`${dl(pick.from)} – ${dl(pick.to)} · press Apply`;}drawCal();});
+    g.appendChild(b);}
+}
+function openCal(){pick=null;calMonth=new Date(range.to.getFullYear(),range.to.getMonth(),1);$('calHint').textContent='Click a start date, then an end date';drawCal();$('cal').hidden=false;$('rngBtn').setAttribute('aria-expanded','true');}
+function closeCal(){$('cal').hidden=true;$('rngBtn').setAttribute('aria-expanded','false');}
+$('rngBtn').addEventListener('click',()=>$('cal').hidden?openCal():closeCal());
+$('calPrev').addEventListener('click',()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);drawCal();});
+$('calNext').addEventListener('click',()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);drawCal();});
+$('calCancel').addEventListener('click',closeCal);
+$('calApply').addEventListener('click',()=>{if(pick&&pick.from){range={from:pick.from,to:pick.to||pick.from,label:'Custom'};drawMtd();}closeCal();});
+document.querySelectorAll('.presets button').forEach(b=>b.addEventListener('click',()=>{
+  const y=yday();let f=y,to=y,l=b.textContent;
+  if(b.dataset.p==='mtd')f=new Date(y.getFullYear(),y.getMonth(),1);
+  else if(b.dataset.p==='7')f=addDays(y,-6);
+  else if(b.dataset.p==='lm'){f=new Date(y.getFullYear(),y.getMonth()-1,1);to=new Date(y.getFullYear(),y.getMonth(),0);}
+  range={from:f,to,label:l};closeCal();drawMtd();}));
+
+function useSummary(s,label){summary=s;$('dashSrc').textContent=label||'';drawDaily();drawMtd();}
 $('newRun').addEventListener('click',()=>{const u=$('updater');u.hidden=!u.hidden;$('newRun').setAttribute('aria-expanded',String(!u.hidden));$('newRun').textContent=u.hidden?'+ Run a new update':'− Hide update';if(!u.hidden)u.scrollIntoView({behavior:'smooth',block:'start'});});
-setRange('y');
+drawDaily();drawMtd();
 render();loadLatest();
 })();
 </script>
