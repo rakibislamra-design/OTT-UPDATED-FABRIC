@@ -320,6 +320,7 @@ td.fail.hov:hover{background:var(--red-soft)}
     <span class="savechip" id="saveChip" hidden></span>
   </div>
 
+  <div id="errBox"></div>
   <div class="prog" id="prog" hidden>
     <div class="ptrack" role="progressbar" aria-label="Update progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progTrack"><i id="progBar"></i></div>
     <div class="plabel"><span id="progText">Starting…</span><span id="progPct">0%</span></div>
@@ -380,7 +381,6 @@ td.fail.hov:hover{background:var(--red-soft)}
   </section>
 
 
-  <div id="errBox"></div>
   <div class="tip" id="tip" role="tooltip" hidden></div>
   <div class="tip tip2" id="tip2" role="tooltip" hidden></div>
   <footer>Excel recalculates every formula when you open the updated file. Check the Buyer Wise OTT Hit Rate MTD figures after opening it.</footer>
@@ -492,6 +492,24 @@ function cellInfo(c,sst){
   return {v,f:fEl?fEl.textContent:null,fShared:fEl&&fEl.getAttribute("t")==="shared",fRef:fEl?fEl.getAttribute("ref"):null};
 }
 
+/* ---------- shared formula expansion ---------- */
+function shiftFormula(f,dr,dc){
+  if(!dr&&!dc) return f;
+  const sh=(c,abs,d)=>abs?c:colStr(Math.max(1,colNum(c)+d));
+  const parts=f.split(/("(?:[^"]|"")*")/);
+  return parts.map((t,i)=>{ if(i%2) return t;
+    return t.replace(/(^|[^A-Za-z0-9_.$!'])((?:'[^']+'|[A-Za-z0-9_.]+)!)?(\$?)([A-Z]{1,3})(\$?)(\d+)(?![A-Za-z0-9_(])/g,(m,pre,sheet,ca,c,ra,r)=>pre+(sheet||"")+ca+sh(c,ca,dc)+ra+(ra?r:String(Math.max(1,+r+dr))))
+            .replace(/(^|[^A-Za-z0-9_.$!'])((?:'[^']+'|[A-Za-z0-9_.]+)!)?(\$?)([A-Z]{1,3}):(\$?)([A-Z]{1,3})(?![A-Za-z0-9_(])/g,(m,pre,sheet,a1,c1,a2,c2)=>pre+(sheet||"")+a1+sh(c1,a1,dc)+":"+a2+sh(c2,a2,dc));
+  }).join("");
+}
+function unshareFormulas(doc){
+  const fs=Array.from(doc.getElementsByTagName("f")).filter(f=>f.getAttribute("t")==="shared");
+  const masters=new Map();
+  for(const f of fs){ if(f.getAttribute("ref")&&f.textContent){ const [c,r]=splitRef(f.parentNode.getAttribute("r")); masters.set(f.getAttribute("si"),{txt:f.textContent,r,c:colNum(c)}); } }
+  for(const f of fs){ const m=masters.get(f.getAttribute("si")); const [c,r]=splitRef(f.parentNode.getAttribute("r"));
+    if(m&&!f.textContent) f.textContent=shiftFormula(m.txt,r-m.r,colNum(c)-m.c);
+    f.removeAttribute("t"); f.removeAttribute("ref"); f.removeAttribute("si"); }
+}
 /* ---------- main run ---------- */
 async function run(){
   $("errBox").innerHTML="";$("results").hidden=true;$("dlInline").hidden=true;$("runBtn").disabled=true;$("prog").classList.remove("fail","done");
@@ -571,10 +589,8 @@ async function run(){
     setStep("write","run");status("Writing workbook…");await tick();
     const writeCols=["M","AM","AN","AO","AP","AQ","AR","AS","AT","AU","AV","AW","AX"];
     const W=new Set(writeCols);
-    // shared-formula safety: any master inside the written area must have all its children inside it too
-    for(const r of rows){ for(const col of writeCols){ const c=getCells(r).get(col); if(!c)continue; const ci=cellInfo(c,F.sst);
-      if(ci.fShared&&ci.fRef){ const [a,b]=ci.fRef.split(":"); const [ca,ra]=splitRef(a); const [cb,rb]=splitRef(b||a);
-        for(let k=colNum(ca);k<=colNum(cb);k++){ if(!W.has(colStr(k))||ra<3||rb>last) throw new Error(`Shared formula at ${col}${r} (${ci.fRef}) reaches outside the update area. Open the file in Excel, re-save, and try again.`) } } } }
+    // make every shared formula explicit, so Excel-saved files with any sharing layout update safely
+    unshareFormulas(doc);
     const tplStyle={}; for(const col of writeCols){ for(const r of rows){const c=getCells(r).get(col); if(c&&c.getAttribute("s")){tplStyle[col]=c.getAttribute("s");break}} }
     function setCell(r,col,spec){
       let c=getCells(r).get(col);
@@ -646,7 +662,7 @@ async function run(){
     prog(100,"Done · ready to download");
   }catch(e){
     console.error(e); status("Update stopped."); $("prog").classList.add("fail"); $("progText").textContent="Stopped";
-    $("errBox").innerHTML=`<div class="flag err">${esc(e.message||String(e))}</div>`;
+    $("errBox").innerHTML=`<div class="flag err">${esc(e.message||String(e))}</div>`; status("Update stopped: "+(e.message||String(e)).slice(0,140)); $("errBox").scrollIntoView({block:"nearest"});
     document.querySelectorAll("#steps li.run").forEach(li=>li.classList.remove("run"));
   }finally{$("runBtn").disabled=!(fpFile&&docFile)}
 }
