@@ -318,7 +318,6 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
       <input type="date" id="rdate">
       <div class="out">OUTPUT</div>
       <div class="outn" id="outName"></div>
-      <label class="fix"><input type="checkbox" id="fix" checked><span>Fix the two template slips (280 CY read CW4772; Dye Q AC read FOC Qty). Untick to reproduce the sheet exactly as before.</span></label>
     </div>
   </section>
 
@@ -1442,7 +1441,7 @@ self.postMessage({t:'done',bytes:r.bytes,report:r.report},[r.bytes.buffer]);}cat
 async function run(){
   busy=true;outBlob=null;render();note('');pill('');$('dlBtn').disabled=true;$('pubBtn').disabled=true;$('msg').textContent='Working…';
   const t0=performance.now();progress(1,'Loading files');
-  const fix=$('fix').checked,today=todaySerial();
+  const fix=true,today=todaySerial();
   const done=(bytes,rep)=>{busy=false;finished(bytes,rep,(performance.now()-t0)/1000);render();};
   const fail=m=>{busy=false;render();$('msg').textContent='';$('prog').classList.remove('show');note('Could not update: '+m,true);};
   const fallback=async()=>{try{const r=await DocBuilder.build(await readAll(),{today,fixSlips:fix,onProgress:progress});done(r.bytes,r.report);}catch(e){fail(String(e&&e.message||e));}};
@@ -1486,7 +1485,7 @@ let cfg=cfgLoad();
 function cfgSave(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 const DATA_FILE='DOC -280+217.xlsx';
 const rawUrl=(f,v)=>`https://raw.githubusercontent.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${encodeURIComponent(cfg.branch)}/${encodeURIComponent(f)}?v=${encodeURIComponent(v||Date.now())}`;
-const fmtWhen=iso=>{const d=new Date(iso);return `${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+const fmtWhen=iso=>{const d=new Date(iso),h=d.getHours();return `${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${h%12||12}:${pad(d.getMinutes())} ${h<12?'AM':'PM'}`;};
 let latest=null,localSummary=false;
 async function fetchLatest(){const r=await fetch(rawUrl('latest.json'),{cache:'no-store'});if(!r.ok)throw new Error('none');return r.json();}
 async function loadLatest(){
@@ -1524,7 +1523,7 @@ async function publish(){
     const bytes=new Uint8Array(await outBlob.arrayBuffer());
     const blob=await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:b64(bytes),encoding:'base64'})});
     const d=rdate();
-    const meta={summary:lastReport&&lastReport.summary,newArt:lastReport&&lastReport.newArt,updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:$('fix').checked};
+    const meta={summary:lastReport&&lastReport.summary,newArt:lastReport&&lastReport.newArt,updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:true};
     const tree=await gh('/git/trees',{method:'POST',body:JSON.stringify({tree:[
       {path:DATA_FILE,mode:'100644',type:'blob',sha:blob.sha},
       {path:'latest.json',mode:'100644',type:'blob',content:JSON.stringify(meta,null,2)}]})});
