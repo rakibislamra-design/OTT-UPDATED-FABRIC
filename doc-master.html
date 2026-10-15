@@ -1484,10 +1484,18 @@ function cfgLoad(){let c={};try{c=JSON.parse(localStorage.getItem(LS)||'{}')}cat
 let cfg=cfgLoad();
 function cfgSave(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 const DATA_FILE='DOC -280+217.xlsx';
-const rawUrl=(f,v)=>`https://raw.githubusercontent.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${encodeURIComponent(cfg.branch)}/${encodeURIComponent(f)}?v=${encodeURIComponent(v||Date.now())}`;
+// files are read by commit id (never stale); the branch name is only a fallback (GitHub caches it ~5 min)
+let curSha=null;
+const rawUrl=(f,v)=>`https://raw.githubusercontent.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${curSha||encodeURIComponent(cfg.branch)}/${encodeURIComponent(f)}?v=${encodeURIComponent(v||Date.now())}`;
+async function resolveSha(){
+  try{const h={'Accept':'application/vnd.github.sha'};if(cfg.token)h.Authorization='Bearer '+cfg.token;
+    const r=await fetch(`https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/commits/${encodeURIComponent(cfg.branch)}?t=${Date.now()}`,{headers:h,cache:'no-store'});
+    if(r.ok){const s=(await r.text()).trim();if(/^[0-9a-f]{40}$/.test(s))return s;}}catch(e){}
+  return null;
+}
 const fmtWhen=iso=>{const d=new Date(iso),h=d.getHours();return `${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)} · ${h%12||12}:${pad(d.getMinutes())} ${h<12?'AM':'PM'}`;};
 let latest=null,localSummary=false;
-async function fetchLatest(){const r=await fetch(rawUrl('latest.json'),{cache:'no-store'});if(!r.ok)throw new Error('none');return r.json();}
+async function fetchLatest(){curSha=await resolveSha();const r=await fetch(rawUrl('latest.json'),{cache:'no-store'});if(!r.ok)throw new Error('none');return r.json();}
 async function loadLatest(){
   const w=$('lastWhen'),inf=$('lastInfo'),b=$('lastDl');
   if(!cfg.owner||!cfg.repo){w.textContent='not set up yet';inf.textContent='';b.hidden=true;openUpdater();return;}
@@ -1531,12 +1539,8 @@ async function publish(){
     const commit=await gh('/git/commits',{method:'POST',body:JSON.stringify({message:'DOC master update '+meta.updated,tree:tree.sha,parents:[]})});
     try{await gh(`/git/refs/heads/${encodeURIComponent(cfg.branch)}`,{method:'PATCH',body:JSON.stringify({sha:commit.sha,force:true})});}
     catch(e){if(e.status!==404&&e.status!==422)throw e;await gh('/git/refs',{method:'POST',body:JSON.stringify({ref:'refs/heads/'+cfg.branch,sha:commit.sha})});}
-    latest=meta;showLatest();
-    const t0=Date.now();let n=0;
-    const show=()=>{const s=Math.floor((Date.now()-t0)/1000);pill(`✓ Saved · going live… ${Math.floor(s/60)}:${pad(s%60)}`);};
-    show();tick=setInterval(async()=>{show();if(++n%5)return;
-      try{const l=await fetchLatest();if(l.updated===meta.updated){clearInterval(tick);pill('✓ Saved · live');}}catch(e){}
-      if(Date.now()-t0>180000){clearInterval(tick);pill('✓ Saved · live within a few minutes');}},1000);
+    curSha=commit.sha;latest=meta;showLatest();
+    pill('✓ Saved · live');
   }catch(e){pill('Save to site failed',true);note('Save to site failed — '+(e.message||e)+(e.status===401||e.status===403||e.status===404?' (check the key: Contents read & write on this repository).':''),true);}
   $('pubBtn').disabled=false;
 }
