@@ -246,6 +246,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
 .art td.bn{max-width:260px;overflow:hidden;text-overflow:ellipsis}
 .art td.pl{font-weight:700}
 .art td.hi{color:var(--red)}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -340,6 +341,23 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
     <div class="dhead">
       <h2 class="sec">Daily output summary</h2>
       <span class="tag" id="dashSrc"></span>
+      <div class="rng">
+        <button class="rngbtn" id="rngBtn" type="button" aria-haspopup="dialog" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+          <span id="rngLbl"></span><span class="car">▾</span></button>
+        <div class="cal" id="cal" role="dialog" aria-label="Choose date range" hidden>
+          <div class="presets">
+            <button type="button" data-p="y">Yesterday</button>
+            <button type="button" data-p="7">Last 7 days</button>
+            <button type="button" data-p="mtd">This month to yesterday</button>
+            <button type="button" data-p="lm">Last month</button>
+          </div>
+          <div class="calnav"><button type="button" id="calPrev" aria-label="Previous month">‹</button><b id="calTitle"></b><button type="button" id="calNext" aria-label="Next month">›</button></div>
+          <div class="grid" id="calGrid"></div>
+          <p class="calhint" id="calHint">Click a date, or a start date then an end date</p>
+          <div class="calbtns"><button type="button" class="btn light" id="calCancel">Cancel</button><button type="button" class="btn" id="calApply">Apply</button></div>
+        </div>
+      </div>
 
     </div>
     <p class="dsub" id="dSub"></p>
@@ -1613,7 +1631,7 @@ function articleTip(e,b,arts,tot){
 }
 function hideArticle(){if(pop.classList.contains('hover')){pop.hidden=true;pop.classList.remove('hover');}}
 function miniTrend(bucket,from,to,side,onHover,onLeave,onPick,getPin,avail){
-  const m0=new Date(to.getFullYear(),to.getMonth(),1),start=m0<addDays(to,-13)?m0:addDays(to,-13),days=[];for(let d=new Date(start);d<=to;d=addDays(d,1))days.push(new Date(d));
+  const m0=new Date(to.getFullYear(),to.getMonth(),1);let start=m0<addDays(to,-13)?m0:addDays(to,-13);if(from<start)start=new Date(from);const days=[];for(let d=new Date(start);d<=to;d=addDays(d,1))days.push(new Date(d));
   const vals=days.map(d=>{const o=view(bucket[isoD(d)],side);return o?o.kg:0;}),nice=niceMax(Math.max(1,...vals));
   const pl=46,pb=20,H=130,slot=Math.max(22,Math.floor(((avail||400)-pl-6)/days.length)),W=pl+days.length*slot+6,ns='http://www.w3.org/2000/svg';
   const mk=(tag,at)=>{const e=document.createElementNS(ns,tag);for(const a in at)e.setAttribute(a,at[a]);return e;};
@@ -1655,7 +1673,7 @@ function drawDaily(){
       el.querySelector('.kv').innerHTML=nf(A.kg)+'<small>kg</small>';
       el.querySelector('.ks').textContent=`${nf(A.n)} ${unitN}${nd>1?` · ${nf(A.kg/nd)} kg/day avg`:''} · ${nd>1?dl(f)+' – '+dl(t2):dl(f)}`;
       const s2=el.querySelector('.side2');if(s2)s2.innerHTML=A.hasSide&&!st.side?`<span><i class="sw" style="background:${C_IN}"></i>Inhouse <b>${nf(A.kin)}</b> kg</span><span><i class="sw" style="background:${C_OUT}"></i>Outside <b>${nf(A.kout)}</b> kg</span>`:'';
-      el.querySelector('.bh').textContent=`By buyer · ${day?dl(day):(nd>1?'range':'yesterday')} · hover for article-wise`;
+      el.querySelector('.bh').textContent=`By buyer · ${day?dl(day):(nd>1?'selected dates':dl(f))} · hover for article-wise`;
       const bl=el.querySelector('.bl');bl.innerHTML='';const arr=Object.entries(A.by).sort((a,b)=>b[1]-a[1]);
       if(!arr.length)bl.innerHTML='<div class="empty">Nothing recorded for this date.</div>';
       let top=arr.slice(0,7);if(arr.length>7)top.push(['Others',arr.slice(7).reduce((s,x)=>s+x[1],0)]);
@@ -1672,7 +1690,7 @@ function drawDaily(){
       el.querySelectorAll('.sel button').forEach(b=>{b.classList.toggle('on',!!b.dataset.s&&st.side===b.dataset.s);if(!hasSides&&b.dataset.s)b.disabled=true;
         b.addEventListener('click',e=>{e.stopPropagation();st.side=b.dataset.s||null;if(!b.dataset.s)st.day=null;drawDaily();});});
       if(!hasSides){const p=document.createElement('div');p.className='ks';p.textContent='Inhouse / Outside filter works after the next update';el.querySelector('.sel').after(p);}}
-    const head=()=>{const h=el.querySelector('.dw');h.innerHTML='Day-wise · point at a column, click to keep'+(st.day?` <span class="daychip">${dl(st.day)}<button type="button" aria-label="Back to yesterday">×</button></span>`:'');
+    const head=()=>{const h=el.querySelector('.dw');h.innerHTML='Day-wise · point at a column, click to keep'+(st.day?` <span class="daychip">${dl(st.day)}<button type="button" aria-label="Back to selected dates">×</button></span>`:'');
       const x=h.querySelector('.daychip button');if(x)x.addEventListener('click',e=>{e.stopPropagation();st.day=null;drawDaily();});};
     head();fill(st.day);
     box.appendChild(el);
@@ -1682,6 +1700,46 @@ function drawDaily(){
   }
 }
 
+
+/* -- calendar (date / range for the daily summary) -- */
+let calMonth=new Date(range.to.getFullYear(),range.to.getMonth(),1),pick=null;
+function hasData(key){return summary&&['knit','dye','rfd'].some(k=>summary[k]&&summary[k][key]);}
+function rngLabel(){$('rngLbl').textContent=`${range.label} · ${range.from.getTime()===range.to.getTime()?dl(range.to):dl(range.from).slice(0,6)+' – '+dl(range.to)}`;}
+function setRange(r){range=r;for(const k in state)state[k].day=null;rngLabel();drawDaily();}
+function drawCal(){
+  $('calTitle').textContent=calMonth.toLocaleString('en-US',{month:'long',year:'numeric'});
+  const g=$('calGrid');g.innerHTML='';for(const w of ['Su','Mo','Tu','We','Th','Fr','Sa']){const s=document.createElement('div');s.className='dow';s.textContent=w;g.appendChild(s);}
+  const start=addDays(calMonth,-calMonth.getDay()),t=today0();
+  const sel=pick||{from:range.from,to:range.to};
+  for(let i=0;i<42;i++){const d=addDays(start,i);if(i>=35&&d.getMonth()!==calMonth.getMonth())break;
+    const b=document.createElement('button');b.type='button';b.textContent=d.getDate();
+    if(d.getMonth()!==calMonth.getMonth())b.classList.add('out');
+    if(hasData(isoD(d)))b.classList.add('dot');
+    if(d.getTime()===t.getTime())b.classList.add('today');
+    const to=sel.to||sel.from;
+    if(sel.from&&d>=sel.from&&d<=to)b.classList.add('inr');
+    if(sel.from&&(d.getTime()===sel.from.getTime()||d.getTime()===to.getTime()))b.classList.add('edge');
+    if(d>=t)b.disabled=true;
+    b.addEventListener('click',e=>{e.stopPropagation();if(!pick||pick.to){pick={from:d,to:null};$('calHint').textContent=`${dl(d)} · press Apply, or click an end date`;}
+      else{pick=d<pick.from?{from:d,to:pick.from}:{from:pick.from,to:d};$('calHint').textContent=`${dl(pick.from)} – ${dl(pick.to)} · press Apply`;}drawCal();});
+    g.appendChild(b);}
+}
+function openCal(){pick=null;calMonth=new Date(range.to.getFullYear(),range.to.getMonth(),1);$('calHint').textContent='Click a date, or a start date then an end date';drawCal();$('cal').hidden=false;$('rngBtn').setAttribute('aria-expanded','true');}
+function closeCal(){$('cal').hidden=true;$('rngBtn').setAttribute('aria-expanded','false');}
+$('rngBtn').addEventListener('click',e=>{e.stopPropagation();$('cal').hidden?openCal():closeCal();});
+$('cal').addEventListener('click',e=>e.stopPropagation());
+document.addEventListener('click',()=>{if(!$('cal').hidden)closeCal();});
+$('calPrev').addEventListener('click',()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);drawCal();});
+$('calNext').addEventListener('click',()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);drawCal();});
+$('calCancel').addEventListener('click',closeCal);
+$('calApply').addEventListener('click',()=>{if(pick&&pick.from){const to=pick.to||pick.from;setRange({from:pick.from,to,label:to.getTime()===pick.from.getTime()?(to.getTime()===yday().getTime()?'Yesterday':'Day'):'Custom'});}closeCal();});
+document.querySelectorAll('.presets button').forEach(b=>b.addEventListener('click',()=>{
+  const y=yday();let f=y,to=y,l=b.textContent;
+  if(b.dataset.p==='mtd'){f=new Date(y.getFullYear(),y.getMonth(),1);l='MTD';}
+  else if(b.dataset.p==='7')f=addDays(y,-6);
+  else if(b.dataset.p==='lm'){f=new Date(y.getFullYear(),y.getMonth()-1,1);to=new Date(y.getFullYear(),y.getMonth(),0);}
+  closeCal();setRange({from:f,to,label:l});}));
+rngLabel();
 function niceMax(m){if(m<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(m)));for(const f of [1,2,2.5,5,10])if(f*p>=m)return f*p;return 10*p;}
 function useSummary(s,label){summary=s;$('dashSrc').textContent=label||'';drawDaily();}
 $('newRun').addEventListener('click',()=>{const u=$('updater');u.hidden=!u.hidden;$('newRun').setAttribute('aria-expanded',String(!u.hidden));$('newRun').textContent=u.hidden?'+ Run a new update':'− Hide update';if(!u.hidden)u.scrollIntoView({behavior:'smooth',block:'start'});});
