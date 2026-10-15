@@ -247,6 +247,12 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
 .art td.pl{font-weight:700}
 .art td.hi{color:var(--red)}
 [hidden]{display:none!important}
+.dlp{display:flex;align-items:center;gap:12px;flex:1 1 260px;min-width:220px}
+.dlbar{flex:1;height:10px;background:var(--card);border:1px solid var(--q20,#D2C7CB);border-radius:999px;overflow:hidden}
+.dlbar i{display:block;height:100%;width:0;background:var(--q,#664356);border-radius:999px;transition:width .15s linear}
+.dlbar.ind i{width:30%;animation:dlind 1.1s ease-in-out infinite}
+@keyframes dlind{0%{margin-left:-30%}100%{margin-left:100%}}
+#dlTxt{font:500 12.5px var(--mono);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -292,6 +298,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
       <span id="lastWhen" class="muted">checking…</span>
       <span id="lastInfo" class="muted"></span>
       <button class="btn" id="lastDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download 217+280 file</button>
+      <div class="dlp" id="dlp" hidden><div class="dlbar"><i id="dlFill"></i></div><span id="dlTxt"></span></div>
     </div>
     <button class="btn light newrun" id="newRun" type="button" aria-expanded="false" aria-controls="updater" hidden>+ Run a new update</button>
   </div>
@@ -1526,11 +1533,22 @@ function showLatest(){
   $('lastDl').hidden=false;
 }
 $('lastDl').addEventListener('click',async()=>{
-  if(!latest)return;const b=$('lastDl'),html=b.innerHTML;b.disabled=true;b.lastChild.textContent='Downloading…';
+  if(!latest)return;const b=$('lastDl'),html=b.innerHTML,box=$('dlp'),fillEl=$('dlFill'),txt=$('dlTxt'),bar=fillEl.parentElement;
+  b.disabled=true;b.lastChild.textContent='Downloading…';box.hidden=false;fillEl.style.width='0';bar.classList.remove('ind');txt.textContent='Starting…';
+  const mb=n=>(n/1048576).toFixed(1);
   try{const r=await fetch(rawUrl(DATA_FILE,latest.updated));if(!r.ok)throw new Error('HTTP '+r.status);
-    const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    const total=+r.headers.get('content-length')||latest.size||0;let got=0;const parts=[];
+    if(!total)bar.classList.add('ind');
+    if(r.body&&r.body.getReader){const rd=r.body.getReader();
+      for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;
+        if(total){const p=Math.min(100,100*got/total);fillEl.style.width=p.toFixed(1)+'%';txt.textContent=`${p.toFixed(0)}% · ${mb(got)} of ${mb(total)} MB`;}
+        else txt.textContent=`${mb(got)} MB`;}
+    }else{parts.push(new Uint8Array(await r.arrayBuffer()));got=parts[0].length;}
+    fillEl.style.width='100%';bar.classList.remove('ind');txt.textContent=`✓ Done · ${mb(got)} MB`;
+    const blob=new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download=latest.name||outName(new Date(latest.updated));document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
-  }catch(e){note('Download failed: '+(e.message||e),true);}
+    setTimeout(()=>{box.hidden=true;},4000);
+  }catch(e){box.hidden=true;note('Download failed: '+(e.message||e),true);}
   b.disabled=false;b.innerHTML=html;
 });
 function b64(bytes){let s='';const CH=0x8000;for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(s);}
