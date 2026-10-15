@@ -292,7 +292,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
       <span id="lastInfo" class="muted"></span>
       <button class="btn" id="lastDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download 217+280 file</button>
     </div>
-    <button class="btn light newrun" id="newRun" type="button" aria-expanded="false" aria-controls="updater">+ Run a new update</button>
+    <button class="btn light newrun" id="newRun" type="button" aria-expanded="false" aria-controls="updater" hidden>+ Run a new update</button>
   </div>
 
   <section class="updater" id="updater" hidden>
@@ -1444,7 +1444,9 @@ function finished(bytes,rep,secs){
 $('go').addEventListener('click',run);
 $('dlBtn').addEventListener('click',saveLocal);
 
-function openUpdater(){const u=$('updater');if(u.hidden)$('newRun').click();}
+function isAdmin(){return !!(cfg&&cfg.token);}
+function applyRole(){const a=isAdmin();$('newRun').hidden=!a;if(!a){$('updater').hidden=true;$('newRun').textContent='+ Run a new update';}}
+function openUpdater(){if(!isAdmin())return;const u=$('updater');if(u.hidden)$('newRun').click();}
 /* ---------- publish: one copy on its own branch, replaced every time ---------- */
 const LS='docmaster-gh-v1';
 function cfgLoad(){let c={};try{c=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
@@ -1514,8 +1516,8 @@ async function publish(){
 $('pubBtn').addEventListener('click',publish);
 function fillGh(){$('ghOwner').value=cfg.owner||'';$('ghRepo').value=cfg.repo||'';$('ghBranch').value=cfg.branch||'';$('ghToken').value=cfg.token||'';$('autoPub').checked=cfg.auto!==false;}
 $('gear').addEventListener('click',()=>{fillGh();$('gh').classList.toggle('show');});
-$('ghSave').addEventListener('click',()=>{cfg={owner:$('ghOwner').value.trim(),repo:$('ghRepo').value.trim(),branch:$('ghBranch').value.trim()||'doc-master-data',token:$('ghToken').value.trim(),auto:$('autoPub').checked};cfgSave();$('ghMsg').textContent='Saved in this browser.';loadLatest();});
-$('ghForget').addEventListener('click',()=>{cfg.token='';cfgSave();$('ghToken').value='';$('ghMsg').textContent='Key removed from this browser.';});
+$('ghSave').addEventListener('click',()=>{cfg={owner:$('ghOwner').value.trim(),repo:$('ghRepo').value.trim(),branch:$('ghBranch').value.trim()||'doc-master-data',token:$('ghToken').value.trim(),auto:$('autoPub').checked};cfgSave();$('ghMsg').textContent='Saved in this browser.';applyRole();loadLatest();});
+$('ghForget').addEventListener('click',()=>{cfg.token='';cfgSave();$('ghToken').value='';$('ghMsg').textContent='Key removed from this browser.';applyRole();});
 $('autoPub').checked=cfg.auto!==false;
 
 /* ---------- dashboard: yesterday summary + MTD trend ---------- */
@@ -1693,7 +1695,7 @@ $('tabWait').addEventListener('click',()=>{naTab='wait';drawNa();});
 $('tabStart').addEventListener('click',()=>{naTab='start';drawNa();});
 function useNewArt(n){newArt=n||null;drawNa();}
 drawNa();
-render();loadLatest();
+applyRole();render();loadLatest();
 })();
 </script>
 </body>
