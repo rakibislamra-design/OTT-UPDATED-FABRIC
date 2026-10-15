@@ -713,6 +713,17 @@ function resetFilter(sh, newLast) {
   sh.tail = sh.tail.replace(/<sortState\b[\s\S]*?<\/sortState>/g, '');
   const m = /<autoFilter ref="([^"]+)"/.exec(sh.tail); return m ? m[1] : null;
 }
+// drop leftover empty rows below the data (styled blank cells from an older, longer paste)
+function trimTail(sh, newLast) {
+  let n = 0;
+  for (const [r, v] of [...sh.rows]) {
+    if (r <= newLast) continue;
+    const cells = v[1];
+    for (const [c, x] of [...cells]) if (!/<v>|<is>|<f[\s>]/.test(x)) cells.delete(c);
+    if (!cells.size) { sh.rows.delete(r); n++; }
+  }
+  return n;
+}
 function setDimension(sh) {
   let minr = Infinity, maxr = 1, maxc = 1;
   for (const [r, [, cells]] of sh.rows) if (cells.size) { minr = Math.min(minr, r); maxr = Math.max(maxr, r); for (const c of cells.keys()) maxc = Math.max(maxc, c); }
@@ -1207,19 +1218,19 @@ async function build(files, opts = {}) {
   const cdq = calcDyeQ(ddq, d280, c280, dkq, today, fix);
 
   // ---- write sheets
-  const filterRefs = {};
+  const filterRefs = {}, trimmed = {}; report.trimmed = trimmed;
   note(46, 'Writing 217');
   let sh = new Sheet(await rd(pathOf['217']));
   let oldLast = lastDataRow(sh, 1, 29, 3), nl = paste(sh, d217, 3, 1, 29, oldLast);
   const f217 = []; for (let c = ci('AD'); c <= ci('BA'); c++) if (c !== ci('AM')) f217.push(c);
   refitFormulas(sh, f217, 3, oldLast, nl);
-  filterRefs['217'] = resetFilter(sh, nl); report.cf217 = slimDuplicateCF(sh); setDimension(sh); wr(pathOf['217'], sh.serialize()); sh = null; await tick();
+  filterRefs['217'] = resetFilter(sh, nl); trimmed['217'] = trimTail(sh, nl); report.cf217 = slimDuplicateCF(sh); setDimension(sh); wr(pathOf['217'], sh.serialize()); sh = null; await tick();
 
   note(54, 'Writing 280 (A:AT data, AU:DB values, row height 15)');
   oldLast = lastDataRow(sh280, 1, 46, 3); nl = paste(sh280, d280, 3, 1, 46, oldLast);
   for (let r = 3; r <= nl; r++) { const v = sh280.rows.get(r); v[0] = v[0].replace(/\s(ht|customHeight)="[^"]*"/g, '') + ' ht="15" customHeight="1"'; }
   writeValues(sh280, ci('AU'), ci('DB'), 3, c280.vals, oldLast);
-  filterRefs['280'] = resetFilter(sh280, nl); slimDuplicateCF(sh280); setDimension(sh280); wr(pathOf['280'], sh280.serialize()); await tick();
+  filterRefs['280'] = resetFilter(sh280, nl); trimmed['280'] = trimTail(sh280, nl); slimDuplicateCF(sh280); setDimension(sh280); wr(pathOf['280'], sh280.serialize()); await tick();
 
   note(66, 'Writing Dye Q');
   sh = new Sheet(await rd(pathOf['Dye Q']));
@@ -1238,7 +1249,7 @@ async function build(files, opts = {}) {
   filterRefs['Dye Q'] = resetFilter(sh, nl);
   sh.tail = sh.tail.replace(/<autoFilter ref="([A-Z]+\d+):([A-Z]+)(\d+)"/, (m, a, c, r) => `<autoFilter ref="${a}:${ci(c) < ldCol ? cl(ldCol) : c}${r}"`);
   filterRefs['Dye Q'] = (/<autoFilter ref="([^"]+)"/.exec(sh.tail) || [])[1] || filterRefs['Dye Q'];
-  slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Dye Q'], sh.serialize()); await tick();
+  trimmed['Dye Q'] = trimTail(sh, nl); slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Dye Q'], sh.serialize()); await tick();
   note(70, `LD New / Repeat on Dye Q ${cl(ldCol)}: New ${ldCount.New} · Repeat ${ldCount.Repeat} · blank ${ldCount.blank}`);
   report.ld = Object.assign({ col: cl(ldCol) }, ldCount);
 
@@ -1246,18 +1257,18 @@ async function build(files, opts = {}) {
   sh = new Sheet(await rd(pathOf['Knit Q']));
   oldLast = lastDataRow(sh, 1, 31, 3); nl = paste(sh, dkq, 3, 1, 31, oldLast);
   refitFormulas(sh, [ci('AF'), ci('AG')], 3, oldLast, nl);
-  filterRefs['Knit Q'] = resetFilter(sh, nl); slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Knit Q'], sh.serialize()); await tick();
+  filterRefs['Knit Q'] = resetFilter(sh, nl); trimmed['Knit Q'] = trimTail(sh, nl); slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Knit Q'], sh.serialize()); await tick();
 
   note(76, 'Writing HS');
   sh = new Sheet(await rd(pathOf['HS']));
   oldLast = lastDataRow(sh, 1, 14, 2); nl = paste(sh, dhs, 2, 1, 14, oldLast);
   refitFormulas(sh, [ci('O')], 2, oldLast, nl);
-  filterRefs['HS'] = resetFilter(sh, nl); setDimension(sh); wr(pathOf['HS'], sh.serialize()); await tick();
+  filterRefs['HS'] = resetFilter(sh, nl); trimmed['HS'] = trimTail(sh, nl); setDimension(sh); wr(pathOf['HS'], sh.serialize()); await tick();
 
   note(80, 'Writing Y-LOT');
   sh = new Sheet(await rd(pathOf['Y-LOT']));
   oldLast = lastDataRow(sh, 1, 16, 3); nl = paste(sh, dlot, 3, 1, 16, oldLast);
-  filterRefs['Y-LOT'] = resetFilter(sh, nl); setDimension(sh); wr(pathOf['Y-LOT'], sh.serialize()); sh = null; await tick();
+  filterRefs['Y-LOT'] = resetFilter(sh, nl); trimmed['Y-LOT'] = trimTail(sh, nl); setDimension(sh); wr(pathOf['Y-LOT'], sh.serialize()); sh = null; await tick();
 
   // ---- speed: other sheets' duplicate-value rules (e.g. sheet "10" had 427 of them)
   note(84, 'Speed clean-up: conditional formats, dead links, calc chain');
@@ -1307,16 +1318,33 @@ async function build(files, opts = {}) {
   // ---- LD field in the Dye Q pivots (DQ P + Dash Board)
   report.ldPivot = await ldPivots(zip, rd, wr, wbx, rels, pathOf, SST, ld.batch2ld, cl(ldCol));
   // ---- pivots: keep all, refresh on open
-  let nPc = 0, nPt = 0;
+  let nPc = 0, nPt = 0, nRec = 0, recBytes = 0;
   for (const p of Object.keys(zip.files)) {
     if (/^xl\/pivotTables\/pivotTable\d+\.xml$/.test(p)) nPt++;
     if (!/^xl\/pivotCache\/pivotCacheDefinition\d+\.xml$/.test(p)) continue;
     nPc++;
     const x = await rd(p); const tag = /<pivotCacheDefinition\b[^>]*>/.exec(x)[0];
-    if (tag.includes('refreshOnLoad="1"')) continue;
-    const nt = tag.replace(/\srefreshOnLoad="[^"]*"/, '').replace(/(\/?)>$/, ' refreshOnLoad="1"$1>');
-    wr(p, x.replace(tag, () => nt));
+    let nt = tag.replace(/\srefreshOnLoad="[^"]*"/, '').replace(/(\/?)>$/, ' refreshOnLoad="1"$1>');
+    if (opts.lightPivots !== false) {
+      // light file: don't store the pivot data copy — Excel rebuilds it from the sheets on open
+      const rp = p.replace(/([^/]+)$/, '_rels/$1.rels');
+      const rx = zip.file(rp) ? await rd(rp) : '';
+      const rec = /<Relationship [^>]*Target="([^"]*pivotCacheRecords\d+\.xml)"[^>]*\/>/.exec(rx);
+      if (rec) {
+        const target = 'xl/pivotCache/' + rec[1].replace(/^.*\//, '');
+        recBytes += (zip.file(target) && zip.file(target)._data && zip.file(target)._data.compressedSize) || 0;
+        zip.remove(target);
+        const rx2 = rx.replace(rec[0], '');
+        if (/<Relationship\b/.test(rx2)) wr(rp, rx2); else zip.remove(rp);
+        ct = ct.replace(new RegExp(`<Override PartName="/${target.replace(/\./g, '\\.')}"[^>]*/>`), '');
+        nt = nt.replace(/\sr:id="[^"]*"/, '').replace(/\ssaveData="[^"]*"/, '').replace(/(\/?)>$/, ' saveData="0"$1>');
+        nRec++;
+      }
+    }
+    if (nt !== tag) wr(p, x.replace(tag, () => nt));
   }
+  if (nRec) wr('[Content_Types].xml', ct);
+  report.pivotRecordsDropped = nRec;
   report.pivotCaches = nPc; report.pivotTables = nPt;
   note(90, `Pivots kept: ${nPt} tables / ${nPc} caches, all refresh on open`);
 
