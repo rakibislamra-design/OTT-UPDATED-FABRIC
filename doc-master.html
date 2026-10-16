@@ -298,6 +298,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
       <span id="lastWhen" class="muted">checking…</span>
       <span id="lastInfo" class="muted"></span>
       <button class="btn" id="lastDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download 217+280 file</button>
+      <button class="btn" id="addDl" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Additional Req</button>
       <div class="dlp" id="dlp" hidden><div class="dlbar"><i id="dlFill"></i></div><span id="dlTxt"></span></div>
     </div>
     <button class="btn light newrun" id="newRun" type="button" aria-expanded="false" aria-controls="updater" hidden>+ Run a new update</button>
@@ -332,6 +333,7 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
   <div class="act">
     <button class="btn" id="go" type="button" disabled>Run update</button>
     <button class="btn" id="dlBtn" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Updated DOC</button>
+    <button class="btn light" id="addLocal" type="button" disabled>Additional Req</button>
     <button class="btn light" id="pubBtn" type="button" disabled>Save to site</button>
     <span class="msg" id="msg"></span>
     <span class="pill" id="pill"></span>
@@ -1378,10 +1380,161 @@ async function build(files, opts = {}) {
   note(100, 'Done');
   report.summary = dailySummary(d280, grp280, dlot, today);
   report.newArt = newArticles(d280, grp280, c280, today);
+  let addBytes = null;
+  try {
+    const addRows = additionalCalc(d217, d280, c280.vals.map(v => v[7]));
+    addBytes = await additionalXlsx(addRows);
+    report.additional = { total: Math.round(addRows.reduce((t, r) => t + (r[22] || 0), 0)), orders: addRows.filter(r => (r[22] || 0) > 0.5).length, size: addBytes.length };
+  } catch (e) { report.warnings.push('Additional Req could not be built: ' + (e.message || e)); }
   report.rows = { '217': d217.length, '280': d280.length, 'Dye Q': ddq.length, 'Knit Q': dkq.length, HS: dhs.length, 'Y-LOT': dlot.length, melange: mel, rib };
-  return { bytes: out, report, debug: opts.debug ? { c280, cdq } : undefined };
+  return { bytes: out, addBytes, report, debug: opts.debug ? { c280, cdq } : undefined };
 }
 const tick = () => new Promise(r => setTimeout(r, 0));
+
+
+/* ==================================================================== Additional requirement (order-wise) */
+const ADD_COLS = [{"min": 1, "max": 1, "width": 8.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 2, "max": 2, "width": 11.109375, "hidden": false, "outline": 0, "collapsed": true}, {"min": 3, "max": 3, "width": 9.109375, "hidden": false, "outline": 0, "collapsed": false}, {"min": 4, "max": 4, "width": 32.0, "hidden": false, "outline": 0, "collapsed": false}, {"min": 5, "max": 5, "width": 26.88671875, "hidden": false, "outline": 0, "collapsed": false}, {"min": 6, "max": 6, "width": 32.88671875, "hidden": false, "outline": 0, "collapsed": false}, {"min": 7, "max": 7, "width": 6.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 8, "max": 15, "width": 11.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 16, "max": 16, "width": 13.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 17, "max": 17, "width": 11.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 18, "max": 18, "width": 12.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 19, "max": 19, "width": 14.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 20, "max": 20, "width": 12.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 21, "max": 21, "width": 10.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 22, "max": 22, "width": 13.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 23, "max": 23, "width": 7.33203125, "hidden": false, "outline": 0, "collapsed": true}, {"min": 24, "max": 24, "width": 34.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 25, "max": 25, "width": 11.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 26, "max": 26, "width": 11.0, "hidden": false, "outline": 0, "collapsed": true}, {"min": 27, "max": 27, "width": 24.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 28, "max": 28, "width": 10.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 29, "max": 29, "width": 21.88671875, "hidden": false, "outline": 0, "collapsed": true}, {"min": 30, "max": 31, "width": 11.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 32, "max": 32, "width": 9.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 33, "max": 33, "width": 13.0, "hidden": false, "outline": 0, "collapsed": true}, {"min": 34, "max": 34, "width": 13.0, "hidden": true, "outline": 1, "collapsed": false}, {"min": 35, "max": 35, "width": 13.0, "hidden": false, "outline": 0, "collapsed": true}, {"min": 36, "max": 36, "width": 46.88671875, "hidden": true, "outline": 1, "collapsed": false}, {"min": 37, "max": 37, "width": 8.6640625, "hidden": false, "outline": 0, "collapsed": true}];
+const ADD_HEAD = ['Group ID','Customer','Customer PO','Color','Fabrication','Order No','AOP','Order Qty (m)','FIN REQ Qty (kg)','RFD Qty (kg)','RFD Qty (m)',
+  '102% Order Qty (m)','102% RFD Bal (m)','Conversion (m per kg)','102% RFD Bal (kg)',
+  'Dyed Qty kg (Plan of this order’s RFD-done batches)','RFD Qty kg (same batches)','Problematic kg not split (added to RFD)','Active PL % = (Dyed − RFD − Problematic) ÷ Dyed',
+  '102% Req Qty kg with PL','WIP kg','Req Additional (order, before adjust)','Req Additional kg','Basis','100% RFD BLNC (m)','OTT Date','PL taken from','Final Reject batches (order)','Why calculated',
+  'Final Reject plan kg (order)','Total plan kg (order, all batches)','Rejected %','Complete % (m) — Order = RFD m ÷ Order m','Complete % (m) — PO-Color-Fab',
+  'Problematic not split kg (order, all batches)','Not split — Dyebatch (inhouse) / Batch No (outside) - kg','Remarks'];
+const ADD = { DEF_PL: 0.14, F98: 0.98, THR: 0.8, TOL: 5, REJ: 0.1 };
+function additionalCalc(d217, d280, bb280) {
+  const S = v => v === null || v === undefined ? '' : String(v).replace(/\s+/g, ' ').trim();
+  const N = v => typeof v === 'number' && isFinite(v) ? v : 0;
+  const orders = [];
+  for (const r of d217) {
+    if (!S(r[4])) continue;
+    if (S(r[3]).toLowerCase().includes('block')) continue;
+    if (S(r[4]).toLowerCase().startsWith('trial')) continue;
+    orders.push({ order: S(r[4]), cust: S(r[3]), po: S(r[5]), color: S(r[6]), fab: S(r[7]), aop: S(r[9]).toUpperCase().includes('AOP'),
+      K: N(r[10]), L: N(r[11]), U: N(r[20]), V: N(r[21]), ott: typeof r[0] === 'number' ? r[0] : null });
+  }
+  const batches = [];
+  d280.forEach((r, i) => {
+    const H = S(r[7]); if (!H) return;
+    if (S(r[4]).toLowerCase().includes('block')) return;
+    if (H.toLowerCase().startsWith('trial')) return;
+    const parts = H.split('|').map(p => p.trim());
+    batches.push({ H, order: parts.slice(0, 2).join(' | '), mill: S(r[2]), cat: S(r[3]), po: S(r[5]), color: S(r[11]), fab: S(r[13]), aop: S(r[12]).toUpperCase().includes('AOP'),
+      W: N(r[22]), AB: N(r[27]), AC: N(r[28]), AH: N(r[33]), AS: S(r[44]), BB: S(bb280[i]) });
+  });
+  const byH = new Map(batches.map(b => [b.H, b]));
+  const desc = new Map();
+  for (const b of batches) { let h = b.H; for (;;) { const m = /^(.*)\/[^/|]+$/.exec(h); if (!m) break; h = m[1]; if (byH.has(h)) { if (!desc.has(h)) desc.set(h, []); desc.get(h).push(b); } } }
+  const base = s => s.split('#')[0];
+  for (const b of batches) {
+    b.rfd = b.AC > 0 || (b.aop && b.AB > 0);
+    b.reject = b.cat.toLowerCase().includes('reject') || b.BB.toLowerCase().includes('reject');
+    b.closed = b.BB.toUpperCase() === 'CLOSED';
+    b.wip = !b.rfd && !b.reject && !b.closed && b.W > 0;
+    b.pl = b.rfd && b.AB > 0;
+    b.probAdd = 0; b.notSplit = 0;
+    if (b.AH > 0) {
+      const ch0 = desc.get(b.H) || [];
+      const linked = ch0.filter(k => b.AS && base(k.AS) === base(b.AS));
+      const ch = (b.AS && linked.length) ? linked : (b.AS && !b.mill ? [] : ch0);
+      let best = null; const n = ch.length, maxK = Math.min(n, n > 15 ? 2 : 10);
+      const rec = (start, k, sum) => {           // same order as itertools.combinations
+        if (k === 0) { if (sum <= b.AH + ADD.TOL && (best === null || Math.abs(sum - b.AH) < Math.abs(best - b.AH))) best = sum; return; }
+        for (let i = start; i <= n - k; i++) rec(i + 1, k - 1, sum + ch[i].W);
+      };
+      for (let k = 1; k <= maxK; k++) rec(0, k, 0);
+      const tl = linked.reduce((s, k) => s + k.W, 0);
+      if (best !== null && Math.abs(best - b.AH) <= ADD.TOL) { /* split */ }
+      else if (linked.length && tl >= b.AH - ADD.TOL) { /* split, bigger than problematic */ }
+      else if (linked.length && tl > 0 && tl < b.AH) { b.probAdd = b.pl ? b.AH - tl : 0; b.notSplit = b.AH - tl; }
+      else { b.probAdd = b.pl ? b.AH : 0; b.notSplit = b.AH; }
+    }
+  }
+  const k3 = (a, b, c) => a + '\u0001' + b + '\u0001' + c;
+  const bgrp = new Map(); for (const b of batches) { const k = k3(b.po, b.color, b.fab); if (!bgrp.has(k)) bgrp.set(k, []); bgrp.get(k).push(b); }
+  const ogrp = new Map(); for (const o of orders) { const k = k3(o.po, o.color, o.fab); if (!ogrp.has(k)) ogrp.set(k, { key: [o.po, o.color, o.fab], os: [] }); ogrp.get(k).os.push(o); }
+  const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+  const groups = [...ogrp.entries()].map(([k, g]) => ({ k, ...g, cust: g.os[0].cust, bs: bgrp.get(k) || [] }));
+  groups.sort((a, b) => cmp(a.cust.toLowerCase(), b.cust.toLowerCase()) || cmp(a.key[0], b.key[0]) || cmp(a.key[1], b.key[1]) || cmp(a.key[2], b.key[2]));
+  const ci = s => s.toLowerCase();
+  const rows = [];
+  groups.forEach((g, gi) => {
+    const gid = gi + 1, bs = g.bs;
+    const gK = g.os.reduce((s, o) => s + o.K, 0), gV = g.os.reduce((s, o) => s + o.V, 0);
+    const gCompl = gK ? gV / gK : 0;
+    const J = bs.length, nW = bs.filter(b => b.wip).length, AA = J - nW > 0;
+    const gN = bs.filter(b => b.pl).reduce((s, b) => s + b.W, 0), gO = bs.filter(b => b.pl).reduce((s, b) => s + b.AB, 0), gP = bs.reduce((s, b) => s + b.probAdd, 0);
+    const gPL = gN > 0 ? (gN - gO - gP) / gN : null;
+    const os = [...g.os].sort((a, b) => cmp(a.order, b.order));
+    const R = os.map(o => {
+      const mine = bs.filter(b => ci(b.order) === ci(o.order));
+      const L102 = o.aop ? null : o.K / ADD.F98, M = o.aop ? null : L102 - o.V, conv = o.aop ? null : (o.L ? o.K / o.L : 0);
+      const balKg = o.aop ? o.L / ADD.F98 - o.U : (conv ? M / conv : 0);
+      const P = mine.filter(b => b.pl).reduce((s, b) => s + b.W, 0), Q = mine.filter(b => b.pl).reduce((s, b) => s + b.AB, 0), Rr = mine.reduce((s, b) => s + b.probAdd, 0);
+      const PL = P > 0 ? (P - Q - Rr) / P : (gN > 0 ? gPL : ADD.DEF_PL);
+      const T = balKg * (1 + PL), U = mine.filter(b => b.wip).reduce((s, b) => s + b.W, 0);
+      const bal100 = o.aop ? o.L - o.U : o.K - o.V;
+      const rej = mine.filter(b => b.reject), rejKg = rej.reduce((s, b) => s + b.W, 0), totKg = mine.reduce((s, b) => s + b.W, 0), rejPct = totKg ? rejKg / totKg : 0;
+      const compl = o.aop ? (o.L ? o.U / o.L : 0) : (o.K ? o.V / o.K : 0);
+      const why = compl > ADD.THR ? 'Order delivered above 80%' : (rejPct > ADD.REJ && T > U ? 'Rejected >10% + WIP short of 102%' : 'Not calculated');
+      const ns = mine.filter(b => b.notSplit > 0.5);
+      const nsTxt = ns.map(b => (b.AS && !b.mill ? b.AS : b.H) + '-' + Math.round(b.notSplit) + ' kg').join(', ');
+      return { o, L102, M, conv, balKg, P, Q, Rr, PL, T, U, bal100, rejN: rej.length, rejKg, totKg, rejPct, compl, why, nsKg: mine.reduce((s, b) => s + b.notSplit, 0), nsTxt,
+        src: P > 0 ? 'Order (own batches)' : (gN > 0 ? 'PO-Color-Fab (order has no RFD yet)' : 'Default 14%') };
+    });
+    const Y = R.reduce((s, r) => s + r.bal100, 0);
+    for (const r of R) r.raw = (J === 0 || Y <= 0 || !AA) ? 0 : r.T - r.U;
+    const all = R.reduce((s, r) => s + r.raw, 0), pos = R.filter(r => r.raw > 0 && r.why !== 'Not calculated').reduce((s, r) => s + r.raw, 0);
+    for (const r of R) r.fin = (r.why === 'Not calculated' || r.raw <= 0) ? 0 : r.raw / pos * Math.min(pos, Math.max(0, all));
+    const basis = Y <= 0 ? '100% RFD done - no additional' : J === 0 ? 'No 280 batches yet - not counted' : !AA ? 'Fresh batches only - no action yet, not calculated'
+      : gN === 0 ? 'Default PL (nothing RFD done)' : gCompl > ADD.THR ? 'Actual PL (RFD above 80%)' : 'Actual PL (RFD 80% or less, WIP short - from delivered batches)';
+    for (const r of R) { const o = r.o;
+      rows.push([gid, o.cust, o.po, o.color, o.fab, o.order, o.aop ? 'Y' : null, o.K, o.L, o.U, o.V, r.L102, r.M, r.conv, r.balKg, r.P, r.Q, r.Rr, r.PL, r.T, r.U, r.raw, r.fin,
+        basis, r.bal100, o.ott, r.src, r.rejN, r.why, r.rejKg, r.totKg, r.rejPct, r.compl, gCompl, r.nsKg, r.nsTxt || null, null]); }
+  });
+  return rows;
+}
+// minimal styled xlsx (SQ stripe: Calibri, purple header, white/#EFECED bands, thin #D2C7CB borders, user's column groups)
+async function additionalXlsx(rows, title) {
+  const FMT = { n: 164, d3: 165, p: 166, dt: 167 };
+  const colFmt = j => (j === 14 ? 'd3' : (j === 19 || j === 32 || j === 33 || j === 34) ? 'p' : j === 26 ? 'dt' : ((j >= 8 && j <= 23) || j === 25 || j === 30 || j === 31 || j === 35) ? 'n' : null);
+  // xf: 0 default, 1 header, then body: [fmt][band][bold]
+  const fmts = [null, 'n', 'd3', 'p', 'dt'], xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>', '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'];
+  const xfIdx = {};
+  for (const f of fmts) for (const band of [0, 1]) for (const bold of [0, 1]) {
+    xfIdx[`${f}|${band}|${bold}`] = xfs.length;
+    xfs.push(`<xf numFmtId="${f ? FMT[f] : 0}" fontId="${bold ? 2 : 0}" fillId="${band ? 3 : 0}" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>`);
+  }
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+    `<numFmts count="4"><numFmt numFmtId="164" formatCode="#,##0;-#,##0;-"/><numFmt numFmtId="165" formatCode="0.000"/><numFmt numFmtId="166" formatCode="0.0%"/><numFmt numFmtId="167" formatCode="dd-mmm-yy"/></numFmts>` +
+    `<fonts count="3"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font></fonts>` +
+    `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF664356"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEFECED"/><bgColor indexed="64"/></patternFill></fill></fills>` +
+    `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD2C7CB"/></left><right style="thin"><color rgb="FFD2C7CB"/></right><top style="thin"><color rgb="FFD2C7CB"/></top><bottom style="thin"><color rgb="FFD2C7CB"/></bottom><diagonal/></border></borders>` +
+    `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  const nc = ADD_HEAD.length, parts = [];
+  let r = 1; let x = `<row r="1" ht="58" customHeight="1">`;
+  ADD_HEAD.forEach((h, j) => { x += `<c r="${cl(j + 1)}1" s="1" t="inlineStr"><is><t xml:space="preserve">${esc(h)}</t></is></c>`; }); parts.push(x + '</row>');
+  for (const row of rows) {
+    r++; const band = r % 2 === 1 ? 1 : 0; x = `<row r="${r}">`;
+    for (let j = 1; j <= nc; j++) {
+      const v = row[j - 1], s = xfIdx[`${colFmt(j)}|${band}|${j === 23 ? 1 : 0}`], ref = cl(j) + r;
+      if (v === null || v === undefined || v === '') x += `<c r="${ref}" s="${s}"/>`;
+      else if (typeof v === 'number') x += Number.isFinite(v) ? `<c r="${ref}" s="${s}"><v>${numStr(v)}</v></c>` : `<c r="${ref}" s="${s}"/>`;
+      else x += `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+    }
+    parts.push(x + '</row>');
+  }
+  const cols = '<cols>' + ADD_COLS.map(d => `<col min="${d.min}" max="${d.max}" width="${d.width || 12}" customWidth="1"${d.hidden ? ' hidden="1"' : ''}${d.outline ? ` outlineLevel="${d.outline}"` : ''}${d.collapsed ? ' collapsed="1"' : ''}/>`).join('') + '</cols>';
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
+    `<sheetPr><outlinePr summaryBelow="1" summaryRight="1"/></sheetPr><dimension ref="A1:${cl(nc)}${r}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews>` +
+    `<sheetFormatPr defaultRowHeight="15" outlineLevelCol="1"/>${cols}<sheetData>${parts.join('')}</sheetData><autoFilter ref="A1:${cl(nc)}${r}"/></worksheet>`;
+  const z = new JSZip();
+  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+  z.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+  z.file('xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Order wise" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'Order wise'!$A$1:$${cl(nc)}$${r}</definedName></definedNames></workbook>`);
+  z.file('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+  z.file('xl/styles.xml', styles); z.file('xl/worksheets/sheet1.xml', sheet);
+  return z.generateAsync({ type: 'uint8array', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+}
 
 /* --------------------------------------------- file-name auto detection */
 function detect(name) {
@@ -1398,7 +1551,7 @@ function detect(name) {
   return null;
 }
 
-root.DocBuilder = { build, detect, _test: { formulaGen, calc280, SEARCH, CONCAT, T, ldKey } };
+root.DocBuilder = { build, detect, additionalCalc, additionalXlsx, _test: { formulaGen, calc280, SEARCH, CONCAT, T, ldKey } };
 })(typeof self !== 'undefined' ? self : globalThis);
 </script>
 <script>
@@ -1408,7 +1561,7 @@ const LIBS=['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
 const TAPS=[['s217','217.xls'],['s280','280.xls'],['dyeq','Inside Dye Q.xls'],['knitq','Knit Q.xls'],['heatset','Heatset.xls'],['lot','Lot.xls']];
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const $=id=>document.getElementById(id);
-const files={};let outBlob=null,busy=false,lastReport=null;
+const files={};let outBlob=null,addBlob=null,busy=false,lastReport=null;
 const coreText=$('core-src').textContent;(0,eval)(coreText);
 const fmt=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const pad=n=>String(n).padStart(2,'0');
@@ -1460,26 +1613,27 @@ async function readAll(){const b={sources:{}};b.master=new Uint8Array(await file
 function makeWorker(){
   const glue=`importScripts(${LIBS.map(u=>JSON.stringify(u)).join(',')});\n${coreText}\n
 self.onmessage=async e=>{try{const r=await DocBuilder.build(e.data.files,{today:e.data.today,fixSlips:e.data.fix,onProgress:(p,m)=>self.postMessage({t:'p',p,m})});
-self.postMessage({t:'done',bytes:r.bytes,report:r.report},[r.bytes.buffer]);}catch(err){self.postMessage({t:'err',m:String(err&&err.message||err)});}};`;
+self.postMessage({t:'done',bytes:r.bytes,addBytes:r.addBytes,report:r.report},[r.bytes.buffer].concat(r.addBytes?[r.addBytes.buffer]:[]));}catch(err){self.postMessage({t:'err',m:String(err&&err.message||err)});}};`;
   return new Worker(URL.createObjectURL(new Blob([glue],{type:'text/javascript'})));
 }
 async function run(){
   busy=true;outBlob=null;render();note('');pill('');$('dlBtn').disabled=true;$('pubBtn').disabled=true;$('msg').textContent='Working…';
   const t0=performance.now();progress(1,'Loading files');
   const fix=true,today=todaySerial();
-  const done=(bytes,rep)=>{busy=false;finished(bytes,rep,(performance.now()-t0)/1000);render();};
+  const done=(bytes,rep,add)=>{busy=false;finished(bytes,rep,(performance.now()-t0)/1000,add);render();};
   const fail=m=>{busy=false;render();$('msg').textContent='';$('prog').classList.remove('show');note('Could not update: '+m,true);};
-  const fallback=async()=>{try{const r=await DocBuilder.build(await readAll(),{today,fixSlips:fix,onProgress:progress});done(r.bytes,r.report);}catch(e){fail(String(e&&e.message||e));}};
+  const fallback=async()=>{try{const r=await DocBuilder.build(await readAll(),{today,fixSlips:fix,onProgress:progress});done(r.bytes,r.report,r.addBytes);}catch(e){fail(String(e&&e.message||e));}};
   let w=null;try{w=makeWorker();}catch(e){}
   if(!w)return fallback();
   const bufs=await readAll();
-  w.onmessage=e=>{const d=e.data;if(d.t==='p')progress(d.p,d.m);else{w.terminate();d.t==='done'?done(d.bytes,d.report):fail(d.m);}};
+  w.onmessage=e=>{const d=e.data;if(d.t==='p')progress(d.p,d.m);else{w.terminate();d.t==='done'?done(d.bytes,d.report,d.addBytes):fail(d.m);}};
   w.onerror=e=>{e.preventDefault();w.terminate();fallback();};
   w.postMessage({files:bufs,today,fix},[bufs.master.buffer,...Object.values(bufs.sources).map(b=>b.buffer)]);
 }
 function saveLocal(){if(!outBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download=outName();document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}
-function finished(bytes,rep,secs){
+function finished(bytes,rep,secs,add){
   outBlob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});lastReport=rep;
+  addBlob=add?new Blob([add],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}):null;$('addLocal').disabled=!addBlob;
   progress(100,'');
   $('dlBtn').disabled=false;$('pubBtn').disabled=false;
   const r=rep.rows;
@@ -1495,6 +1649,8 @@ function finished(bytes,rep,secs){
 }
 $('go').addEventListener('click',run);
 $('dlBtn').addEventListener('click',saveLocal);
+const addName=(d=rdate())=>`DOC Additional Req ${pad(d.getDate())}-${MON[d.getMonth()]}-${d.getFullYear()}.xlsx`;
+$('addLocal').addEventListener('click',()=>{if(!addBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(addBlob);a.download=addName();document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);});
 
 function isAdmin(){return !!(cfg&&cfg.token);}
 function applyRole(){const a=isAdmin();$('newRun').hidden=!a;if(!a){$('updater').hidden=true;$('newRun').textContent='+ Run a new update';}}
@@ -1508,7 +1664,7 @@ function cfgLoad(){let c={};try{c=JSON.parse(localStorage.getItem(LS)||'{}')}cat
   c.branch=c.branch||'doc-master-data';if(c.auto===undefined)c.auto=true;return c;}
 let cfg=cfgLoad();
 function cfgSave(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
-const DATA_FILE='DOC -280+217.xlsx';
+const DATA_FILE='DOC -280+217.xlsx',ADD_FILE='DOC Additional Req.xlsx';
 // files are read by commit id (never stale); the branch name is only a fallback (GitHub caches it ~5 min)
 let curSha=null;
 const rawUrl=(f,v)=>`https://raw.githubusercontent.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/${curSha||encodeURIComponent(cfg.branch)}/${encodeURIComponent(f)}?v=${encodeURIComponent(v||Date.now())}`;
@@ -1531,13 +1687,14 @@ function showLatest(){
   $('lastWhen').textContent=fmtWhen(latest.updated);
   $('lastInfo').textContent=latest.reportDate?`Report date ${latest.reportDate}`:'';
   $('lastDl').hidden=false;
+  const ad=latest.additional;$('addDl').hidden=!ad;if(ad)$('addDl').title=`${ad.total.toLocaleString('en-US')} kg across ${ad.orders} orders`;
 }
-$('lastDl').addEventListener('click',async()=>{
-  if(!latest)return;const b=$('lastDl'),html=b.innerHTML,box=$('dlp'),fillEl=$('dlFill'),txt=$('dlTxt'),bar=fillEl.parentElement;
+async function dlFromSite(file,name,size,b){
+  if(!latest)return;const html=b.innerHTML,box=$('dlp'),fillEl=$('dlFill'),txt=$('dlTxt'),bar=fillEl.parentElement;
   b.disabled=true;b.lastChild.textContent='Downloading…';box.hidden=false;fillEl.style.width='0';bar.classList.remove('ind');txt.textContent='Starting…';
   const mb=n=>(n/1048576).toFixed(1);
-  try{const r=await fetch(rawUrl(DATA_FILE,latest.updated));if(!r.ok)throw new Error('HTTP '+r.status);
-    const total=+r.headers.get('content-length')||latest.size||0;let got=0;const parts=[];
+  try{const r=await fetch(rawUrl(file,latest.updated));if(!r.ok)throw new Error('HTTP '+r.status);
+    const total=+r.headers.get('content-length')||size||0;let got=0;const parts=[];
     if(!total)bar.classList.add('ind');
     if(r.body&&r.body.getReader){const rd=r.body.getReader();
       for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;
@@ -1546,11 +1703,13 @@ $('lastDl').addEventListener('click',async()=>{
     }else{parts.push(new Uint8Array(await r.arrayBuffer()));got=parts[0].length;}
     fillEl.style.width='100%';bar.classList.remove('ind');txt.textContent=`✓ Done · ${mb(got)} MB`;
     const blob=new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download=latest.name||outName(new Date(latest.updated));document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+    a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
     setTimeout(()=>{box.hidden=true;},4000);
   }catch(e){box.hidden=true;note('Download failed: '+(e.message||e),true);}
   b.disabled=false;b.innerHTML=html;
-});
+}
+$('lastDl').addEventListener('click',()=>dlFromSite(DATA_FILE,latest.name||outName(new Date(latest.updated)),latest.size,$('lastDl')));
+$('addDl').addEventListener('click',()=>{const ad=latest&&latest.additional;if(ad)dlFromSite(ADD_FILE,ad.name,ad.size,$('addDl'));});
 function b64(bytes){let s='';const CH=0x8000;for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(s);}
 async function gh(path,opt={}){
   const r=await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}${path}`,Object.assign({},opt,{headers:Object.assign({'Accept':'application/vnd.github+json','Authorization':'Bearer '+cfg.token,'X-GitHub-Api-Version':'2022-11-28'},opt.body?{'Content-Type':'application/json'}:{})}));
@@ -1566,10 +1725,13 @@ async function publish(){
   try{
     const bytes=new Uint8Array(await outBlob.arrayBuffer());
     const blob=await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:b64(bytes),encoding:'base64'})});
+    const addB=addBlob?new Uint8Array(await addBlob.arrayBuffer()):null;
+    const addBlobGh=addB?await gh('/git/blobs',{method:'POST',body:JSON.stringify({content:b64(addB),encoding:'base64'})}):null;
     const d=rdate();
-    const meta={summary:lastReport&&lastReport.summary,newArt:lastReport&&lastReport.newArt,updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:true};
+    const meta={summary:lastReport&&lastReport.summary,newArt:lastReport&&lastReport.newArt,updated:new Date().toISOString(),reportDate:`${pad(d.getDate())}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`,name:outName(),size:bytes.length,rows:lastReport&&lastReport.rows,ld:lastReport&&lastReport.ld,fixSlips:true,additional:addB&&lastReport&&lastReport.additional?{name:addName(),size:addB.length,total:lastReport.additional.total,orders:lastReport.additional.orders}:null};
     const tree=await gh('/git/trees',{method:'POST',body:JSON.stringify({tree:[
       {path:DATA_FILE,mode:'100644',type:'blob',sha:blob.sha},
+      ...(addBlobGh?[{path:ADD_FILE,mode:'100644',type:'blob',sha:addBlobGh.sha}]:[]),
       {path:'latest.json',mode:'100644',type:'blob',content:JSON.stringify(meta,null,2)}]})});
     // parentless commit + force-moved branch: the previous file is wiped, no history builds up
     const commit=await gh('/git/commits',{method:'POST',body:JSON.stringify({message:'DOC master update '+meta.updated,tree:tree.sha,parents:[]})});
