@@ -442,6 +442,64 @@ function rawVal(t,inner,sst){
   return Number(v);
 }
 
+/* ---------- mini formula engine (for DOC files saved without calculated values) ---------- */
+const XERR=e=>({err:e}); const isErr=v=>v&&typeof v==="object"&&"err" in v;
+function fTokens(src){
+  const t=[]; let i=0; const S=src;
+  while(i<S.length){ const ch=S[i];
+    if(/\s/.test(ch)){i++;continue}
+    if(ch==='"'){ let j=i+1,str=""; while(j<S.length){ if(S[j]==='"'){ if(S[j+1]==='"'){str+='"';j+=2;continue} break } str+=S[j++]; } t.push({k:"s",v:str}); i=j+1; continue; }
+    const m=/^(\$?[A-Z]{1,3}\$?\d+)(?![A-Za-z0-9_(])/.exec(S.slice(i)); if(m){ t.push({k:"r",v:m[1].replace(/\$/g,"")}); i+=m[1].length; continue; }
+    const n=/^\d+(\.\d+)?([eE][+-]?\d+)?/.exec(S.slice(i)); if(n){ t.push({k:"n",v:+n[0]}); i+=n[0].length; continue; }
+    const f=/^([A-Za-z_][A-Za-z0-9_.]*)\s*\(/.exec(S.slice(i)); if(f){ t.push({k:"f",v:f[1].toUpperCase()}); i+=f[0].length; continue; }
+    const b=/^(TRUE|FALSE)(?![A-Za-z0-9_])/i.exec(S.slice(i)); if(b){ t.push({k:"b",v:b[1].toUpperCase()==="TRUE"}); i+=b[0].length; continue; }
+    const o=/^(<>|<=|>=|[-+*/^&=<>(),%])/.exec(S.slice(i)); if(o){ t.push({k:"o",v:o[1]}); i+=o[1].length; continue; }
+    throw new Error("unsupported formula: "+S);
+  } return t;
+}
+function fEval(src,get){
+  const T=fTokens(src); let p=0; const pk=()=>T[p], nx=()=>T[p++];
+  const num=v=>isErr(v)?v:typeof v==="number"?v:typeof v==="boolean"?(v?1:0):(v===null||v===""?0:(isFinite(+v)?+v:XERR("#VALUE!")));
+  const str=v=>isErr(v)?v:v===null?"":typeof v==="boolean"?(v?"TRUE":"FALSE"):typeof v==="number"?String(+v.toPrecision(15)):String(v);
+  const cmp=(a,b,op)=>{ if(isErr(a))return a; if(isErr(b))return b; let x=a,y=b; if(typeof x==="string"&&typeof y==="string"){x=x.toLowerCase();y=y.toLowerCase()} if(x===null)x=typeof y==="string"?"":0; if(y===null)y=typeof x==="string"?"":0;
+    return op==="="?x==y:op==="<>"?x!=y:op==="<"?x<y:op===">"?x>y:op==="<="?x<=y:x>=y; };
+  function args(){ const out=[]; if(pk()&&pk().k==="o"&&pk().v===")"){nx();return out} while(true){ const st=p; out.push(st); skipExpr(); const t=nx(); if(t.v===")")break; } return out; }
+  function skipExpr(){ let d=0; while(p<T.length){ const t=T[p]; if(t.k==="f"||(t.k==="o"&&t.v==="(")){d++;p++;continue} if(t.k==="o"&&t.v===")"){ if(d===0)return; d--; p++; continue } if(t.k==="o"&&t.v===","&&d===0)return; p++; } }
+  function evalAt(pos){ const save=p; p=pos; const v=E(); p=save; return v; }
+  function call(fn){ const A=args(); const end=p; const a=i=>evalAt(A[i]);
+    let r;
+    switch(fn){
+      case "IF": { const c=a(0); if(isErr(c)){r=c;break} r=num(c)&&c!==""&&c!==false?(A.length>1?a(1):true):(A.length>2?a(2):false); break; }
+      case "IFERROR": { const v=a(0); r=isErr(v)?a(1):v; break; }
+      case "ISNUMBER": { const v=a(0); r=typeof v==="number"; break; }
+      case "ISERROR": { r=isErr(a(0)); break; }
+      case "TRIM": { const v=str(a(0)); r=isErr(v)?v:v.replace(/^ +| +$/g,"").replace(/ {2,}/g," "); break; }
+      case "SEARCH": { const f=str(a(0)), w=str(a(1)); if(isErr(f)){r=f;break} if(isErr(w)){r=w;break} const st=A.length>2?num(a(2)):1;
+        const re=new RegExp(f.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/~\*/g,"\u0001").replace(/~\?/g,"\u0002").replace(/\*/g,"[\\s\\S]*").replace(/\?/g,"[\\s\\S]").replace(/\u0001/g,"\\*").replace(/\u0002/g,"\\?"),"i");
+        const idx=w.slice(st-1).search(re); r=idx<0?XERR("#VALUE!"):idx+st; break; }
+      case "VALUE": { const v=num(a(0)); r=v; break; }
+      case "ABS": { const v=num(a(0)); r=isErr(v)?v:Math.abs(v); break; }
+      case "ROUND": { const v=num(a(0)),d=num(a(1)); r=isErr(v)?v:Math.round(v*10**d)/10**d; break; }
+      default: throw new Error("unsupported function "+fn);
+    }
+    p=end; return r; }
+  function P(){ const t=nx(); if(!t) return null;
+    if(t.k==="n"||t.k==="s"||t.k==="b") return t.v;
+    if(t.k==="r") return get(t.v);
+    if(t.k==="f") return call(t.v);
+    if(t.k==="o"&&t.v==="("){ const v=E(); nx(); return v; }
+    if(t.k==="o"&&t.v==="-"){ const v=num(U()); return isErr(v)?v:-v; }
+    if(t.k==="o"&&t.v==="+") return U();
+    throw new Error("bad token"); }
+  function U(){ return P(); }
+  function Pow(){ let a=U(); while(pk()&&pk().k==="o"&&pk().v==="^"){ nx(); const b=num(U()),x=num(a); a=isErr(x)?x:isErr(b)?b:x**b; } return a; }
+  function M(){ let a=Pow(); while(pk()&&pk().k==="o"&&(pk().v==="*"||pk().v==="/")){ const o=nx().v,b=num(Pow()),x=num(a); a=isErr(x)?x:isErr(b)?b:o==="*"?x*b:(b===0?XERR("#DIV/0!"):x/b); } return a; }
+  function Ad(){ let a=M(); while(pk()&&pk().k==="o"&&(pk().v==="+"||pk().v==="-")){ const o=nx().v,b=num(M()),x=num(a); a=isErr(x)?x:isErr(b)?b:o==="+"?x+b:x-b; } return a; }
+  function C(){ let a=Ad(); while(pk()&&pk().k==="o"&&pk().v==="&"){ nx(); const b=str(Ad()),x=str(a); a=isErr(x)?x:isErr(b)?b:x+b; } return a; }
+  function E(){ let a=C(); while(pk()&&pk().k==="o"&&["=","<>","<",">","<=",">="].includes(pk().v)){ const o=nx().v; a=cmp(a,C(),o); } return a; }
+  return E();
+}
+
 /* ---------- 1. DOC sheet 217 ---------- */
 async function readDOC(zip){
   const path=await sheetPath(zip,"217");
@@ -450,22 +508,32 @@ async function readDOC(zip){
   const xml=await zip.file(path).async("string");
   const sumAQ=new Map(),sumAR=new Map(),first=new Map();
   const rowRe=/<row [^>]*?r="(\d+)"[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g;
-  const cRe=/<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
-  const want={AF:1,AP:1,AQ:1,AR:1};
-  let m,rows=0;
-  while((m=rowRe.exec(xml))){
-    if(+m[1]<3||!m[2]) continue;
-    const cells={};let c;cRe.lastIndex=0;
-    while((c=cRe.exec(m[2]))){ if(want[c[1]]){const tm=/\bt="(\w+)"/.exec(c[2]);cells[c[1]]=rawVal(tm?tm[1]:null,c[3],sst);} }
-    let key=cells.AP; if(key===null||key===undefined||key==="") continue;
+  const cRe=/<c r="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+  // index every cell so formulas without saved values can be worked out
+  const grid=new Map(), masters=new Map(); let m,rows=0,computed=0;
+  while((m=rowRe.exec(xml))){ if(!m[2])continue; const r=+m[1], cells=new Map(); let c; cRe.lastIndex=0;
+    while((c=cRe.exec(m[2]))){ const tm=/\bt="(\w+)"/.exec(c[3]); const inner=c[4]||""; const fm=/<f([^>]*)>([\s\S]*?)<\/f>|<f([^>]*)\/>/.exec(inner); const vm=/<v>([\s\S]*?)<\/v>/.exec(inner);
+      const cell={t:tm?tm[1]:null,inner,f:fm?decode(fm[2]||""):null,hasV:!!vm||(tm&&tm[1]==="inlineStr")};
+      const fa=fm?(fm[1]||fm[3]||""):""; if(/t="shared"/.test(fa)){ const si=/si="(\d+)"/.exec(fa)[1]; if(cell.f){ masters.set(si,{f:cell.f,r,c:colNum(c[1])}); } else cell.si=si; }
+      cells.set(c[1],cell); }
+    grid.set(r,cells); }
+  const memo=new Map();
+  const get=(ref,depth=0)=>{ const mm=/^([A-Z]+)(\d+)$/.exec(ref); const col=mm[1], r=+mm[2]; const k=ref; if(memo.has(k))return memo.get(k);
+    const cell=grid.get(r)&&grid.get(r).get(col); let v=null;
+    if(cell){ if(cell.hasV) v=rawVal(cell.t==="str"&&!cell.hasV?null:cell.t,cell.inner,sst);
+      else { let f=cell.f; if(!f&&cell.si&&masters.has(cell.si)){ const ms=masters.get(cell.si); f=shiftFormula(ms.f,r-ms.r,colNum(col)-ms.c); }
+        if(f&&depth<40){ try{ v=fEval(f,x=>get(x,depth+1)); computed++; }catch(e){ v=null; } } } }
+    if(isErr(v)) v=v.err; memo.set(k,v); return v; };
+  for(const [r] of grid){ if(r<3) continue;
+    let key=get("AP"+r); if(key===null||key===undefined||key==="") continue;
     const k=typeof key==="string"?norm(key):norm(xtrim(key));
-    const aq=cells.AQ??null, ar=cells.AR??null, af=cells.AF??null;
+    const aq=get("AQ"+r), ar=get("AR"+r), af=get("AF"+r);
     if(isNum(aq)) sumAQ.set(k,(sumAQ.get(k)||0)+aq);
     if(isNum(ar)) sumAR.set(k,(sumAR.get(k)||0)+ar);
     if(!first.has(k)) first.set(k,[aq,af]);
-    rows++;
+    rows++; if(rows%400===0) memo.clear();
   }
-  return {sumAQ,sumAR,first,rows};
+  return {sumAQ,sumAR,first,rows,computed};
 }
 
 /* ---------- 2. Fabric plan ---------- */
@@ -517,7 +585,7 @@ async function run(){
   try{
     setStep("read","run");status("Reading DOC -280+217 (sheet 217)…");await tick();
     const D=await readDOC(docZip);
-    status(`Sheet 217: ${D.rows.toLocaleString()} rows. Reading Fabric Plan…`);prog(36,"Reading Fabric Plan · Fab Plan-Final");await tick();
+    status(`Sheet 217: ${D.rows.toLocaleString()} rows${D.computed?` (${D.computed.toLocaleString()} formulas worked out)`:""}. Reading Fabric Plan…`);prog(36,"Reading Fabric Plan · Fab Plan-Final");await tick();
     const F=await readFP(fpFile);
     const doc=F.doc, NS=doc.documentElement.namespaceURI;
     const sheetData=doc.getElementsByTagName("sheetData")[0];
@@ -551,6 +619,7 @@ async function run(){
       AO.set(r, an===0?"#NA":(D.sumAR.get(nk)||0));
       if(D.first.has(nk)){const [aq,af]=D.first.get(nk);AV.set(r,aq??0);AW.set(r,af??0)} else {AV.set(r,"#N/A");AW.set(r,"#N/A")}
     }
+    if(![...AN.values()].some(v=>v>0)) throw new Error("No Fabric Plan row matched a Taps key in DOC sheet 217 (all Tps Rfd Qty = 0). Check that you picked the right DOC -280+217 file.");
     setStep("ax","done");
 
     /* step 2 */
@@ -630,6 +699,15 @@ async function run(){
     let out=new XMLSerializer().serializeToString(doc);
     if(!out.startsWith("<?xml")) out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+out;
     const z=F.zip; z.file(F.path,out);
+    // Buyer Wise OTT Hit Rate: move the daily date (C7) to the day before the report date, and drop stale cached results
+    try{
+      const bwPath=await sheetPath(z,"Buyer Wise OTT Hit Rate");
+      let bw=await z.file(bwPath).async("string");
+      const rd=$("runDate").value.split("-").map(Number), ser=Math.round((Date.UTC(rd[0],rd[1]-1,rd[2])-Date.UTC(1899,11,30))/864e5)-1;
+      bw=bw.replace(/<c r="C7"([^>]*?)(?:\/>|>[\s\S]*?<\/c>)/,(m,a)=>`<c r="C7"${a.replace(/\s*t="[^"]*"/,"")}><v>${ser}</v></c>`);
+      bw=bw.replace(/(<f\b[^>]*?(?:\/>|>[\s\S]*?<\/f>))<v>[^<]*<\/v>/g,"$1");
+      z.file(bwPath,bw);
+    }catch(e){ console.warn("Buyer Wise date not updated",e); }
     // workbook: full recalc on load, remove calc chain, external links and broken names
     let wb=await z.file("xl/workbook.xml").async("string");
     let rels=await z.file("xl/_rels/workbook.xml.rels").async("string");
