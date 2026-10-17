@@ -393,7 +393,434 @@ h1{font:700 clamp(22px,2.6vw,30px)/1.1 var(--disp);margin:2px 0 4px;letter-spaci
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script id="core-src" type="text/plain">/* DOC-280+217 master builder — runs fully in the browser (or Node for testing).
+<script id="core-src" type="text/plain">/* ===== Dye Q Combo Planner engine (Body/Gusset, Combo, Batch Plan MC) — from Dye_Q_Combo_Planner.html ===== */
+/* Dye Q Body/Gusset + Combo + Batch Plan MC engine.
+   Works in browser (window.DyeQEngine) and Node (module.exports). Needs JSZip. */
+(function (root) {
+  'use strict';
+
+  // ---------- small helpers ----------
+  const unesc = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, d) => String.fromCharCode(+d)).replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCharCode(parseInt(h, 16))).replace(/&amp;/g, '&');
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cn = c => { let n = 0; for (const ch of c) n = n * 26 + ch.charCodeAt(0) - 64; return n; };
+  const cl = n => { let s = ''; while (n) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; };
+  const str = v => (v === null || v === undefined) ? '' : String(v);
+  const cmpStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
+  function parseSST(xml) {
+    const out = [];
+    if (!xml) return out;
+    const re = /<si>([\s\S]*?)<\/si>/g; let m;
+    while ((m = re.exec(xml))) {
+      let t = ''; const tr = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g; let k;
+      while ((k = tr.exec(m[1]))) t += k[1];
+      out.push(unesc(t));
+    }
+    return out;
+  }
+  // returns Map(row -> {colLetter: value}) for wanted columns
+  function readCells(xml, want, sst, fromRow) {
+    const rows = new Map();
+    const re = /<c r="([A-Z]{1,3})(\d+)"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let m;
+    while ((m = re.exec(xml))) {
+      const col = m[1]; if (!want.has(col)) continue;
+      const r = +m[2]; if (r < fromRow) continue;
+      const attrs = m[3], inner = m[4] || '';
+      const tm = /\bt="(\w+)"/.exec(attrs); const t = tm ? tm[1] : null;
+      let val = null;
+      if (t === 'inlineStr') { let s = ''; const tr = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g; let k; while ((k = tr.exec(inner))) s += k[1]; val = unesc(s); }
+      else {
+        const vm = /<v>([\s\S]*?)<\/v>/.exec(inner);
+        if (vm) {
+          if (t === 's') val = sst[+vm[1]];
+          else if (t === 'str' || t === 'e' || t === 'b') val = unesc(vm[1]);
+          else { const f = parseFloat(vm[1]); val = isNaN(f) ? unesc(vm[1]) : f; }
+        }
+      }
+      let o = rows.get(r); if (!o) { o = {}; rows.set(r, o); }
+      o[col] = val;
+    }
+    return rows;
+  }
+
+  // ---------- classification (fabric rules) ----------
+  const ELAS = /spandex|lycra|elas|creora|\d+\s*d\b|\/\s*5\b/i;
+  const elastic = f => ELAS.test(str(f));
+  const gsm = f => { const m = /-\s*(\d{2,3})\s*-\s*\d{2,3}\s*-/.exec(str(f)); return m ? +m[1] : null; };
+  const gkey = o => { o = str(o).trim(); return o.includes('+') ? o.split('+').pop().trim() : o; };
+  const norm = f => str(f).replace(/\s+/g, '').toLowerCase();
+  const isT33 = b => str(b).toUpperCase().replace(/ /g, '').includes('T33');
+
+  function buildOrders(rows280) {
+    const orders = new Map(); const seen = new Set();
+    for (const r of rows280) {
+      const o = r.G, b = r.H, f = r.N, q = r.W;
+      if (!o || !f) continue;
+      const bk = b === null || b === undefined ? '\u0000null' : b;
+      if (seen.has(bk)) continue; seen.add(bk);
+      const g = gkey(o); if (!orders.has(g)) orders.set(g, new Map());
+      const fm = orders.get(g), k = norm(f);
+      if (!fm.has(k)) fm.set(k, { qty: 0, name: null });
+      const d = fm.get(k); d.name = f; d.qty += (typeof q === 'number') ? q : 0;
+    }
+    return orders;
+  }
+  function classify(orders, order, fabric, buyer) {
+    if (buyer && isT33(buyer)) return 'Body';
+    const fabs = orders.get(gkey(order)); const key = norm(fabric);
+    if (!fabs || !fabs.has(key) || fabs.size === 1) return 'Body';
+    const me = fabs.get(key);
+    const vals = [...fabs.values()];
+    const eAny = vals.map(v => elastic(v.name));
+    const anyE = eAny.some(Boolean), allE = eAny.every(Boolean);
+    if (anyE && !allE) {
+      if (elastic(fabric)) return 'Body';
+      const bodyQ = vals.filter(v => elastic(v.name)).reduce((a, v) => a + v.qty, 0);
+      return me.qty <= bodyQ * 1.05 ? 'Gusset' : 'Body';
+    }
+    if (allE) return 'Body';
+    let low = null, lk = null;
+    for (const v of vals) { const k = [gsm(v.name) || 999, v.qty]; if (!low || k[0] < lk[0] || (k[0] === lk[0] && k[1] < lk[1])) { low = v; lk = k; } }
+    const othersMax = Math.max(...[...fabs.entries()].filter(([k]) => k !== key).map(([, v]) => v.qty));
+    return (low === me && me.qty <= othersMax) ? 'Gusset' : 'Body';
+  }
+
+  // ---------- pairing ----------
+  const nshade = s => str(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  function parseB(b) {
+    const p = str(b).split('|').map(x => x.trim());
+    if (p.length < 3) return null;
+    if (!/^[+-]?\d+$/.test(p[1])) return null;
+    return { o: p[0], seq: parseInt(p[1], 10), sub: p[2] };
+  }
+  const subkey = s => s.split('/').map(x => /^\d+$/.test(x) ? +x : 0);
+  const cmpArr = (a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) { if (a[i] !== b[i]) return a[i] - b[i]; } return a.length - b.length; };
+  const kExact = sh => nshade(sh);
+  const kMinusG = sh => nshade(str(sh).trim().replace(/[-\s]+g\s*$/i, ''));
+  const kStrip = sh => { let t = str(sh).replace(/\b(aop|gusset|gst|body|wing)\b/gi, ''); t = t.trim().replace(/[-\s]+g\s*$/i, ''); t = t.trim().replace(/[-\s]+(g|b)\s*$/i, ''); return nshade(t); };
+  const kCode = sh => { const m = /\d{4,6}/.exec(str(sh)); return m ? m[0] : null; };
+  const LEVELS = [['exact', kExact], ['minusG', kMinusG], ['stripped', kStrip], ['code', kCode]];
+  const GSUF = /[-\s]g\s*$/i;
+  const isG = sh => GSUF.test(str(sh));
+
+  function buildModel(rows280) {
+    const orders = buildOrders(rows280);
+    const rows = new Map(); // batch -> data
+    for (const r of rows280) {
+      const b = r.H; if (!b || rows.has(b)) continue;
+      const p = parseB(b); if (!p) continue;
+      rows.set(b, { buyer: r.E, po: str(r.F).trim(), order: r.G, shade: r.L, fab: r.N, qty: r.W || 0, pos: r.BB, o: p.o, seq: p.seq, sub: p.sub });
+    }
+    for (const d of rows.values()) d.type = classify(orders, d.order, d.fab, d.buyer);
+    // items
+    const IK = (po, o, seq) => po + '\u0001' + o + '\u0001' + seq;
+    const items = new Map(); // key -> {po,o,seq,batches:[]}
+    for (const [b, d] of rows) {
+      const k = IK(d.po, d.o, d.seq);
+      if (!items.has(k)) items.set(k, { key: k, po: d.po, o: d.o, seq: d.seq, batches: [] });
+      items.get(k).batches.push(b);
+    }
+    const itype = new Map(), ishade = new Map();
+    for (const it of items.values()) {
+      const cnt = new Map(); let best = null, bc = 0;
+      for (const b of it.batches) { const t = rows.get(b).type; cnt.set(t, (cnt.get(t) || 0) + 1); }
+      for (const [t, c] of cnt) if (c > bc) { best = t; bc = c; }
+      itype.set(it.key, best); ishade.set(it.key, rows.get(it.batches[0]).shade);
+    }
+    const itT33 = k => isT33(rows.get(items.get(k).batches[0]).buyer);
+    for (const k of items.keys()) {
+      if (isG(ishade.get(k)) && !itT33(k)) itype.set(k, 'Gusset');
+      if (itT33(k)) itype.set(k, 'Body');
+    }
+    const cmatch = (a, b) => LEVELS.some(([, kf]) => { const x = kf(a); return x && x === kf(b); });
+    const sortedItems = [...items.values()].sort((a, b) => cmpStr(a.po, b.po) || cmpStr(a.o, b.o) || (a.seq - b.seq));
+    const byOS = (a, b) => cmpStr(a.o, b.o) || (a.seq - b.seq);
+
+    function runPairing() {
+      const ip = new Map(), taken = new Set();
+      for (const gi of sortedItems) {
+        if (itype.get(gi.key) !== 'Gusset') continue;
+        const bk = IK(gi.po, gi.o, gi.seq - 1);
+        if (itype.has(bk) && itype.get(bk) === 'Body' && !taken.has(bk) && cmatch(ishade.get(gi.key), ishade.get(bk))) {
+          ip.set(gi.key, bk); ip.set(bk, gi.key); taken.add(bk);
+        }
+      }
+      for (const [, kf] of LEVELS) {
+        const grp = new Map();
+        for (const it of items.values()) {
+          const k = kf(ishade.get(it.key)); if (!k) continue;
+          const gk = it.po + '\u0002' + k; if (!grp.has(gk)) grp.set(gk, []); grp.get(gk).push(it);
+        }
+        for (const its of grp.values()) {
+          let bodies = its.filter(i => itype.get(i.key) === 'Body' && !taken.has(i.key)).sort(byOS);
+          const gus = its.filter(i => itype.get(i.key) === 'Gusset' && !ip.has(i.key)).sort(byOS);
+          if (!bodies.length || !gus.length) continue;
+          for (const gi of gus) {
+            bodies = bodies.filter(b => !taken.has(b.key));
+            if (!bodies.length) break;
+            const same = bodies.filter(b => b.o === gi.o && b.seq < gi.seq);
+            let bi;
+            if (same.length) { bi = same[0]; for (const s of same) if (s.seq > bi.seq) bi = s; }
+            else {
+              const sameo = bodies.filter(b => b.o === gi.o);
+              const pool = sameo.length ? sameo : bodies;
+              const cand = sameo.length ? gus.filter(x => x.o === gi.o) : gus;
+              bi = pool[Math.min(cand.indexOf(gi), pool.length - 1)];
+            }
+            ip.set(gi.key, bi.key); ip.set(bi.key, gi.key); taken.add(bi.key);
+          }
+        }
+      }
+      return ip;
+    }
+    let pair = null;
+    for (let i = 0; i < 5; i++) {
+      pair = runPairing();
+      const ribbody = k => { if (!pair.has(k)) return false; const bk = pair.get(k); return /\brib/i.test(str(rows.get(items.get(bk).batches[0]).fab)); };
+      const demote = [...items.keys()].filter(k => itype.get(k) === 'Gusset' && !isG(ishade.get(k)) && (!pair.has(k) || ribbody(k)));
+      if (!demote.length) break;
+      for (const k of demote) itype.set(k, 'Body');
+    }
+    const finalType = b => { const d = rows.get(b); return d ? itype.get(IK(d.po, d.o, d.seq)) : null; };
+    const partner = b => {
+      const d = rows.get(b); if (!d) return null;
+      const k = IK(d.po, d.o, d.seq); if (!pair.has(k)) return null;
+      const pbs = items.get(pair.get(k)).batches;
+      const same = pbs.filter(x => parseB(x).sub === d.sub);
+      if (same.length) return same[0];
+      return [...pbs].sort((a, b) => cmpArr(subkey(parseB(a).sub), subkey(parseB(b).sub)))[0];
+    };
+    return { orders, rows, finalType, partner, classify: (o, f, b) => classify(orders, o, f, b) };
+  }
+
+  // ---------- MC ----------
+  const MC = [[4, 10, '10 Kg MC', true], [18, 39, '30 Kg MC', false], [39, 62, '60 Kg MC', true], [80, 125, '120 Kg MC', true],
+    [135, 201, '200 Kg MC', false], [201, 262, '250 Kg MC', true], [350, 521, '500 Kg MC', false], [521, 770, '750 Kg MC', true]];
+  const mc = q => { for (const [lo, hi, lab, inc] of MC) if (inc ? (q >= lo && q <= hi) : (q >= lo && q < hi)) return lab; return 'Need Batch Plan'; };
+
+  // ---------- workbook plumbing ----------
+  async function sheetPaths(zip) {
+    const wb = await zip.file('xl/workbook.xml').async('string');
+    const rels = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+    const relMap = {}; let m; const rr = /<Relationship\b([^>]*)\/>/g;
+    while ((m = rr.exec(rels))) { const id = /Id="([^"]+)"/.exec(m[1]), t = /Target="([^"]+)"/.exec(m[1]); if (id && t) relMap[id[1]] = t[1]; }
+    const out = {}; const sr = /<sheet\b([^>]*)\/>/g; let idx = 0;
+    while ((m = sr.exec(wb))) {
+      const name = unesc(/name="([^"]+)"/.exec(m[1])[1]); const rid = /r:id="([^"]+)"/.exec(m[1])[1];
+      let t = relMap[rid]; t = t.startsWith('/') ? t.slice(1) : 'xl/' + t.replace(/^\.\//, '');
+      out[name] = { path: t, index: idx++ };
+    }
+    return out;
+  }
+  function splitSheet(xml) {
+    const a = xml.indexOf('<sheetData>'), b = xml.lastIndexOf('</sheetData>');
+    if (a < 0) { const e = xml.indexOf('<sheetData/>'); return { head: xml.slice(0, e), body: '', tail: xml.slice(e + 12) }; }
+    return { head: xml.slice(0, a), body: xml.slice(a + 11, b), tail: xml.slice(b + 12) };
+  }
+  const rowRe = () => /<row r="(\d+)"[^>]*>[\s\S]*?<\/row>|<row r="(\d+)"[^>]*\/>/g;
+
+  // shift same-row refs inside formulas when a row moves
+  function retargetFormulas(rowXml, oldR, newR, sheetName) {
+    return rowXml.replace(/<f([^>]*)>([\s\S]*?)<\/f>/g, (all, at, f) => {
+      const parts = f.split(/(&quot;[\s\S]*?&quot;|"[^"]*")/);
+      for (let i = 0; i < parts.length; i += 2) {
+        parts[i] = parts[i].replace(/((?:'[^']+'|[A-Za-z0-9_.]+)!)?(\$?)([A-Z]{1,3})(\$?)(\d+)(?![\d(])/g, (mm, sh, d1, c, d2, r) => {
+          if (sh) { const s = sh.slice(0, -1).replace(/^'|'$/g, '').replace(/''/g, "'"); if (s !== sheetName) return mm; }
+          if (d2 || +r !== oldR) return mm;
+          return (sh || '') + d1 + c + d2 + newR;
+        });
+      }
+      return '<f' + at + '>' + parts.join('') + '</f>';
+    });
+  }
+
+  // ---------- main ----------
+  async function run(JSZip, input, log = () => {}) { return runZip(await JSZip.loadAsync(input), log); }
+  async function runZip(zip, log = () => {}) {
+    const sp = await sheetPaths(zip);
+    if (!sp['280'] || !sp['Dye Q']) throw new Error('Workbook must contain sheets "280" and "Dye Q".');
+    log('Reading shared strings…');
+    const sstFile = zip.file('xl/sharedStrings.xml');
+    const sst = parseSST(sstFile ? await sstFile.async('string') : '');
+    log('Reading 280 sheet…');
+    let x280 = await zip.file(sp['280'].path).async('string');
+    const c280 = readCells(x280, new Set(['E', 'F', 'G', 'H', 'L', 'N', 'W', 'BB', 'DB']), sst, 2);
+    const hdrDB = c280.get(2) ? str(c280.get(2).DB) : '';
+    const already = hdrDB.trim() === 'Body Type';
+    const rows280 = [...c280.entries()].filter(([r]) => r >= 3).sort((a, b) => a[0] - b[0]).map(([r, o]) => Object.assign({ _r: r }, o));
+    log(`280: ${rows280.length} rows. Classifying & pairing…`);
+    const M = buildModel(rows280);
+
+    // ---- Dye Q
+    log('Reading Dye Q…');
+    let xdq = await zip.file(sp['Dye Q'].path).async('string');
+    const cdq = readCells(xdq, new Set(['D', 'E', 'F', 'R', 'U']), sst, 3);
+    const res = new Map(); // row -> {type,batch,qty}
+    for (const [r, o] of cdq) {
+      if (!o.F) continue;
+      let t = M.finalType(o.F); if (!t) t = M.classify(o.E, o.R, o.D);
+      res.set(r, { type: t, batch: o.F, qty: typeof o.U === 'number' ? o.U : 0 });
+    }
+    const dq = new Map(); for (const [r, v] of res) dq.set(v.batch, r);
+    const typ = b => res.get(dq.get(b)).type, qty = b => res.get(dq.get(b)).qty;
+    const sortedDQ = [...dq.keys()].sort((a, b) => dq.get(a) - dq.get(b));
+    const grp = new Map(), memberOf = new Map();
+    for (const b of sortedDQ) if (typ(b) === 'Body') { grp.set(b, [b]); memberOf.set(b, b); }
+    const freeBody = g => {
+      const pb = M.partner(g); if (!pb) return null;
+      if (grp.has(pb) && grp.get(pb).length === 1) return pb;
+      const p = parseB(pb);
+      for (const b of [...grp.keys()].sort((a, c) => dq.get(a) - dq.get(c))) {
+        const q = parseB(b);
+        if (typ(b) === 'Body' && grp.get(b).length === 1 && q && q.o === p.o && q.seq === p.seq) return b;
+      }
+      return null;
+    };
+    const gus = sortedDQ.filter(b => typ(b) === 'Gusset').map(g => { const pb = M.partner(g); const pg = parseB(g); return { g, k: (pb && pg && parseB(pb).sub === pg.sub) ? 0 : 1 }; })
+      .sort((a, b) => a.k - b.k || dq.get(a.g) - dq.get(b.g)).map(x => x.g);
+    for (const g of gus) { const pb = freeBody(g); if (pb) { grp.get(pb).push(g); memberOf.set(g, pb); } else { grp.set(g, [g]); memberOf.set(g, g); } }
+    const info = new Map(); const mcCount = {};
+    for (const mem of grp.values()) {
+      const bodies = mem.filter(m => typ(m) === 'Body'), guss = mem.filter(m => typ(m) === 'Gusset');
+      const q = mem.reduce((a, m) => a + qty(m), 0);
+      let combo;
+      if (bodies.length && guss.length) combo = bodies.concat(guss).join('+');
+      else if (bodies.length) { const pg = M.partner(bodies[0]); combo = (pg && dq.has(pg)) ? bodies[0] : pg ? bodies[0] + '+' + pg : bodies[0]; }
+      else { const pb = M.partner(guss[0]); combo = pb ? pb + '+' + guss[0] : guss[0]; }
+      const st = mc(q); mcCount[st] = (mcCount[st] || 0) + 1;
+      for (const m of mem) info.set(dq.get(m), { t: typ(m) === 'Body' ? 'B' : 'G', combo, q, st });
+    }
+    const order = [];
+    [...grp.values()].map(mem => ({ mem, q: mem.reduce((a, m) => a + qty(m), 0), mn: Math.min(...mem.map(m => dq.get(m))) }))
+      .sort((a, b) => (b.q - a.q) || (a.mn - b.mn))
+      .forEach(({ mem }) => [...mem].sort((a, b) => ((typ(a) !== 'Body') - (typ(b) !== 'Body')) || dq.get(a) - dq.get(b)).forEach(m => order.push(dq.get(m))));
+
+    log('Writing Dye Q…');
+    {
+      const { head, body, tail } = splitSheet(xdq);
+      const rowXml = new Map(); let m; const rr = rowRe();
+      while ((m = rr.exec(body))) rowXml.set(+(m[1] || m[2]), m[0]);
+      const styleOf = (row, col) => { const s = new RegExp('<c r="' + col + '\\d+"( s="\\d+")?').exec(row); return s && s[1] ? s[1] : ''; };
+      const cs = (ref, txt, sty) => `<c r="${ref}"${sty} t="inlineStr"><is><t>${esc(txt)}</t></is></c>`;
+      const cnum = (ref, v, sty) => `<c r="${ref}"${sty}><v>${Math.round(v * 100) / 100}</v></c>`;
+      const addCells = (row, cells) => {
+        row = row.replace(/<c r="A[M-P]\d+"[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g, '');
+        row = row.replace(/spans="(\d+):(\d+)"/, (a, x, y) => `spans="${x}:${Math.max(42, +y)}"`);
+        if (row.endsWith('/>')) row = row.slice(0, -2) + '></row>';
+        const after = /<c r="(A[Q-Z]|[B-Z][A-Z]|[A-Z]{3})\d+"/.exec(row);
+        return after ? row.slice(0, after.index) + cells + row.slice(after.index) : row.slice(0, -6) + cells + '</row>';
+      };
+      if (rowXml.has(2)) { const r2 = rowXml.get(2), hs = styleOf(r2, 'AL'); rowXml.set(2, addCells(r2, cs('AM2', 'Body Type', hs) + cs('AN2', 'Combo Batch (Body+Gusset)', hs) + cs('AO2', 'Combo Qty', hs) + cs('AP2', 'Batch Plan MC', hs))); }
+      for (const [n, v] of info) { const r = rowXml.get(n); const ds = styleOf(r, 'AL'); rowXml.set(n, addCells(r, cs('AM' + n, v.t, ds) + cs('AN' + n, v.combo, ds) + cnum('AO' + n, v.q, ds) + cs('AP' + n, v.st, ds))); }
+      const rest = [...rowXml.keys()].filter(n => n >= 3 && !info.has(n)).sort((a, b) => a - b);
+      const finalOrder = order.concat(rest);
+      const out = [];
+      for (const n of [...rowXml.keys()].filter(n => n < 3).sort((a, b) => a - b)) out.push(rowXml.get(n));
+      finalOrder.forEach((old, i) => {
+        const nw = i + 3; let x = rowXml.get(old);
+        x = x.replace(/<row r="\d+"/, `<row r="${nw}"`).replace(/(<c r="[A-Z]{1,3})\d+"/g, `$1${nw}"`);
+        if (old !== nw) x = retargetFormulas(x, old, nw, 'Dye Q');
+        out.push(x);
+      });
+      let h = head.replace(/<dimension ref="A1:([A-Z]+)(\d+)"\/>/, (a, c, r) => `<dimension ref="A1:${cn(c) < cn('AP') ? 'AP' : c}${r}"/>`);
+      h = h.replace(/<cols>[\s\S]*?<\/cols>/, cols => {
+        const defs = cols.match(/<col [^>]*\/>/g) || []; const keep = [];
+        for (const d of defs) {
+          const a = +/min="(\d+)"/.exec(d)[1], b = +/max="(\d+)"/.exec(d)[1];
+          if (b < 39 || a > 42) { keep.push(d); continue; }
+          if (a < 39) keep.push(d.replace(/max="\d+"/, 'max="38"'));
+          if (b > 42) keep.push(d.replace(/min="\d+"/, 'min="43"'));
+        }
+        keep.push('<col min="39" max="39" width="11" customWidth="1"/>', '<col min="40" max="40" width="78" customWidth="1"/>', '<col min="41" max="41" width="11" customWidth="1"/>', '<col min="42" max="42" width="26" customWidth="1"/>');
+        keep.sort((x, y) => +/min="(\d+)"/.exec(x)[1] - +/min="(\d+)"/.exec(y)[1]);
+        return '<cols>' + keep.join('') + '</cols>';
+      });
+      const t = tail.replace(/<autoFilter ref="A2:([A-Z]+)(\d+)"/, (a, c, r) => `<autoFilter ref="A2:${cn(c) < cn('AP') ? 'AP' : c}${r}"`);
+      xdq = h + '<sheetData>' + out.join('') + '</sheetData>' + t;
+      zip.file(sp['Dye Q'].path, xdq);
+    }
+
+    // ---- 280 Body Type column at DB
+    log(already ? 'Updating 280 Body Type (DB)…' : 'Inserting 280 Body Type column before DB…');
+    const INS = cn('DB'); const val = new Map(); const cnt280 = { B: 0, G: 0 };
+    for (const r of rows280) { if (!r.H) continue; const t = M.finalType(r.H); if (t) { const c = t === 'Body' ? 'B' : 'G'; val.set(r._r, c); cnt280[c]++; } }
+    {
+      const { head, body, tail } = splitSheet(x280);
+      const shiftCol = c => (cn(c) >= INS ? cl(cn(c) + 1) : c);
+      const newBody = body.replace(rowRe(), (row, r1, r2) => {
+        const rn = +(r1 || r2);
+        if (row.endsWith('/>')) row = row.slice(0, -2) + '></row>';
+        if (already) row = row.replace(/<c r="DB\d+"[^>]*?(?:\/>|>[\s\S]*?<\/c>)/g, '');
+        else {
+          row = row.replace(/<c r="([A-Z]{1,3})(\d+)"/g, (a, c, r) => `<c r="${shiftCol(c)}${r}"`);
+          row = row.replace(/spans="(\d+):(\d+)"/, (a, x, y) => `spans="${x}:${+y >= INS ? +y + 1 : Math.max(INS, +y)}"`);
+        }
+        let txt = null;
+        if (rn === 2) txt = 'Body Type'; else if (val.has(rn)) txt = val.get(rn);
+        if (txt === null) return row;
+        const sm = new RegExp('<c r="DA' + rn + '"( s="\\d+")?').exec(row); const sty = sm && sm[1] ? sm[1] : '';
+        const cell = `<c r="DB${rn}"${sty} t="inlineStr"><is><t>${esc(txt)}</t></is></c>`;
+        const re = /<c r="([A-Z]{1,3})\d+"/g; let mm, pos = -1;
+        while ((mm = re.exec(row))) if (cn(mm[1]) > INS) { pos = mm.index; break; }
+        return pos >= 0 ? row.slice(0, pos) + cell + row.slice(pos) : row.slice(0, -6) + cell + '</row>';
+      });
+      let h = head, t = tail;
+      if (!already) {
+        h = h.replace(/<dimension ref="A1:([A-Z]+)(\d+)"\/>/, (a, c, r) => `<dimension ref="A1:${cn(c) >= INS ? cl(cn(c) + 1) : 'DB'}${r}"/>`);
+        h = h.replace(/<cols>[\s\S]*?<\/cols>/, cols => {
+          const defs = cols.match(/<col [^>]*\/>/g) || []; const keep = [];
+          for (let d of defs) {
+            let a = +/min="(\d+)"/.exec(d)[1], b = +/max="(\d+)"/.exec(d)[1];
+            if (a < INS && b >= INS) { keep.push(d.replace(/max="\d+"/, `max="${INS - 1}"`)); d = d.replace(/min="\d+"/, `min="${INS}"`); a = INS; }
+            if (a >= INS) { a++; b = Math.min(b + 1, 16384); d = d.replace(/min="\d+"/, `min="${a}"`).replace(/max="\d+"/, `max="${b}"`); }
+            keep.push(d);
+          }
+          keep.push(`<col min="${INS}" max="${INS}" width="12" customWidth="1"/>`);
+          keep.sort((x, y) => +/min="(\d+)"/.exec(x)[1] - +/min="(\d+)"/.exec(y)[1]);
+          return '<cols>' + keep.join('') + '</cols>';
+        });
+        t = t.replace(/<autoFilter ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"/, (a, c1, r1, c2, r2) => `<autoFilter ref="${c1}${r1}:${cn(c2) >= INS ? cl(cn(c2) + 1) : c2}${r2}"`);
+        t = t.replace(/sqref="([^"]*)"/g, (a, sq) => 'sqref="' + sq.replace(/([A-Z]{1,3})(\d+)/g, (m, c, r) => shiftCol(c) + r) + '"');
+      }
+      x280 = h + '<sheetData>' + newBody + '</sheetData>' + t;
+      zip.file(sp['280'].path, x280);
+      if (!already) {
+        // workbook defined names + pivot caches that point at 280 columns >= DB
+        let wb = await zip.file('xl/workbook.xml').async('string');
+        wb = wb.replace(/('280'|\b280)!\$?([A-Z]{1,3})\$?(\d+):\$?([A-Z]{1,3})\$?(\d+)/g, (m, s, c1, r1, c2, r2) => `${s}!$${shiftCol(c1)}$${r1}:$${shiftCol(c2)}$${r2}`);
+        wb = wb.replace(/('Dye Q'!\$A\$2:\$)([A-Z]+)(\$\d+)/g, (m, a, c, b) => a + (cn(c) < cn('AP') ? 'AP' : c) + b);
+        zip.file('xl/workbook.xml', wb);
+        for (const f of Object.keys(zip.files).filter(f => /^xl\/pivotCache\/pivotCacheDefinition\d+\.xml$/.test(f))) {
+          let p = await zip.file(f).async('string');
+          p = p.replace(/<worksheetSource ref="([A-Z]+)(\d+):([A-Z]+)(\d+)" sheet="280"\/>/, (m, c1, r1, c2, r2) => `<worksheetSource ref="${c1}${r1}:${shiftCol(c2)}${r2}" sheet="280"/>`);
+          zip.file(f, p);
+        }
+      } else {
+        let wb = await zip.file('xl/workbook.xml').async('string');
+        wb = wb.replace(/('Dye Q'!\$A\$2:\$)([A-Z]+)(\$\d+)/g, (m, a, c, b) => a + (cn(c) < cn('AP') ? 'AP' : c) + b);
+        zip.file('xl/workbook.xml', wb);
+      }
+    }
+    // drop calcChain (row positions changed) — Excel rebuilds it
+    if (zip.file('xl/calcChain.xml')) {
+      zip.remove('xl/calcChain.xml');
+      const ct = await zip.file('[Content_Types].xml').async('string');
+      zip.file('[Content_Types].xml', ct.replace(/<Override[^>]*calcChain[^>]*\/>/g, ''));
+      const rl = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+      zip.file('xl/_rels/workbook.xml.rels', rl.replace(/<Relationship[^>]*calcChain[^>]*\/>/g, ''));
+    }
+    // summary
+    const dqCount = { B: 0, G: 0 }; for (const v of info.values()) dqCount[v.t]++;
+    const twoBatch = [...grp.values()].filter(m => m.length === 2).length;
+    const top = order.slice(0, 40).map(n => ({ batch: res.get(n).batch, t: info.get(n).t, combo: info.get(n).combo, q: info.get(n).q, st: info.get(n).st }));
+    log('Compressing workbook…');
+    return { zip, summary: { dq: dqCount, combos: grp.size, twoBatch, mc: mcCount, b280: cnt280, already280: already, top } };
+  }
+
+  const api = { run, runZip, mc, MC };
+  root.DyeQEngine = api;
+})(typeof self !== 'undefined' ? self : globalThis);
+/* DOC-280+217 master builder — runs fully in the browser (or Node for testing).
    Needs globals: XLSX (SheetJS) and JSZip. Exposes DocBuilder.build(). */
 (function (root) {
 'use strict';
@@ -1229,12 +1656,15 @@ async function build(files, opts = {}) {
   // ---- old 280 values (= the "280 (2)" copy) and row-1 templates
   note(18, 'Reading current 280 sheet (280 (2) copy for comments / urgent / remarks)');
   const sh280 = new Sheet(await rd(pathOf['280'])); await tick();
+  // Body Type (Dye Q Combo Planner) sits at DB once added; the old DB 'Extra' column is then at DC
+  const bodyTypeAtDB = String(cellValue(sh280.get(2, ci('DB')), SST) || '').trim() === 'Body Type';
+  const colOf = c => (bodyTypeAtDB && c === 'DB') ? ci('DC') : ci(c);
   const oldCols = {}; const want = ['H', 'R', 'BB', 'BQ', 'BT', 'CB', 'CN', 'CR', 'CS', 'CT', 'CV', 'DB'];
   want.forEach(c => oldCols[c] = []);
   const oldRows = [...sh280.rows.keys()].sort((a, b) => a - b);
-  for (const r of oldRows) for (const c of want) oldCols[c].push(cellValue(sh280.get(r, ci(c)), SST));
+  for (const r of oldRows) for (const c of want) oldCols[c].push(cellValue(sh280.get(r, colOf(c)), SST));
   const old = { H: oldCols.H, cols: oldCols };
-  const tmpl = []; for (let c = ci('AU'); c <= ci('DB'); c++) { const v = cellValue(sh280.get(1, c), SST); if (typeof v === 'string' && /^qq/i.test(v)) tmpl.push(c); }
+  const tmpl = []; for (let c = ci('AU'); c <= ci(bodyTypeAtDB ? 'DC' : 'DB'); c++) { if (bodyTypeAtDB && c === ci('DB')) continue; const v = cellValue(sh280.get(1, c), SST); if (typeof v === 'string' && /^qq/i.test(v)) tmpl.push(c); }
   if (tmpl.length !== EXPECT_280_TEMPLATES) report.warnings.push(`280 row 1 has ${tmpl.length} qq templates in AU:DB (expected 60) — check the calc columns.`);
 
   note(24, 'Calculating 280 AU:DB (activated row-1 formulas → values)');
@@ -1255,7 +1685,8 @@ async function build(files, opts = {}) {
   note(54, 'Writing 280 (A:AT data, AU:DB values, row height 15)');
   oldLast = lastDataRow(sh280, 1, 46, 3); nl = paste(sh280, d280, 3, 1, 46, oldLast);
   for (let r = 3; r <= nl; r++) { const v = sh280.rows.get(r); v[0] = v[0].replace(/\s(ht|customHeight)="[^"]*"/g, '') + ' ht="15" customHeight="1"'; }
-  writeValues(sh280, ci('AU'), ci('DB'), 3, c280.vals, oldLast);
+  if (!bodyTypeAtDB) writeValues(sh280, ci('AU'), ci('DB'), 3, c280.vals, oldLast);
+  else { writeValues(sh280, ci('AU'), ci('DA'), 3, c280.vals.map(v => v.slice(0, 59)), oldLast); writeValues(sh280, ci('DC'), ci('DC'), 3, c280.vals.map(v => [v[59]]), oldLast); }
   filterRefs['280'] = resetFilter(sh280, nl); trimmed['280'] = trimTail(sh280, nl); slimDuplicateCF(sh280); setDimension(sh280); wr(pathOf['280'], sh280.serialize()); await tick();
 
   note(66, 'Writing Dye Q');
@@ -1275,6 +1706,8 @@ async function build(files, opts = {}) {
   filterRefs['Dye Q'] = resetFilter(sh, nl);
   sh.tail = sh.tail.replace(/<autoFilter ref="([A-Z]+\d+):([A-Z]+)(\d+)"/, (m, a, c, r) => `<autoFilter ref="${a}:${ci(c) < ldCol ? cl(ldCol) : c}${r}"`);
   filterRefs['Dye Q'] = (/<autoFilter ref="([^"]+)"/.exec(sh.tail) || [])[1] || filterRefs['Dye Q'];
+  // old Body Type / Combo / Qty / MC (AM:AP) are rebuilt by the combo planner below
+  for (const [r, [, cells]] of sh.rows) if (r >= 3) for (let c = ci('AM'); c <= ci('AP'); c++) cells.delete(c);
   trimmed['Dye Q'] = trimTail(sh, nl); slimDuplicateCF(sh); setDimension(sh); wr(pathOf['Dye Q'], sh.serialize()); await tick();
   note(70, `LD New / Repeat on Dye Q ${cl(ldCol)}: New ${ldCount.New} · Repeat ${ldCount.Repeat} · blank ${ldCount.blank}`);
   report.ld = Object.assign({ col: cl(ldCol) }, ldCount);
@@ -1343,6 +1776,10 @@ async function build(files, opts = {}) {
 
   // ---- LD field in the Dye Q pivots (DQ P + Dash Board)
   report.ldPivot = await ldPivots(zip, rd, wr, wbx, rels, pathOf, SST, ld.batch2ld, cl(ldCol));
+  // ---- Dye Q Combo Planner: 280 DB Body Type (B/G); Dye Q AM:AP Body Type, Combo Batch, Combo Qty, Batch Plan MC; Dye Q sorted by Combo Qty
+  note(88, 'Body / Gusset combos (Dye Q Combo Planner)');
+  try { const dq = await root.DyeQEngine.runZip(zip, () => {}); report.combo = dq.summary; }
+  catch (e) { report.warnings.push('Body/Gusset combo step failed: ' + (e.message || e)); }
   // ---- pivots: keep all, refresh on open
   let nPc = 0, nPt = 0, nRec = 0, recBytes = 0;
   for (const p of Object.keys(zip.files)) {
@@ -1494,7 +1931,10 @@ function additionalCalc(d217, d280, bb280) {
   return rows;
 }
 // minimal styled xlsx (SQ stripe: Calibri, purple header, white/#EFECED bands, thin #D2C7CB borders, user's column groups)
-async function additionalXlsx(rows, title) {
+async function additionalXlsx(rows0, title) {
+  // largest Req Additional first; default filter on Color (D): colours ending in AOP (AOP-G not included)
+  const rows = rows0.slice().sort((a, b) => (b[22] || 0) - (a[22] || 0));
+  const isAop = v => /AOP$/i.test(String(v || '').trim());
   const FMT = { n: 164, d3: 165, p: 166, dt: 167 };
   const colFmt = j => (j === 14 ? 'd3' : (j === 19 || j === 32 || j === 33 || j === 34) ? 'p' : j === 26 ? 'dt' : ((j >= 8 && j <= 23) || j === 25 || j === 30 || j === 31 || j === 35) ? 'n' : null);
   // xf: 0 default, 1 header, then body: [fmt][band][bold]
@@ -1514,7 +1954,7 @@ async function additionalXlsx(rows, title) {
   let r = 1; let x = `<row r="1" ht="58" customHeight="1">`;
   ADD_HEAD.forEach((h, j) => { x += `<c r="${cl(j + 1)}1" s="1" t="inlineStr"><is><t xml:space="preserve">${esc(h)}</t></is></c>`; }); parts.push(x + '</row>');
   for (const row of rows) {
-    r++; const band = r % 2 === 1 ? 1 : 0; x = `<row r="${r}">`;
+    r++; const band = r % 2 === 1 ? 1 : 0; x = `<row r="${r}"${isAop(row[3]) ? '' : ' hidden="1"'}>`;
     for (let j = 1; j <= nc; j++) {
       const v = row[j - 1], s = xfIdx[`${colFmt(j)}|${band}|${j === 23 ? 1 : 0}`], ref = cl(j) + r;
       if (v === null || v === undefined || v === '') x += `<c r="${ref}" s="${s}"/>`;
@@ -1526,7 +1966,7 @@ async function additionalXlsx(rows, title) {
   const cols = '<cols>' + ADD_COLS.map(d => `<col min="${d.min}" max="${d.max}" width="${d.width || 12}" customWidth="1"${d.hidden ? ' hidden="1"' : ''}${d.outline ? ` outlineLevel="${d.outline}"` : ''}${d.collapsed ? ' collapsed="1"' : ''}/>`).join('') + '</cols>';
   const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
     `<sheetPr><outlinePr summaryBelow="1" summaryRight="1"/></sheetPr><dimension ref="A1:${cl(nc)}${r}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews>` +
-    `<sheetFormatPr defaultRowHeight="15" outlineLevelCol="1"/>${cols}<sheetData>${parts.join('')}</sheetData><autoFilter ref="A1:${cl(nc)}${r}"/></worksheet>`;
+    `<sheetFormatPr defaultRowHeight="15" outlineLevelCol="1"/>${cols}<sheetData>${parts.join('')}</sheetData><autoFilter ref="A1:${cl(nc)}${r}"><filterColumn colId="3"><customFilters><customFilter val="*AOP"/></customFilters></filterColumn></autoFilter></worksheet>`;
   const z = new JSZip();
   z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
   z.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
@@ -1640,6 +2080,7 @@ function finished(bytes,rep,secs,add){
   $('msg').textContent=`Done · ${r['280'].toLocaleString()} batches processed in ${secs.toFixed(0)} s.`;
   const parts=[`217: ${r['217'].toLocaleString()} rows after removing duplicates`,`Melange ${r.melange} · Rib ${r.rib}`];
   if(rep.ld)parts.push(`LD New ${rep.ld.New} · Repeat ${rep.ld.Repeat} (Dye Q ${rep.ld.col})`);
+  if(rep.combo)parts.push(`Body/Gusset: Dye Q B ${rep.combo.dq.B} · G ${rep.combo.dq.G} · ${rep.combo.twoBatch} combos · ${(rep.combo.mc||{})['Need Batch Plan']||0} need batch plan`);
   parts.push(`${rep.pivotTables} pivots refresh on open`);
   if(rep.warnings&&rep.warnings.length)parts.push(rep.warnings.join(' '));
   note(parts.join(' · '));
